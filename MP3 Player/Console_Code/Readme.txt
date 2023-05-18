@@ -1,0 +1,3 @@
+install ->
+	pygame
+	Fore
