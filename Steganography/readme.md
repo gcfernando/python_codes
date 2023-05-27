@@ -1,0 +1,1 @@
+Steganography is the practice of concealing a message or information within another file or message in a way that is not easily detectable. It involves hiding the existence of the message rather than scrambling or encrypting it. Common techniques include altering the least significant bits of an image or audio file or embedding hidden text within whitespace.
