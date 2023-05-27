@@ -1,0 +1,4 @@
+Install ->
+	random
+	string
+	re
