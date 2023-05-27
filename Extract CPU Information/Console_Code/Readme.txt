@@ -1,0 +1,3 @@
+Install ->
+	psutil
+	cpuinfo
