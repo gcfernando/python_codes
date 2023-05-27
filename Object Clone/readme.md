@@ -1,0 +1,1 @@
+If you want to create a true copy of an object, you can use the 𝗱𝗲𝗲𝗽𝗰𝗼𝗽𝘆 method. The 𝗱𝗲𝗲𝗽𝗰𝗼𝗽𝘆 method creates a new object with a new reference and recursively clones all the attributes of the original object. This means that any changes made to the original object will not affect the cloned object.
