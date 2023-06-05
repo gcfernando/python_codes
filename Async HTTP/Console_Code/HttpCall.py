@@ -34,13 +34,13 @@ async def main():
         data = None
         method = input("Enter Method (GET, POST, PUT, DELETE): ")
 
-        if method == "POST" or method == "PUT":
+        if method.lower() == 'post' or method.lower() == 'put':
             # For POST and PUT requests, prompt the user for category details
             id = int(input("Enter Category Id: "))
             name = input("Enter Category Name: ")
             description = input("Enter Category Description: ")
             data = {"id": id, "description": description, "name": name}
-        elif method == "DELETE":
+        elif method.lower() == 'delete':
             # For DELETE request, prompt the user for the category id to delete
             id = int(input("Enter Category Id: "))
 
