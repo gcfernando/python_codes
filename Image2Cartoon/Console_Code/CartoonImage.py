@@ -18,6 +18,9 @@ def convert_to_cartoon(image):
     # Combine the color image with the edges
     cartoon = cv2.bitwise_and(color, color, mask=edges)
 
+    # Resize the cartoon image to 500x500 pixels
+    cartoon = cv2.resize(cartoon, (500, 500))
+    
     return cartoon
 
 # Provide the path to the input image
