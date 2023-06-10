@@ -5,7 +5,7 @@ from colorama import Fore
 
 os.system('cls')
 current_song_index = 0
-music_folder = "C:\Gehan\Songs"
+music_folder = input("Enter file name folder path : ")
 
 music_files = [os.path.join(music_folder, filename) for filename in os.listdir(music_folder) if filename.endswith(".mp3")]
 
