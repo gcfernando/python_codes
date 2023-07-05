@@ -1,0 +1,1 @@
+The Python script enables you to perform mathematical operations using a C# DLL library called "Calculator.dll". By loading the DLL and accessing its functionality, the script can execute addition, subtraction, multiplication, and division operations. The results of these calculations are then displayed. This script showcases how Python can interact with external libraries.
