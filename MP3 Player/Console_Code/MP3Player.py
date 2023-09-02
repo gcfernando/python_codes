@@ -1,7 +1,13 @@
 # Developer ::> Gehan Fernando
 # import libraries
-import pygame, os, random, sys
+import pygame, os, random, sys, time
 from colorama import Fore
+
+def prevent_sleep_windows():
+    import ctypes
+    ES_CONTINUOUS = 0x80000000
+    ES_SYSTEM_REQUIRED = 0x00000001
+    ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
 
 os.system('cls')
 current_song_index = 0
@@ -21,6 +27,9 @@ pygame.mixer.music.play()
 print(Fore.GREEN + "Now playing\t:", os.path.basename(music_files[current_song_index]))
 if len(music_files) > 1:
     print(Fore.YELLOW + "Next up\t\t:", os.path.basename(music_files[(current_song_index + 1) % len(music_files)]))
+
+# Prevent sleep/screensaver
+prevent_sleep_windows()
 
 while True:
     if not pygame.mixer.music.get_busy():
