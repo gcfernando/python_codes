@@ -21,15 +21,16 @@ if not music_files:
 random.shuffle(music_files)
 
 pygame.mixer.init(frequency=96000, size=32, channels=2, buffer=4096)
+
+# Prevent sleep/screensaver
+prevent_sleep_windows()
+
 pygame.mixer.music.load(music_files[current_song_index])
 pygame.mixer.music.play()
 
 print(Fore.GREEN + "Now playing\t:", os.path.basename(music_files[current_song_index]))
 if len(music_files) > 1:
     print(Fore.YELLOW + "Next up\t\t:", os.path.basename(music_files[(current_song_index + 1) % len(music_files)]))
-
-# Prevent sleep/screensaver
-prevent_sleep_windows()
 
 while True:
     if not pygame.mixer.music.get_busy():
