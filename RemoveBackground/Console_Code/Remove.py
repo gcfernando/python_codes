@@ -27,7 +27,7 @@ def remove_background(input_path, output_path):
         # Open the resultant image data using PIL's Image module
         with Image.open(io.BytesIO(out_img)) as result_img:
 
-            # Create a white canvas of the same size as the result image
+            # Create a white / black canvas of the same size as the result image
             white_canvas = Image.new('RGB', result_img.size, 'black')
             
             # Paste the result image onto the white canvas
