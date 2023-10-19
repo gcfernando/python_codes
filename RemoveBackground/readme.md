@@ -1,0 +1,1 @@
+This Python tool that can magically wipe out the background from your pics and swap it with a clean white backdrop. Thanks to the awesomeness of rembg and a little help from the Python Imaging Library (PIL), it's now super easy to clean up those product shots or profile pics. Say goodbye to those pesky, distracting backgrounds!
