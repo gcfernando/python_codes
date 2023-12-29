@@ -1,18 +1,32 @@
 # Developer ::> Gehan Fernando
 # import libraries
-import os
+import os, sys
 import io
-import PySimpleGUI as sg
 import pyglet
+import PySimpleGUI as sg
 from PIL import Image
 
 # Set the theme for the GUI
 sg.theme("DarkTeal10")
 
+# Function to determine the resource path
+
+
+def resource_path(relative_path):
+    """ Get the absolute path to the resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+
 # Define folders for fonts, images, and data
-font_folder = 'Fonts'
-image_folder = 'Images'
-data_folder = 'Data'
+font_folder = resource_path('Fonts')
+image_folder = resource_path('Images')
+data_folder = resource_path('Data')
 
 # Initialize the current index and the list to store image information
 current_index = 0
