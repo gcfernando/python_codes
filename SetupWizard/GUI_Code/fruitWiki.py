@@ -10,8 +10,6 @@ from PIL import Image
 sg.theme("DarkTeal10")
 
 # Function to determine the resource path
-
-
 def resource_path(relative_path):
     """ Get the absolute path to the resource, works for dev and for PyInstaller """
     try:
