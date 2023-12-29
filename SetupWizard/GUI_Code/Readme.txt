@@ -1,3 +1,4 @@
 install ->
 	pyinstaller
 	pysimplegui
+	Image
