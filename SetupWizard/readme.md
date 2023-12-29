@@ -1,0 +1,1 @@
+This code demonstrates how to convert a GUI app created with Python into a standalone executable file and then package it into a setup file for easy distribution.
