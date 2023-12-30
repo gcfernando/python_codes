@@ -32,15 +32,15 @@ image_information = []
 
 
 def button_control(index):
-    if index <= 0:
-        window['previous'].update(disabled=True)
-        return
-    if index >= len(image_information) - 1:
-        window['next'].update(disabled=True)
-        return
+    # Determine the states of 'previous' and 'next' buttons
+    is_first = index <= 0
+    is_last = index >= len(image_information) - 1
 
-    window['previous'].update(disabled=False)
-    window['next'].update(disabled=False)
+    # Update the 'previous' button state
+    window['previous'].update(disabled=is_first)
+
+    # Update the 'next' button state
+    window['next'].update(disabled=is_last)
 
 
 def read_file(file_path):
