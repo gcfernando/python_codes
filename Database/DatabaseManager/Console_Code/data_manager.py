@@ -2,20 +2,31 @@
 # import libraries
 import dbm
 
-# Open the database and write data
-with dbm.open('user.db', 'c') as db:
-    db['first_name'] = 'Gehan'
-    db['last_name'] = 'Fernando'
-    db['age'] = '43'  # Note: dbm stores values as bytes, so convert to bytes
-    db['country'] = 'Sri Lanka'
+# Define user data
+user_data = {
+    'first_name': 'Gehan',
+    'last_name': 'Fernando',
+    'age': '43',
+    'country': 'Sri Lanka'
+}
 
-# Open the database and read data
-with dbm.open('user.db', 'r') as db:
-    firstName = db.get(b'first_name').decode()  # Decode bytes to string
-    lastName = db.get(b'last_name').decode()  # Decode bytes to string
-    age = db.get(b'age').decode()  # Decode bytes to string
-    country = db.get(b'country').decode()  # Decode bytes to string
+# Function to save user data to the database
+def save_user_data(filename, data):
+    with dbm.open(filename, 'c') as db:
+        for key, value in data.items():
+            db[key] = value
 
-    content = f'Hi, I am {firstName} {lastName}. I live in {country}, and I am {age} years old.'
+# Function to load user data from the database
+def load_user_data(filename):
+    with dbm.open(filename, 'r') as db:
+        return {key: db[key].decode() for key in db.keys()}
 
-    print(content)
+# Save user data
+save_user_data('user.db', user_data)
+
+# Load and display user data
+user_info = load_user_data('user.db')
+content = (f'Hi, I am {user_info["first_name"]} {user_info["last_name"]}. '
+           f'I live in {user_info["country"]}, and I am {user_info["age"]} years old.')
+
+print(content)
