@@ -1,0 +1,3 @@
+This project is designed to predict salaries based on years of experience. It takes historical salary data, learns the patterns, and creates a model that can estimate future salaries. The system cleans the data, removes duplicates, and ensures accuracy before training itself to recognize trends.
+
+Once the model is built, a user can enter their years of experience, and the system will predict an expected salary based on past trends. If the model is highly accurate, it is saved for future use. The goal is to help individuals or businesses estimate salaries more reliably.
