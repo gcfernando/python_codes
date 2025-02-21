@@ -76,6 +76,7 @@ mse = mean_squared_error(y_test, y_pred)
 
 # Print model performance metric
 print(f"R² Score: {r2:.4f}")
+print(f"Mean Squared Error: {mse:.2f}")
 
 # Step 10: Model Persistence
 # Save model and scaler if R² score meets threshold
