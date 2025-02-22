@@ -1,7 +1,7 @@
 """
 Salary Prediction Model using Linear Regression
-=============================================
-Author: Gehan Fernando
+===============================================
+Developer ::> Gehan Fernando
 
 This script implements a machine learning pipeline to predict salaries based on years of experience.
 It includes data preprocessing, model training, evaluation, and model persistence steps.

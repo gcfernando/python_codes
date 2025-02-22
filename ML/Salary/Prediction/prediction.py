@@ -1,7 +1,7 @@
 """
 Salary Prediction Model - Inference Script
-========================================
-Author: Gehan Fernando
+==========================================
+Developer ::> Gehan Fernando
 
 This script loads a pre-trained salary prediction model and makes predictions based on user input.
 It handles the complete inference pipeline including data preprocessing and salary prediction.
