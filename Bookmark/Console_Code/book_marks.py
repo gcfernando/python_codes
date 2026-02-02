@@ -19,11 +19,11 @@ def FindRows():
 
 try:
     while True:
-        c.print("\n[green]ADD / SEARCH / EDIT / DELETE / OPEN / HELP >[/green]", end="")
+        c.print("\n[green]COMMAND >>[/green]", end="")
         cmd = input(" ").strip().lower()
 
         if cmd == "help":
-            c.print("[green]Commands:[/green] add search edit delete open"); continue
+            c.print("[green]Commands:[/green] ADD/ EDIT/ DELETE/ OPEN/ SEARCH"); continue
 
         if cmd == "add":
             t = input("Title: ").strip()
