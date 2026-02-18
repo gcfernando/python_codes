@@ -36,4 +36,4 @@ And a footer that tells you whether anything suspicious has been found.
 ## 🚀 Run it
 
 ```bash
-python3 monitor.py
+python3 health_monitor.py
