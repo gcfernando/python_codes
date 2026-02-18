@@ -17,7 +17,7 @@ from rich.text import Text
 
 console = Console(emoji=False)
 
-SNAPSHOT_INTERVAL = 3
+SNAPSHOT_INTERVAL = 1
 LEAK_THRESHOLD_MB = 50
 LEAK_WINDOW = 10
 
@@ -57,13 +57,13 @@ def build_table(snapshots: dict[int, list[float]], streaks: dict[int, int]) -> T
         consec = streaks.get(pid, 0)
 
         if consec >= LEAK_WINDOW:
-            status = Text("LEAK", style="bold red")
+            status = Text("🚨 LEAK", style="bold red")
             growth_style = "bold red"
         elif growth > LEAK_THRESHOLD_MB / 2:
-            status = Text("WATCH", style="yellow")
+            status = Text("👀 WATCH", style="yellow")
             growth_style = "yellow"
         else:
-            status = Text("OK", style="green")
+            status = Text("✅ OK", style="green")
             growth_style = "green"
 
         growth_text = f"+{growth:.1f}" if growth >= 0 else f"{growth:.1f}"
