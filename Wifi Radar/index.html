@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WIFI-RADAR // TACTICAL NETWORK SCANNER</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:#00ff41; --green-dim:#00aa2a; --green-dark:#003a0f;
+  --green-glow:rgba(0,255,65,.18); --amber:#ffaa00; --red:#ff2244;
+  --cyan:#00ccff; --teal:#00ffcc; --lime:#aaff00;
+  --bg:#000a02; --panel:rgba(0,8,1,.93); --border:rgba(0,255,65,.2);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--green);
+  font-family:'Share Tech Mono',monospace;overflow:hidden;cursor:crosshair}
+body::before{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px)}
+body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
+  background:rgba(0,255,65,.012);animation:flicker 9s infinite}
+@keyframes flicker{0%,94%,100%{opacity:1}95%{opacity:.82}96.5%{opacity:1}97.5%{opacity:.9}}
+
+.layout{display:grid;grid-template-columns:280px 1fr 290px;grid-template-rows:46px 1fr 40px;height:100vh}
+
+/* TOP BAR */
+.topbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;border-bottom:1px solid var(--border);
+  background:linear-gradient(90deg,#000a02,#001505,#000a02);position:relative;overflow:hidden}
+.topbar::after{content:'';position:absolute;bottom:0;left:-100%;height:1px;width:100%;
+  background:linear-gradient(90deg,transparent,var(--green),transparent);animation:topline 4s linear infinite}
+@keyframes topline{to{left:100%}}
+.title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;
+  letter-spacing:5px;color:var(--green);text-shadow:0 0 18px var(--green);white-space:nowrap}
+.title em{color:var(--amber);font-style:normal}
+.topbar-right{display:flex;align-items:center;gap:13px;font-size:10px;letter-spacing:2px;flex-shrink:0}
+.stat-pill{display:flex;align-items:center;gap:5px;color:var(--green-dim)}
+.stat-pill b{color:var(--green)}
+.pill-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 7px var(--green);animation:blink 1.6s ease-in-out infinite}
+.pill-dot.amber{background:var(--amber);box-shadow:0 0 7px var(--amber);animation:blink-fast .35s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes blink-fast{0%,100%{opacity:1}50%{opacity:.4}}
+.top-btn{color:var(--green-dim);text-decoration:none;font-size:9px;letter-spacing:2px;
+  border:1px solid var(--border);padding:2px 8px;cursor:pointer;background:none;
+  font-family:'Share Tech Mono',monospace;transition:all .2s}
+.top-btn:hover{color:var(--green);border-color:var(--green)}
+.top-btn.export{color:var(--amber);border-color:rgba(255,170,0,.3)}
+.top-btn.export:hover{border-color:var(--amber);box-shadow:0 0 8px rgba(255,170,0,.25)}
+#clock{font-size:12px;letter-spacing:3px;color:var(--green)}
+
+/* SIDE PANELS */
+.lpanel,.rpanel{display:flex;flex-direction:column;background:var(--panel);overflow:hidden}
+.lpanel{border-right:1px solid var(--border)}
+.rpanel{border-left:1px solid var(--border)}
+.phead{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:4px;
+  color:var(--green-dim);padding:7px 13px;border-bottom:1px solid var(--border);
+  text-transform:uppercase;flex-shrink:0}
+
+/* NETWORK LIST */
+.net-list{overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--green-dark) transparent}
+.net-list::-webkit-scrollbar{width:3px}
+.net-list::-webkit-scrollbar-thumb{background:var(--green-dark)}
+.net-item{padding:7px 13px;border-bottom:1px solid rgba(0,255,65,.07);
+  cursor:pointer;transition:background .15s;position:relative}
+.net-item:hover{background:rgba(0,255,65,.07)}
+.net-item.active{background:rgba(0,255,65,.12)}
+.net-item.active::before{content:'▶';position:absolute;left:3px;top:50%;
+  transform:translateY(-50%);font-size:7px;color:var(--green)}
+.net-item.stale{opacity:.35}
+.net-ssid{font-size:11.5px;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.net-ssid.hidden{color:var(--green-dim);font-style:italic}
+.net-vendor{font-size:9px;color:var(--green-dim);margin-bottom:3px;opacity:.8}
+.net-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.badge{padding:0 4px;border:1px solid currentColor;font-size:8.5px;letter-spacing:.5px;border-radius:2px}
+.b-open {color:var(--red);   border-color:rgba(255,34,68,.4)}
+.b-wpa2 {color:var(--green); border-color:rgba(0,255,65,.35)}
+.b-wpa  {color:var(--amber); border-color:rgba(255,170,0,.35)}
+.b-wep  {color:#ff6600;      border-color:rgba(255,102,0,.35)}
+.b-wpa3 {color:var(--teal);  border-color:rgba(0,255,204,.35)}
+.b-mixed{color:var(--lime);  border-color:rgba(170,255,0,.35)}
+.b-5g   {color:var(--cyan);  border-color:rgba(0,204,255,.3)}
+.b-24g  {color:#88ff88;      border-color:rgba(136,255,136,.3)}
+.sigbar-wrap{width:42px;height:5px;background:#001a07;border:1px solid var(--border);border-radius:1px;overflow:hidden}
+.sigbar{height:100%;transition:width .5s ease;background:linear-gradient(90deg,var(--green-dark),var(--green));box-shadow:0 0 4px var(--green)}
+.sigbar.weak{background:linear-gradient(90deg,#330000,var(--red));box-shadow:0 0 4px var(--red)}
+.sigbar.mid{background:linear-gradient(90deg,#332200,var(--amber));box-shadow:0 0 4px var(--amber)}
+
+/* RADAR */
+.radar-area{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 50%,#001c08 0%,#000a02 72%)}
+.radar-wrap{position:relative;
+  width:min(calc(100vh - 130px),calc(100vw - 610px));
+  height:min(calc(100vh - 130px),calc(100vw - 610px));
+  max-width:640px;max-height:640px}
+#radar{width:100%;height:100%;display:block}
+.cardinal{position:absolute;font-size:10px;letter-spacing:1px;color:var(--green-dim);pointer-events:none}
+.c-n{top:-18px;left:50%;transform:translateX(-50%)}
+.c-s{bottom:-18px;left:50%;transform:translateX(-50%)}
+.c-e{right:-26px;top:50%;transform:translateY(-50%)}
+.c-w{left:-26px;top:50%;transform:translateY(-50%)}
+.tooltip{position:absolute;background:#000d04f2;border:1px solid var(--green);
+  padding:9px 13px;font-size:10.5px;line-height:1.9;pointer-events:none;z-index:200;
+  display:none;white-space:nowrap;box-shadow:0 0 24px var(--green-glow)}
+.tt-ssid{font-size:12px}.tt-vendor{color:var(--green-dim);font-size:9.5px}.tt-dim{color:var(--green-dim)}
+
+/* RIGHT PANEL */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
+.stat-block{padding:8px 13px;border-bottom:1px solid var(--border)}
+.stat-block.nb{border-bottom:none}
+.stat-block.br{border-right:1px solid var(--border)}
+.stat-lbl{font-size:8.5px;letter-spacing:3px;color:var(--green-dim);text-transform:uppercase;margin-bottom:3px}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;
+  color:var(--green);text-shadow:0 0 14px var(--green);line-height:1}
+.stat-val.amber{color:var(--amber);text-shadow:0 0 14px var(--amber)}
+.stat-val.red  {color:var(--red);  text-shadow:0 0 14px var(--red)}
+.stat-val.teal {color:var(--teal); text-shadow:0 0 14px var(--teal)}
+.stat-val.small{font-size:11.5px}
+
+/* CHANNEL */
+.chan-block{padding:8px 13px;border-bottom:1px solid var(--border);flex-shrink:0}
+.chan-bars{display:flex;align-items:flex-end;gap:2px;height:34px;margin-top:5px}
+.cbar-wrap{display:flex;flex-direction:column;align-items:center;flex:1}
+.cbar{width:100%;min-height:2px;background:linear-gradient(to top,var(--green-dark),var(--green));
+  box-shadow:0 0 3px var(--green-glow);transition:height .5s ease}
+.cbar.hi{background:linear-gradient(to top,#330000,var(--red));box-shadow:0 0 4px rgba(255,34,68,.4)}
+.cnum{font-size:7.5px;color:var(--green-dim);margin-top:2px}
+
+/* TABS */
+.tab-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:6px 0;font-size:9px;letter-spacing:2px;text-align:center;cursor:pointer;
+  color:var(--green-dim);border:none;background:none;font-family:'Share Tech Mono',monospace;
+  text-transform:uppercase;transition:all .2s}
+.tab:hover{color:var(--green)}
+.tab.active{color:var(--green);border-bottom:2px solid var(--green);background:rgba(0,255,65,.05);margin-bottom:-1px}
+.tab-content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.tab-pane{display:none;flex:1;overflow:hidden;flex-direction:column}
+.tab-pane.active{display:flex}
+
+/* GRAPH */
+.graph-area{padding:10px 13px;flex:1;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.graph-title{font-size:9px;color:var(--green-dim);letter-spacing:1.5px;flex-shrink:0}
+.graph-title b{color:var(--green)}
+#sig-graph{width:100%;flex:1;display:block;min-height:0}
+.graph-legend{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.legend-item{font-size:9px;display:flex;align-items:center;gap:4px;cursor:pointer;
+  padding:2px 5px;border:1px solid transparent;transition:border-color .2s}
+.legend-item:hover{border-color:rgba(0,255,65,.3)}
+.legend-item.pinned{border-color:rgba(0,255,65,.4);background:rgba(0,255,65,.05)}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.graph-hint{font-size:8.5px;color:rgba(0,255,65,.3);text-align:center;flex-shrink:0}
+
+/* DETAIL */
+.detail-block{flex:1;overflow-y:auto;padding:0 0 4px}
+.drow{display:flex;justify-content:space-between;padding:4px 13px;
+  border-bottom:1px solid rgba(0,255,65,.06);font-size:10.5px}
+.drow .dk{color:var(--green-dim);letter-spacing:1px;flex-shrink:0}
+.drow .dv{color:var(--green);text-align:right;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.detail-empty{color:var(--green-dim);font-size:11px;margin-top:20px;text-align:center;padding:13px}
+.band-row{display:flex;align-items:center;gap:5px;padding:2px 0 2px 8px;
+  border-left:2px solid rgba(0,255,65,.15);margin:2px 0;cursor:pointer;transition:border-color .15s}
+.band-row:hover,.band-row.band-sel{border-left-color:var(--green)}
+
+/* BOTTOM BAR */
+.bottombar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;border-top:1px solid var(--border);background:var(--panel);
+  font-size:9.5px;letter-spacing:2px;color:var(--green-dim);overflow:hidden}
+.ticker{flex:1;overflow:hidden}
+.ticker-inner{white-space:nowrap;animation:ticker 40s linear infinite;font-size:9.5px}
+@keyframes ticker{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+
+/* ALERT */
+#alert-box{display:none;position:fixed;top:54px;left:50%;transform:translateX(-50%);
+  z-index:8000;background:#09050066;backdrop-filter:blur(4px);
+  border:1px solid var(--amber);padding:12px 20px;min-width:360px;max-width:540px;
+  box-shadow:0 0 40px rgba(255,170,0,.3);animation:apop .25s ease-out}
+@keyframes apop{0%{opacity:0;transform:translateX(-50%) translateY(-8px)}100%{opacity:1;transform:translateX(-50%) translateY(0)}}
+.alert-hdr{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:4px;
+  color:var(--amber);margin-bottom:9px;display:flex;align-items:center;gap:8px}
+.alert-entry{font-size:11px;padding:4px 0;border-bottom:1px solid rgba(255,170,0,.1);
+  display:flex;justify-content:space-between;align-items:center;color:var(--green)}
+.ae-vendor{color:var(--green-dim);font-size:9px}
+.ae-right{display:flex;gap:6px;align-items:center}
+.ae-mac{font-size:8.5px;color:var(--green-dim)}
+.alert-close{position:absolute;top:8px;right:10px;cursor:pointer;
+  color:var(--amber);font-size:14px;background:none;border:none;font-family:monospace}
+
+/* BANNERS */
+.banner{display:none;position:fixed;top:0;left:0;right:0;text-align:center;
+  padding:5px 12px;font-size:10.5px;letter-spacing:2px;z-index:10000}
+#b-offline{background:#170000cc;border-bottom:1px solid var(--red);color:var(--red)}
+#b-zero{background:#171000cc;border-bottom:1px solid var(--amber);color:var(--amber)}
+#b-zero a{color:var(--amber)}
+
+@keyframes flash{0%{color:var(--amber);text-shadow:0 0 30px var(--amber)}100%{color:var(--green);text-shadow:0 0 14px var(--green)}}
+.flash{animation:flash .9s ease-out}
+</style>
+</head>
+<body>
+
+<div class="banner" id="b-offline">⚠ SERVER OFFLINE — Run <b>python server.py</b> — Showing simulated data</div>
+<div class="banner" id="b-zero">⚠ SCAN RETURNED 0 APs &nbsp;·&nbsp; Wi-Fi must be ON &nbsp;·&nbsp; <a href="/api/debug" target="_blank">DEBUG PAGE</a> &nbsp;·&nbsp; Windows: Run as Administrator</div>
+
+<!-- NEW AP ALERT POPUP -->
+<div id="alert-box">
+  <button class="alert-close" onclick="closeAlert()">✕</button>
+  <div class="alert-hdr">⚠ &nbsp;NEW NETWORK DETECTED</div>
+  <div id="alert-list"></div>
+</div>
+
+<div class="layout">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="title">☰ &nbsp;WIFI<em>-</em>RADAR // TACTICAL NETWORK SCANNER</div>
+    <div class="topbar-right">
+      <div class="stat-pill"><span class="pill-dot" id="scan-dot"></span><span id="scan-status">SCANNING</span></div>
+      <div class="stat-pill">OS <b id="lbl-os">—</b></div>
+      <div class="stat-pill">METHOD <b id="lbl-method">—</b></div>
+      <div class="stat-pill">APs <b id="lbl-aps">0</b></div>
+      <div class="stat-pill">SCAN# <b id="lbl-scan">0</b></div>
+      <button class="top-btn export" onclick="exportCSV()">⬇ EXPORT CSV</button>
+      <a class="top-btn" href="/api/debug" target="_blank">DEBUG</a>
+    </div>
+    <div id="clock">00:00:00</div>
+  </div>
+
+  <!-- LEFT: Network list -->
+  <div class="lpanel">
+    <div class="phead">// DETECTED NETWORKS &nbsp;<span id="net-count" style="color:var(--green)">0</span></div>
+    <div class="net-list" id="net-list"><div style="padding:14px 13px;color:var(--green-dim);font-size:11px">Scanning…</div></div>
+  </div>
+
+  <!-- CENTRE: Radar -->
+  <div class="radar-area">
+    <div class="radar-wrap">
+      <span class="cardinal c-n">N</span><span class="cardinal c-s">S</span>
+      <span class="cardinal c-e">E</span><span class="cardinal c-w">W</span>
+      <canvas id="radar"></canvas>
+      <div class="tooltip" id="tooltip"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Stats + Graph + Detail -->
+  <div class="rpanel">
+    <div class="phead">// SIGNAL INTEL</div>
+
+    <div class="stats-grid">
+      <div class="stat-block nb br"><div class="stat-lbl">TOTAL APs</div><div class="stat-val" id="s-total">0</div></div>
+      <div class="stat-block nb">   <div class="stat-lbl">OPEN</div>    <div class="stat-val red" id="s-open">0</div></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-block nb br"><div class="stat-lbl">WPA3 / WPA2/3</div><div class="stat-val teal small" id="s-wpa3">0</div></div>
+      <div class="stat-block nb">   <div class="stat-lbl">2.4 / 5 GHz</div>  <div class="stat-val amber small" id="s-bands">—/—</div></div>
+    </div>
+    <div class="stat-block"><div class="stat-lbl">STRONGEST</div><div class="stat-val small amber" id="s-best">—</div></div>
+
+    <div class="chan-block">
+      <div class="phead" style="padding:0 0 4px;border:none;font-size:8.5px">// CHANNEL ACTIVITY</div>
+      <div class="chan-bars" id="chan-bars"></div>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab active" id="tab-btn-graph"  onclick="switchTab('graph')">📈 SIGNAL GRAPH</button>
+      <button class="tab"        id="tab-btn-detail" onclick="switchTab('detail')">📋 AP DETAIL</button>
+    </div>
+
+    <div class="tab-content">
+      <!-- GRAPH TAB -->
+      <div class="tab-pane active" id="tab-graph">
+        <div class="graph-area">
+          <div class="graph-title" id="graph-title">Top <b>5</b> networks · click legend to pin</div>
+          <canvas id="sig-graph"></canvas>
+          <div class="graph-legend" id="graph-legend"></div>
+          <div class="graph-hint">live · 4s interval · 60 data points</div>
+        </div>
+      </div>
+      <!-- DETAIL TAB -->
+      <div class="tab-pane" id="tab-detail">
+        <div class="detail-block" id="detail-block">
+          <div class="detail-empty">— click an AP on the radar or list —</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottombar">
+    <span style="flex-shrink:0;margin-right:16px">SYS:ONLINE</span>
+    <div class="ticker"><div class="ticker-inner" id="ticker">INITIALIZING…</div></div>
+    <span style="flex-shrink:0;margin-left:16px" id="last-ts">LAST SCAN: —</span>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  WiFi Military Radar  v5 PROD
+// ════════════════════════════════════════════════════════════════
+
+const RC = document.getElementById('radar');
+const rc = RC.getContext('2d');
+const GC = document.getElementById('sig-graph');
+const gc = GC.getContext('2d');
+
+function resizeAll(){
+  const w = RC.parentElement;
+  RC.width = w.clientWidth; RC.height = w.clientHeight;
+  const ga = GC.parentElement;
+  GC.width  = ga.clientWidth;
+  GC.height = Math.max(80, ga.clientHeight - 90);
+}
+resizeAll();
+window.addEventListener('resize', ()=>{ resizeAll(); drawGraph(); });
+
+// ── State ────────────────────────────────────────────────────────
+let networks=[], selectedBSSID=null, pinnedBSSIDs=new Set();
+let sweepAngle=0, scanCount=0, serverOnline=false, activeTab='graph';
+const sigHistory={}, blips={};
+let alertQueue=[], alertVisible=false, alertTimer=null, prevCount=0;
+let alertAudioCtx=null;
+
+// ── Security color map ───────────────────────────────────────────
+const SEC_COLOR = {
+  'OPEN':'#ff2244','WEP':'#ff6600','WPA':'#ffaa00',
+  'WPA2':'#00ff41','WPA3':'#00ffcc','WPA2/WPA3':'#aaff00'
+};
+const GRAPH_PALETTE = ['#00ff41','#00ccff','#ffaa00','#ff2244','#00ffcc','#aaff00','#ff6600','#cc88ff'];
+
+function blipColor(n){
+  const s=SEC_COLOR[n.security];
+  if(s && n.security!=='WPA2') return s;
+  return n.band==='5GHz'?'#00ccff':'#00ff41';
+}
+function graphColor(bssid,idx){
+  const n=networks.find(x=>x.bssid===bssid);
+  if(n) return blipColor(n);
+  return GRAPH_PALETTE[idx%GRAPH_PALETTE.length];
+}
+
+// ── Clock ────────────────────────────────────────────────────────
+function tickClock(){
+  const d=new Date(), tz=-d.getTimezoneOffset();
+  document.getElementById('clock').textContent=
+    d.toTimeString().slice(0,8)+' UTC'+(tz>=0?'+':'')+tz/60;
+}
+setInterval(tickClock,1000); tickClock();
+
+// ── DEMO DATA ────────────────────────────────────────────────────
+const DEMO=(()=>{
+  const cfg=[
+    {s:'GC',           sec:'WPA3',      ch:36,  sig:72, v:'ASUS'},
+    {s:'GC_IoT',       sec:'WPA2',      ch:6,   sig:68, v:'ASUS'},
+    {s:'GC_Kids',      sec:'WPA2',      ch:11,  sig:65, v:'ASUS'},
+    {s:'TP-Link_5G',   sec:'WPA2/WPA3', ch:149, sig:58, v:'TP-Link'},
+    {s:'NETGEAR-Home', sec:'WPA2',      ch:6,   sig:51, v:'Netgear'},
+    {s:'Neighbor_WiFi',sec:'WPA2',      ch:1,   sig:44, v:'Unknown'},
+    {s:'xfinitywifi',  sec:'OPEN',      ch:6,   sig:38, v:'Arris'},
+    {s:'AndroidAP',    sec:'WPA2',      ch:40,  sig:33, v:'Unknown'},
+    {s:'ASUS_5GHz',    sec:'WPA3',      ch:157, sig:29, v:'ASUS'},
+    {s:'<hidden>',     sec:'WPA2',      ch:11,  sig:24, v:'Unknown'},
+    {s:'CenturyLink',  sec:'WPA2',      ch:1,   sig:20, v:'ZTE'},
+    {s:'Ring_Device',  sec:'WPA2',      ch:6,   sig:16, v:'Amazon'},
+  ];
+  function sp(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return{angle:h%360,distance:18+(h>>8)%70}}
+  return cfg.map(({s,sec,ch,sig,v})=>{
+    const {angle,distance}=sp(s);
+    const mac=Array.from({length:6},(_,j)=>((s.charCodeAt(j%s.length)*31+j)&0xff).toString(16).padStart(2,'0')).join(':').toUpperCase();
+    return {ssid:s,bssid:mac,vendor:v,signal_pct:sig,signal_dbm:-100+Math.round(sig/2),
+      channel:ch,security:sec,band:ch>14?'5GHz':'2.4GHz',angle,distance,stale:false};
+  });
+})();
+function getDemoNets(){
+  return DEMO.map(n=>({...n,
+    signal_pct:Math.max(5,Math.min(100,n.signal_pct+Math.round((Math.random()-.5)*6))),
+    signal_dbm:Math.max(-100,Math.min(-20,n.signal_dbm+Math.round((Math.random()-.5)*3)))}));
+}
+
+// ── Fetch ────────────────────────────────────────────────────────
+async function fetchNets(){
+  try{
+    const r=await fetch('/api/scan',{signal:AbortSignal.timeout(4000)});
+    if(!r.ok) throw 0;
+    const d=await r.json();
+    serverOnline=true;
+    document.getElementById('b-offline').style.display='none';
+    document.getElementById('lbl-os').textContent    =d.os||'—';
+    document.getElementById('lbl-method').textContent=d.method||'—';
+    document.getElementById('lbl-scan').textContent  =d.scan_count||0;
+    if(d.new_bssids?.length) triggerAlert(d.new_bssids, d.networks||[]);
+    return d.networks||[];
+  }catch{
+    serverOnline=false;
+    document.getElementById('b-offline').style.display='block';
+    document.getElementById('lbl-os').textContent='DEMO';
+    document.getElementById('lbl-method').textContent='SIMULATED';
+    return getDemoNets();
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function secBadge(sec){
+  const m={OPEN:'b-open',WPA:'b-wpa',WEP:'b-wep',WPA3:'b-wpa3','WPA2/WPA3':'b-mixed'};
+  return `<span class="badge ${m[sec]||'b-wpa2'}">${sec==='WPA2/WPA3'?'WPA2/3':sec}</span>`;
+}
+function bandBadge(b){return b==='5GHz'?'<span class="badge b-5g">5GHz</span>':'<span class="badge b-24g">2.4G</span>'}
+function sigClass(p){return p<30?'weak':p<60?'mid':''}
+
+// ── Tabs ─────────────────────────────────────────────────────────
+function switchTab(name){
+  activeTab=name;
+  ['graph','detail'].forEach(t=>{
+    document.getElementById('tab-btn-'+t).classList.toggle('active',t===name);
+    document.getElementById('tab-'+t).classList.toggle('active',t===name);
+  });
+  if(name==='graph') requestAnimationFrame(drawGraph);
+}
+
+// ── ALERT: New AP ────────────────────────────────────────────────
+function playBeep(){
+  try{
+    if(!alertAudioCtx) alertAudioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const ctx=alertAudioCtx;
+    [440,554,659].forEach((f,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value=f; o.type='square';
+      g.gain.setValueAtTime(0,ctx.currentTime+i*.12);
+      g.gain.linearRampToValueAtTime(.07,ctx.currentTime+i*.12+.02);
+      g.gain.linearRampToValueAtTime(0, ctx.currentTime+i*.12+.1);
+      o.start(ctx.currentTime+i*.12); o.stop(ctx.currentTime+i*.12+.13);
+    });
+  }catch{}
+}
+function triggerAlert(newBSSIDs,allNets){
+  const entries=newBSSIDs.map(b=>allNets.find(x=>x.bssid===b)||{ssid:'Unknown',vendor:'Unknown',security:'?',bssid:b});
+  alertQueue.push(...entries);
+  if(!alertVisible) showNextAlert();
+}
+function showNextAlert(){
+  if(!alertQueue.length){alertVisible=false;return;}
+  alertVisible=true;
+  const batch=alertQueue.splice(0,5); alertQueue=[];
+  document.getElementById('alert-list').innerHTML=batch.map(n=>
+    `<div class="alert-entry">
+      <div><b>${esc(n.ssid)}</b> <span class="ae-vendor">· ${esc(n.vendor||'Unknown')}</span></div>
+      <div class="ae-right">${secBadge(n.security)}<span class="ae-mac">${n.bssid}</span></div>
+    </div>`).join('');
+  document.getElementById('alert-box').style.display='block';
+  playBeep();
+  if(alertTimer) clearTimeout(alertTimer);
+  alertTimer=setTimeout(closeAlert,7000);
+}
+function closeAlert(){
+  document.getElementById('alert-box').style.display='none';
+  alertVisible=false;
+  if(alertQueue.length) setTimeout(showNextAlert,400);
+}
+
+// ── CSV Export ───────────────────────────────────────────────────
+function exportCSV(){
+  if(serverOnline){window.open('/api/export/csv','_blank');return;}
+  const rows=[['SSID','BSSID','Vendor','Signal_dBm','Signal_%','Channel','Band','Security','Status']];
+  for(const n of [...networks].sort((a,b)=>b.signal_pct-a.signal_pct))
+    rows.push([n.ssid,n.bssid,n.vendor||'Unknown',n.signal_dbm,n.signal_pct,n.channel,n.band,n.security,n.stale?'STALE':'ACTIVE']);
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`wifi_scan_${new Date().toISOString().slice(0,19).replace(/[T:]/g,'_')}.csv`;
+  a.click();
+}
+
+// ── Render: List ─────────────────────────────────────────────────
+function renderList(){
+  // Group by SSID — multi-band routers show as one entry with sub-rows per band
+  const grouped = {};
+  for(const n of networks){
+    if(!grouped[n.ssid]) grouped[n.ssid]=[];
+    grouped[n.ssid].push(n);
+  }
+  // Sort groups by best signal
+  const groupList = Object.values(grouped)
+    .sort((a,b)=>Math.max(...b.map(n=>n.signal_pct))-Math.max(...a.map(n=>n.signal_pct)));
+
+  document.getElementById('net-list').innerHTML = groupList.map(group=>{
+    const best = group.sort((a,b)=>b.signal_pct-a.signal_pct)[0];
+    const pct  = best.signal_pct||0;
+    const isAnySelected = group.some(n=>n.bssid===selectedBSSID);
+    const isStale = group.every(n=>n.stale);
+    const isHidden = best.ssid==='<hidden>';
+    const multiband = group.length > 1;
+
+    // Sub-band rows for multi-band
+    const bandRows = multiband ? group.map(n=>{
+      const isSel = n.bssid===selectedBSSID;
+      return `<div class="band-row ${isSel?'band-sel':''}" onclick="event.stopPropagation();selectAP('${n.bssid}')">
+        ${bandBadge(n.band)}
+        <span style="font-size:9px;color:var(--green-dim)">${n.signal_dbm}dBm</span>
+        <span style="font-size:8.5px;color:var(--green-dim)">ch${n.channel}</span>
+        ${isSel?'<span style="color:var(--green);font-size:8px">◀ selected</span>':''}
+      </div>`;
+    }).join('') : '';
+
+    return `<div class="net-item ${isAnySelected?'active':''} ${isStale?'stale':''}"
+               onclick="selectAP('${best.bssid}')">
+      <div class="net-ssid ${isHidden?'hidden':''}">${esc(best.ssid)}${multiband?` <span style="font-size:8.5px;color:var(--green-dim);font-style:normal">(${group.length} radios)</span>`:''}</div>
+      <div class="net-vendor">📡 ${esc(best.vendor||'Unknown')}</div>
+      <div class="net-meta">
+        <div class="sigbar-wrap"><div class="sigbar ${sigClass(pct)}" style="width:${pct}%"></div></div>
+        <span style="font-size:10px;color:var(--green-dim)">${best.signal_dbm}dBm</span>
+        ${secBadge(best.security)}
+        ${multiband ? '' : bandBadge(best.band)}
+      </div>
+      ${bandRows}
+    </div>`;
+  }).join('');
+  document.getElementById('net-count').textContent=networks.length;
+}
+
+// ── Render: Stats ────────────────────────────────────────────────
+function renderStats(){
+  const t=networks.length, open=networks.filter(n=>n.security==='OPEN').length;
+  const wpa3=networks.filter(n=>n.security==='WPA3'||n.security==='WPA2/WPA3').length;
+  const n24=networks.filter(n=>n.band==='2.4GHz').length, n5=networks.filter(n=>n.band==='5GHz').length;
+  const best=[...networks].sort((a,b)=>b.signal_pct-a.signal_pct)[0];
+  document.getElementById('s-total').textContent=t;
+  document.getElementById('s-open').textContent=open;
+  document.getElementById('s-wpa3').textContent=wpa3;
+  document.getElementById('s-bands').textContent=`${n24}/${n5}`;
+  document.getElementById('s-best').textContent=best?`${best.ssid.slice(0,16)} (${best.signal_dbm}dBm)`:'—';
+  document.getElementById('lbl-aps').textContent=t;
+}
+
+// ── Render: Channels ─────────────────────────────────────────────
+function renderChannels(){
+  const c={};
+  for(const n of networks) c[n.channel||0]=(c[n.channel||0]||0)+1;
+  const chs=Object.keys(c).map(Number).sort((a,b)=>a-b);
+  const max=Math.max(1,...Object.values(c));
+  document.getElementById('chan-bars').innerHTML=chs.map(ch=>{
+    const cnt=c[ch], h=Math.round((cnt/max)*32);
+    return `<div class="cbar-wrap"><div class="cbar ${cnt===max?'hi':''}" style="height:${h}px"></div><div class="cnum">${ch}</div></div>`;
+  }).join('');
+}
+
+// ── Render: Detail ───────────────────────────────────────────────
+function renderDetail(){
+  const n=networks.find(x=>x.bssid===selectedBSSID);
+  const el=document.getElementById('detail-block');
+  if(!n){el.innerHTML='<div class="detail-empty">— click an AP to inspect —</div>';return;}
+  const sc=SEC_COLOR[n.security]||'var(--green)';
+  const rows=[
+    ['SSID',      n.ssid],
+    ['BSSID',     n.bssid],
+    ['VENDOR',    n.vendor||'Unknown'],
+    ['SIGNAL',    `${n.signal_dbm} dBm  (${n.signal_pct}%)`],
+    ['CHANNEL',   `${n.channel}`],
+    ['BAND',      n.band],
+    ['SECURITY',  n.security],
+    ['STATUS',    n.stale?'⚠ STALE':'● ACTIVE'],
+    ['FIRST SEEN',n.first_seen?new Date(n.first_seen*1000).toTimeString().slice(0,8):'—'],
+  ];
+  el.innerHTML=rows.map(([k,v])=>`<div class="drow">
+    <span class="dk">${k}</span>
+    <span class="dv" style="${k==='SECURITY'?`color:${sc}`:''}">
+      ${esc(String(v))}
+    </span></div>`).join('');
+}
+
+// ── Signal history ───────────────────────────────────────────────
+function updateHistory(){
+  for(const n of networks){
+    if(!sigHistory[n.bssid]) sigHistory[n.bssid]=[];
+    sigHistory[n.bssid].push(n.signal_pct);
+    if(sigHistory[n.bssid].length>60) sigHistory[n.bssid].shift();
+  }
+}
+
+// ── SIGNAL GRAPH ────────────────────────────────────────────────
+function drawGraph(){
+  const W=GC.width, H=GC.height;
+  if(W<10||H<10) return;
+  gc.clearRect(0,0,W,H);
+
+  // Grid
+  for(let i=0;i<=4;i++){
+    const y=H*i/4;
+    gc.strokeStyle='rgba(0,255,65,.07)'; gc.lineWidth=.5;
+    gc.beginPath(); gc.moveTo(0,y); gc.lineTo(W,y); gc.stroke();
+    gc.fillStyle='rgba(0,255,65,.25)'; gc.font='8px Share Tech Mono';
+    gc.fillText(`${100-i*25}%`,2,y+9);
+  }
+
+  // Which BSSIDs to show (pinned + top by signal, max 8)
+  const top=[...networks].sort((a,b)=>b.signal_pct-a.signal_pct).slice(0,5).map(n=>n.bssid);
+  const shown=[...new Set([...pinnedBSSIDs,...top])].slice(0,8);
+
+  if(!shown.length){
+    gc.fillStyle='rgba(0,255,65,.2)'; gc.font='10px Share Tech Mono'; gc.textAlign='center';
+    gc.fillText('Scanning for networks…',W/2,H/2); gc.textAlign='left'; return;
+  }
+
+  shown.forEach((bssid,idx)=>{
+    const hist=sigHistory[bssid];
+    if(!hist||hist.length<2) return;
+    const col=graphColor(bssid,idx);
+    const pinned=pinnedBSSIDs.has(bssid)||bssid===selectedBSSID;
+    gc.beginPath();
+    hist.forEach((v,i)=>{
+      const x=(i/(Math.max(hist.length-1,1)))*W;
+      const y=H-(v/100)*(H-10)-5;
+      i===0?gc.moveTo(x,y):gc.lineTo(x,y);
+    });
+    gc.strokeStyle=col; gc.lineWidth=pinned?2:1.2;
+    gc.shadowColor=col; gc.shadowBlur=pinned?8:3;
+    gc.setLineDash(pinned?[]:[3,4]); gc.stroke();
+    gc.shadowBlur=0; gc.setLineDash([]);
+    // Last value bubble
+    const lv=hist[hist.length-1];
+    const lx=W-4, ly=H-(lv/100)*(H-10)-5;
+    gc.beginPath(); rc.arc; gc.arc(lx,ly,3,0,Math.PI*2);
+    gc.fillStyle=col; gc.fill();
+    gc.fillStyle=col; gc.font='8px Share Tech Mono'; gc.textAlign='right';
+    gc.fillText(`${lv}%`,lx-5,ly+3); gc.textAlign='left';
+  });
+
+  // Legend
+  document.getElementById('graph-legend').innerHTML=shown.map((bssid,idx)=>{
+    const n=networks.find(x=>x.bssid===bssid);
+    const col=graphColor(bssid,idx);
+    const lbl=(n?.ssid||bssid).slice(0,16);
+    const pinned=pinnedBSSIDs.has(bssid)||bssid===selectedBSSID;
+    return `<div class="legend-item ${pinned?'pinned':''}" onclick="togglePin('${bssid}')" title="${bssid}">
+      <div class="legend-dot" style="background:${col};box-shadow:0 0 4px ${col}"></div>
+      <span style="color:${col};font-size:9px">${esc(lbl)}</span>
+    </div>`;
+  }).join('');
+}
+
+function togglePin(bssid){
+  if(pinnedBSSIDs.has(bssid)) pinnedBSSIDs.delete(bssid);
+  else pinnedBSSIDs.add(bssid);
+  drawGraph();
+}
+
+// ── Select AP ────────────────────────────────────────────────────
+function selectAP(bssid){
+  selectedBSSID=bssid;
+  pinnedBSSIDs.add(bssid);
+  renderList(); renderDetail();
+  switchTab('detail');
+  setTimeout(()=>{switchTab('graph'); setTimeout(()=>switchTab('detail'),80);},0);
+  // Show detail immediately, queue graph update
+  switchTab('detail');
+  drawGraph();
+}
+
+// ── Ticker ───────────────────────────────────────────────────────
+function renderTicker(){
+  const open=networks.filter(n=>n.security==='OPEN');
+  const wpa3=networks.filter(n=>n.security==='WPA3');
+  const parts=[
+    `SCAN #${scanCount}  ◈  NETWORKS: ${networks.length}`,
+    ...open.map(n=>`⚠ OPEN NETWORK: ${n.ssid} [${n.vendor||'?'}]`),
+    ...wpa3.map(n=>`✦ WPA3: ${n.ssid} [${n.vendor||'?'}]`),
+    `2.4GHz: ${networks.filter(n=>n.band==='2.4GHz').length}  ◈  5GHz: ${networks.filter(n=>n.band==='5GHz').length}`,
+    `TEAL=WPA3  LIME=WPA2/WPA3  GREEN=WPA2  AMBER=WPA  ORANGE=WEP  RED=OPEN`,
+    serverOnline?'SERVER: CONNECTED  ◈  REAL SCAN DATA':'SERVER: OFFLINE  ◈  DEMO MODE',
+  ];
+  document.getElementById('ticker').textContent=parts.join('   ◈   ');
+}
+
+// ── Blips ────────────────────────────────────────────────────────
+function updateBlips(prev){
+  for(const n of networks){
+    if(!blips[n.bssid]) blips[n.bssid]={alpha:1,ring:0};
+    else blips[n.bssid].alpha=1;
+  }
+}
+setInterval(()=>{
+  for(const n of networks){
+    const diff=((n.angle-sweepAngle)+360)%360;
+    if((diff<6||diff>354)&&blips[n.bssid]){blips[n.bssid].alpha=1;blips[n.bssid].ring=0;}
+  }
+},40);
+
+// ── RADAR DRAW ───────────────────────────────────────────────────
+function drawRadar(){
+  const W=RC.width,H=RC.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-10;
+  rc.clearRect(0,0,W,H);
+  const bg=rc.createRadialGradient(cx,cy,0,cx,cy,R);
+  bg.addColorStop(0,'rgba(0,28,10,.85)'); bg.addColorStop(1,'rgba(0,6,2,.2)');
+  rc.beginPath(); rc.arc(cx,cy,R,0,Math.PI*2); rc.fillStyle=bg; rc.fill();
+
+  for(let i=1;i<=4;i++){
+    const r=R*(i/4); rc.beginPath(); rc.arc(cx,cy,r,0,Math.PI*2);
+    rc.strokeStyle=i===4?'rgba(0,255,65,.35)':'rgba(0,255,65,.1)';
+    rc.lineWidth=i===4?1.5:.8; rc.stroke();
+    if(i<4){rc.fillStyle='rgba(0,255,65,.2)';rc.font='8px Share Tech Mono';rc.fillText(`${25*i}%`,cx+r+3,cy-2);}
+  }
+  rc.save(); rc.strokeStyle='rgba(0,255,65,.09)'; rc.lineWidth=.5; rc.setLineDash([3,5]);
+  [[cx,cy-R,cx,cy+R],[cx-R,cy,cx+R,cy],
+   [cx-R*.707,cy-R*.707,cx+R*.707,cy+R*.707],[cx+R*.707,cy-R*.707,cx-R*.707,cy+R*.707]
+  ].forEach(([x1,y1,x2,y2])=>{rc.beginPath();rc.moveTo(x1,y1);rc.lineTo(x2,y2);rc.stroke();});
+  rc.setLineDash([]); rc.restore();
+
+  const sa=(sweepAngle-90)*Math.PI/180, TL=Math.PI/1.9;
+  for(let i=0;i<30;i++){
+    const a0=sa-TL*(1-i/30),a1=sa-TL*(1-(i+1)/30);
+    rc.beginPath(); rc.moveTo(cx,cy); rc.arc(cx,cy,R,a0,a1); rc.closePath();
+    rc.fillStyle=`rgba(0,255,65,${.09*(i/30)})`; rc.fill();
+  }
+  rc.beginPath(); rc.moveTo(cx,cy); rc.lineTo(cx+R*Math.cos(sa),cy+R*Math.sin(sa));
+  rc.strokeStyle='rgba(0,255,65,.95)'; rc.lineWidth=1.5;
+  rc.shadowColor='#00ff41'; rc.shadowBlur=10; rc.stroke(); rc.shadowBlur=0;
+  rc.beginPath(); rc.arc(cx,cy,3,0,Math.PI*2); rc.fillStyle='#00ff41';
+  rc.shadowColor='#00ff41'; rc.shadowBlur=14; rc.fill(); rc.shadowBlur=0;
+
+  // Group networks by SSID to avoid label clutter for multi-band routers
+  // Draw all blips first, then labels (so labels render on top)
+  const ssidGroups = {};
+  for(const n of networks){
+    if(!ssidGroups[n.ssid]) ssidGroups[n.ssid]=[];
+    ssidGroups[n.ssid].push(n);
+  }
+
+  // Pass 1: dots + rings
+  for(const n of networks){
+    const blip=blips[n.bssid]||{alpha:.7,ring:0};
+    const a=(n.angle-90)*Math.PI/180, d=(n.distance/100)*R;
+    const bx=cx+d*Math.cos(a), by=cy+d*Math.sin(a);
+    const col=blipColor(n), sz=2.5+(n.signal_pct/100)*4, sel=n.bssid===selectedBSSID;
+    const rgb=parseInt(col.slice(1),16);
+    const [r2,g2,b2]=[(rgb>>16)&255,(rgb>>8)&255,rgb&255];
+    if(blip.ring<30){
+      blip.ring+=.6;
+      rc.beginPath(); rc.arc(bx,by,blip.ring*.9,0,Math.PI*2);
+      rc.strokeStyle=`rgba(${r2},${g2},${b2},${Math.max(0,1-blip.ring/30)*.8})`;
+      rc.lineWidth=.8; rc.stroke();
+    }
+    rc.beginPath(); rc.arc(bx,by,sz+(sel?2.5:0),0,Math.PI*2);
+    rc.fillStyle=col; rc.shadowColor=col; rc.shadowBlur=sel?22:10;
+    rc.globalAlpha=n.stale?.28:Math.max(.5,blip.alpha);
+    rc.fill(); rc.globalAlpha=1; rc.shadowBlur=0;
+    if(blip.alpha>.55) blip.alpha-=.0015;
+    blips[n.bssid]=blip;
+  }
+
+  // Pass 2: labels — one per SSID group, placed at the STRONGEST signal AP
+  // Multi-band routers show:  "GC  ●2.4 ●5 ●6"
+  const labelledSSIDs = new Set();
+  const sortedBySignal = [...networks].sort((a,b)=>b.signal_pct-a.signal_pct);
+  for(const n of sortedBySignal){
+    if(n.stale) continue;
+    if(labelledSSIDs.has(n.ssid)) continue;
+    labelledSSIDs.add(n.ssid);
+
+    const siblings = ssidGroups[n.ssid] || [n];
+    const a=(n.angle-90)*Math.PI/180, d=(n.distance/100)*R;
+    const bx=cx+d*Math.cos(a), by=cy+d*Math.sin(a);
+    const col=blipColor(n), sz=2.5+(n.signal_pct/100)*4;
+    const sel=siblings.some(s=>s.bssid===selectedBSSID);
+
+    // Main SSID label
+    const lbl=n.ssid.length>13?n.ssid.slice(0,12)+'…':n.ssid;
+    rc.font=`${sel?'bold ':''}10px Share Tech Mono`;
+    rc.fillStyle=col; rc.globalAlpha=.85;
+    rc.shadowColor=col; rc.shadowBlur=3;
+    rc.fillText(lbl, bx+sz+5, by+3.5);
+
+    // Multi-band badge: show bands for all siblings
+    if(siblings.length > 1){
+      const bands = [...new Set(siblings.map(s=>s.band))].sort();
+      const bandStr = siblings.length + '× ' + bands.map(b=>b==='5GHz'?'5G':b==='2.4GHz'?'2.4':'6G').join('+');
+      rc.font='8px Share Tech Mono';
+      rc.fillStyle='rgba(0,255,65,.5)';
+      rc.shadowBlur=0;
+      rc.fillText(bandStr, bx+sz+5, by+14);
+    }
+    rc.globalAlpha=1; rc.shadowBlur=0;
+  }
+  rc.beginPath(); rc.arc(cx,cy,R,0,Math.PI*2);
+  rc.strokeStyle='rgba(0,255,65,.65)'; rc.lineWidth=2;
+  rc.shadowColor='#00ff41'; rc.shadowBlur=14; rc.stroke(); rc.shadowBlur=0;
+  for(let deg=0;deg<360;deg+=10){
+    const a=(deg-90)*Math.PI/180,major=deg%30===0,inner=major?R-11:R-5;
+    rc.beginPath(); rc.moveTo(cx+inner*Math.cos(a),cy+inner*Math.sin(a));
+    rc.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));
+    rc.strokeStyle=major?'rgba(0,255,65,.5)':'rgba(0,255,65,.17)';
+    rc.lineWidth=major?1.2:.6; rc.stroke();
+    if(major){
+      rc.font='8.5px Share Tech Mono'; rc.fillStyle='rgba(0,255,65,.38)';
+      rc.textAlign='center'; rc.textBaseline='middle';
+      rc.fillText(deg+'°',cx+(R+16)*Math.cos(a),cy+(R+16)*Math.sin(a));
+    }
+  }
+  rc.textAlign='left'; rc.textBaseline='alphabetic';
+  sweepAngle=(sweepAngle+1.1)%360;
+  requestAnimationFrame(drawRadar);
+}
+
+// ── Tooltip / click ──────────────────────────────────────────────
+function hitTest(e){
+  const rect=RC.getBoundingClientRect();
+  const sx=RC.width/rect.width,sy=RC.height/rect.height;
+  const mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sy;
+  const cx=RC.width/2,cy=RC.height/2,R=Math.min(RC.width,RC.height)/2-10;
+  let hit=null,minD=22;
+  for(const n of networks){
+    const a=(n.angle-90)*Math.PI/180,d=(n.distance/100)*R;
+    const dist=Math.hypot(mx-(cx+d*Math.cos(a)),my-(cy+d*Math.sin(a)));
+    if(dist<minD){minD=dist;hit=n;}
+  }
+  return hit;
+}
+RC.addEventListener('mousemove',e=>{
+  const hit=hitTest(e), tip=document.getElementById('tooltip');
+  if(hit){
+    tip.style.display='block';
+    tip.style.left=(e.offsetX+16)+'px'; tip.style.top=(e.offsetY-8)+'px';
+    const col=blipColor(hit);
+    tip.innerHTML=`<div class="tt-ssid" style="color:${col}">${esc(hit.ssid)}</div>
+      <div class="tt-vendor">📡 ${esc(hit.vendor||'Unknown')}</div>
+      <div class="tt-dim">${hit.bssid}</div>
+      <div>Signal: ${hit.signal_dbm} dBm &nbsp;(${hit.signal_pct}%)</div>
+      <div>Ch <b>${hit.channel}</b> &nbsp;·&nbsp; ${hit.band} &nbsp;·&nbsp; <b style="color:${col}">${hit.security}</b></div>`;
+  }else tip.style.display='none';
+});
+RC.addEventListener('mouseleave',()=>document.getElementById('tooltip').style.display='none');
+RC.addEventListener('click',e=>{const h=hitTest(e);if(h)selectAP(h.bssid);});
+
+// ── MAIN POLL ────────────────────────────────────────────────────
+async function poll(){
+  const dot=document.getElementById('scan-dot');
+  dot.className='pill-dot amber';
+  document.getElementById('scan-status').textContent='SCANNING';
+
+  const prev=new Set(networks.map(n=>n.bssid));
+  const nets=await fetchNets();
+  scanCount++;
+
+  document.getElementById('b-zero').style.display=
+    (serverOnline&&nets.length===0&&scanCount>2)?'block':'none';
+
+  networks=nets;
+  updateHistory(); updateBlips(prev);
+
+  if(nets.length>prevCount){
+    const el=document.getElementById('s-total');
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+  }
+
+  renderList(); renderStats(); renderChannels(); renderTicker();
+  if(selectedBSSID) renderDetail();
+  if(activeTab==='graph') drawGraph();
+
+  document.getElementById('last-ts').textContent='LAST SCAN: '+new Date().toTimeString().slice(0,8);
+  dot.className='pill-dot';
+  document.getElementById('scan-status').textContent='ACTIVE';
+  prevCount=nets.length;
+  setTimeout(poll, serverOnline?4000:3000);
+}
+
+drawRadar();
+poll();
+</script>
+</body>
+</html>
