@@ -1,4 +1,4 @@
-# 📡 WIFI-RADAR
+# 📡 WIFI-RADAR by Gehan Fernando
 ### *Tactical Network Scanner — See Every Signal. Know Your Airspace.*
 
 ```
