@@ -170,12 +170,39 @@ def norm_sec(s):
         return 'WEP'
     return 'WPA2'
 
-def make_ap(ssid, bssid, sig_pct, sig_dbm, channel, security):
+def norm_radio(s):
+    """Normalise 802.11 radio type string to clean label."""
+    s = str(s).upper().replace('802.11','').strip()
+    # Map common netsh/nmcli variants
+    for tag,label in [('BE','WiFi 7 (be)'),('AX','WiFi 6 (ax)'),('AC','WiFi 5 (ac)'),
+                      ('N','WiFi 4 (n)'),('G','802.11g'),('B','802.11b'),('A','802.11a')]:
+        if tag in s: return label
+    return s if s else '—'
+
+def make_ap(ssid, bssid, sig_pct, sig_dbm, channel, security,
+            radio_type='—', noise_dbm=None, cipher='—', net_type='Infrastructure',
+            rates=None):
     bssid   = str(bssid).upper().replace('-',':').strip()
     channel = int(channel) if channel else 6
     try:    sig_pct = max(0, min(100, int(sig_pct)))
     except: sig_pct = 50
     sig_dbm = int(sig_dbm) if sig_dbm is not None else round(-100 + sig_pct*0.5)
+    noise_dbm = int(noise_dbm) if noise_dbm is not None else None
+    snr = (sig_dbm - noise_dbm) if noise_dbm is not None else None
+    # Parse rates list — accept "1 2 5.5 11 54" or ["54","48",...] etc.
+    if rates:
+        if isinstance(rates, str):
+            rate_vals = re.findall(r'[\d.]+', rates)
+        else:
+            rate_vals = [str(r) for r in rates]
+        try:
+            rate_floats = sorted([float(x) for x in rate_vals], reverse=True)
+            max_rate    = rate_floats[0] if rate_floats else None
+            rates_str   = ', '.join(str(int(r) if r==int(r) else r) for r in rate_floats[:8])
+        except:
+            max_rate, rates_str = None, '—'
+    else:
+        max_rate, rates_str = None, '—'
     angle, dist = stable_pos(bssid)
     return {
         'ssid':       str(ssid).strip() or '<hidden>',
@@ -183,9 +210,16 @@ def make_ap(ssid, bssid, sig_pct, sig_dbm, channel, security):
         'vendor':     lookup_vendor(bssid),
         'signal_pct': sig_pct,
         'signal_dbm': sig_dbm,
+        'noise_dbm':  noise_dbm,
+        'snr':        snr,
         'channel':    channel,
         'security':   norm_sec(security),
-        'band':       '5GHz' if channel > 14 else '2.4GHz',
+        'cipher':     cipher if cipher else '—',
+        'radio_type': norm_radio(radio_type),
+        'net_type':   net_type if net_type else 'Infrastructure',
+        'rates':      rates_str,
+        'max_rate':   max_rate,
+        'band':       '6GHz' if channel > 180 else '5GHz' if channel > 14 else '2.4GHz',
         'angle':      angle,
         'distance':   dist,
         'stale':      False,
@@ -235,8 +269,14 @@ def scan_windows():
         # If captured text looks like a metadata key:value, the real SSID was blank
         ssid = '<hidden>' if (not raw_ssid or JUNK.match(raw_ssid) or ':' in raw_ssid) else raw_ssid
         if re.match(r'[0-9A-Fa-f]{2}[:\-]', ssid): continue
-        auth_m = re.search(r'(?i)authentication\s*:\s*(.+)', ssid_block)
-        sec    = auth_m.group(1).strip() if auth_m else 'WPA2-Personal'
+        auth_m   = re.search(r'(?i)authentication\s*:\s*(.+)', ssid_block)
+        cipher_m = re.search(r'(?i)encryption\s*:\s*(.+)',     ssid_block)
+        radio_m  = re.search(r'(?i)radio\s+type\s*:\s*(.+)',   ssid_block)
+        ntype_m  = re.search(r'(?i)network\s+type\s*:\s*(.+)', ssid_block)
+        sec      = auth_m.group(1).strip()   if auth_m   else 'WPA2-Personal'
+        cipher   = cipher_m.group(1).strip() if cipher_m else '—'
+        radio    = radio_m.group(1).strip()  if radio_m  else '—'
+        net_type = ntype_m.group(1).strip()  if ntype_m  else 'Infrastructure'
         bssid_parts = re.split(
             r'\n\s*BSSID\s+\d+\s*:\s*([0-9A-Fa-f]{2}(?:[:\-][0-9A-Fa-f]{2}){5})',
             '\n'+ssid_block
@@ -245,34 +285,46 @@ def scan_windows():
             all_macs = re.findall(r'([0-9A-Fa-f]{2}(?:[:\-][0-9A-Fa-f]{2}){5})', ssid_block)
             all_sigs = re.findall(r'(?i)signal\s*:\s*(\d+)\s*%', ssid_block)
             all_chs  = re.findall(r'(?i)channel\s*:\s*(\d+)', ssid_block)
+            br_m     = re.search(r'(?i)basic\s+rates.*?:\s*(.+)',  ssid_block)
+            or_m     = re.search(r'(?i)other\s+rates.*?:\s*(.+)',  ssid_block)
+            rates    = (br_m.group(1) if br_m else '') + ' ' + (or_m.group(1) if or_m else '')
             for j, mac in enumerate(all_macs):
                 nets.append(make_ap(ssid, mac.replace('-',':'),
                                     int(all_sigs[j]) if j<len(all_sigs) else 50,
-                                    None, int(all_chs[j]) if j<len(all_chs) else 6, sec))
+                                    None, int(all_chs[j]) if j<len(all_chs) else 6,
+                                    sec, radio, None, cipher, net_type, rates.strip() or None))
             continue
         j = 1
         while j+1 < len(bssid_parts):
             mac      = bssid_parts[j].strip().replace('-',':')
             subblock = bssid_parts[j+1]
             j += 2
-            sig_m = re.search(r'(?i)signal\s*:\s*(\d+)\s*%', subblock)
-            ch_m  = re.search(r'(?i)channel\s*:\s*(\d+)',     subblock)
+            sig_m  = re.search(r'(?i)signal\s*:\s*(\d+)\s*%', subblock)
+            ch_m   = re.search(r'(?i)channel\s*:\s*(\d+)',     subblock)
+            br_m   = re.search(r'(?i)basic\s+rates.*?:\s*(.+)',  subblock)
+            or_m   = re.search(r'(?i)other\s+rates.*?:\s*(.+)',  subblock)
+            rates  = (br_m.group(1) if br_m else '') + ' ' + (or_m.group(1) if or_m else '')
             nets.append(make_ap(ssid, mac,
                                 int(sig_m.group(1)) if sig_m else 50,
-                                None, int(ch_m.group(1)) if ch_m else 6, sec))
+                                None, int(ch_m.group(1)) if ch_m else 6,
+                                sec, radio, None, cipher, net_type, rates.strip() or None))
     if nets: return nets, raw, f"netsh({len(nets)})"
 
     # Fallback state machine
     cur_ssid,cur_sec,cur_mac,cur_sig,cur_ch = '<hidden>','WPA2-Personal',None,50,6
+    cur_radio,cur_cipher,cur_ntype,cur_rates = '—','—','Infrastructure',''
     def commit():
-        if cur_mac: nets.append(make_ap(cur_ssid,cur_mac,cur_sig,None,cur_ch,cur_sec))
+        if cur_mac: nets.append(make_ap(cur_ssid,cur_mac,cur_sig,None,cur_ch,cur_sec,
+                                        cur_radio,None,cur_cipher,cur_ntype,
+                                        cur_rates.strip() or None))
     for line in txt.split('\n'):
         s = line.strip()
         if not s: continue
         m = re.match(r'^SSID\s+\d+\s*:\s*(.*)$', s, re.I)
         if m and not s.upper().startswith('BSSID'):
             commit(); cur_mac=None; cur_ssid=m.group(1).strip() or '<hidden>'
-            cur_sec='WPA2-Personal'; cur_sig=50; cur_ch=6; continue
+            cur_sec='WPA2-Personal'; cur_sig=50; cur_ch=6
+            cur_radio='—'; cur_cipher='—'; cur_ntype='Infrastructure'; cur_rates=''; continue
         m = re.match(r'^BSSID\s+\d+\s*:\s*(.+)$', s, re.I)
         if m:
             commit()
@@ -281,6 +333,14 @@ def scan_windows():
             cur_sig=50; cur_ch=6; continue
         m = re.match(r'^(?:authentication|auth)\s*:\s*(.+)$', s, re.I)
         if m: cur_sec=m.group(1).strip(); continue
+        m = re.match(r'^encryption\s*:\s*(.+)$', s, re.I)
+        if m: cur_cipher=m.group(1).strip(); continue
+        m = re.match(r'^radio\s+type\s*:\s*(.+)$', s, re.I)
+        if m: cur_radio=m.group(1).strip(); continue
+        m = re.match(r'^network\s+type\s*:\s*(.+)$', s, re.I)
+        if m: cur_ntype=m.group(1).strip(); continue
+        m = re.match(r'^(?:basic|other)\s+rates.*?:\s*(.+)$', s, re.I)
+        if m: cur_rates += ' ' + m.group(1); continue
         m = re.match(r'^signal\s*:\s*(\d+)\s*%', s, re.I)
         if m: cur_sig=int(m.group(1)); continue
         m = re.match(r'^channel\s*:\s*(\d+)', s, re.I)
@@ -305,25 +365,42 @@ def scan_macos():
             if raw.strip(): break
         except: pass
     for line in raw.strip().splitlines()[1:]:
-        m = re.match(r'\s*(.+?)\s{2,}([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})\s+(-\d+)\s+(\S+)', line)
+        # airport -s columns: SSID  BSSID  RSSI  CHANNEL  HT  CC  SECURITY
+        m = re.match(r'\s*(.+?)\s{2,}([0-9a-fA-F]{2}(?::[0-9a-fA-F]{2}){5})\s+(-\d+)\s+(\S+)\s*(\S*)\s*(\S*)\s*(.*)', line)
         if not m: continue
-        ssid,bssid = m.group(1).strip() or '<hidden>', m.group(2)
+        ssid    = m.group(1).strip() or '<hidden>'
+        bssid   = m.group(2)
         sig_dbm = int(m.group(3))
-        ch_m = re.match(r'(\d+)', m.group(4))
+        ch_raw  = m.group(4)
+        ht_flag = m.group(5)   # e.g. Y/N for HT (802.11n)
+        sec_raw = m.group(7)
+        ch_m    = re.match(r'(\d+)', ch_raw)
         channel = int(ch_m.group(1)) if ch_m else 6
-        sec = 'WPA2' if ('WPA2' in line or 'RSN' in line) else 'WPA' if 'WPA' in line else 'OPEN'
-        nets.append(make_ap(ssid, bssid, max(0,min(100,2*(sig_dbm+100))), sig_dbm, channel, sec))
+        sec     = 'WPA2' if ('WPA2' in line or 'RSN' in line) else 'WPA' if 'WPA' in line else 'OPEN'
+        # Derive radio type from HT flag + channel band
+        if ht_flag.upper() == 'Y':
+            radio = '802.11n' if channel <= 14 else '802.11ac'
+        else:
+            radio = '802.11g' if channel <= 14 else '802.11a'
+        nets.append(make_ap(ssid, bssid, max(0,min(100,2*(sig_dbm+100))), sig_dbm,
+                            channel, sec, radio, None, '—', 'Infrastructure'))
     if not nets:
         try:
             r = subprocess.run(['system_profiler','SPAirPortDataType'], capture_output=True, text=True, timeout=30)
             raw += r.stdout
             for block in re.split(r'\n(?=\s{8}\S)', raw):
-                sm=re.match(r'\s+([^\n:]+):',block); bm=re.search(r'Network ID\s*:\s*([0-9a-fA-F:]{17})',block)
-                gm=re.search(r'Signal / Noise\s*:\s*(-\d+)',block); cm=re.search(r'Channel\s*:\s*(\d+)',block)
+                sm=re.match(r'\s+([^\n:]+):',block)
+                bm=re.search(r'Network ID\s*:\s*([0-9a-fA-F:]{17})',block)
+                gm=re.search(r'Signal / Noise\s*:\s*(-\d+)\s*/\s*(-\d+)',block)
+                cm=re.search(r'Channel\s*:\s*(\d+)',block)
                 if sm and gm:
-                    ssid=sm.group(1).strip(); bssid=bm.group(1) if bm else hashlib.md5(ssid.encode()).hexdigest()[:17]
-                    sig_dbm=int(gm.group(1))
-                    nets.append(make_ap(ssid,bssid,max(0,min(100,2*(sig_dbm+100))),sig_dbm,int(cm.group(1)) if cm else 6,'WPA2'))
+                    ssid    = sm.group(1).strip()
+                    bssid   = bm.group(1) if bm else hashlib.md5(ssid.encode()).hexdigest()[:17]
+                    sig_dbm = int(gm.group(1))
+                    noise   = int(gm.group(2)) if gm.lastindex >= 2 else None
+                    ch      = int(cm.group(1)) if cm else 6
+                    nets.append(make_ap(ssid, bssid, max(0,min(100,2*(sig_dbm+100))),
+                                        sig_dbm, ch, 'WPA2', '—', noise, '—', 'Infrastructure'))
         except: pass
     return nets, raw, f"airport({len(nets)})"
 
@@ -334,8 +411,12 @@ def scan_macos():
 def scan_linux():
     raw, nets = "", []
     try:
-        r = subprocess.run(['nmcli','--terse','--fields','SSID,BSSID,SIGNAL,CHAN,SECURITY',
-                            'dev','wifi','list','--rescan','yes'], capture_output=True, text=True, timeout=20)
+        # Request extra fields: MODE=net_type, SIGNAL_RATE for radio hint
+        r = subprocess.run(
+            ['nmcli','--terse','--fields',
+             'SSID,BSSID,SIGNAL,CHAN,SECURITY,RSN-FLAGS,WPA-FLAGS,MODE',
+             'dev','wifi','list','--rescan','yes'],
+            capture_output=True, text=True, timeout=20)
         raw = r.stdout
         if r.returncode==0 and raw.strip():
             for line in raw.strip().splitlines():
@@ -347,7 +428,14 @@ def scan_linux():
                 except: sp=50
                 try: ch=int(parts[3])
                 except: ch=6
-                nets.append(make_ap(ssid, bssid, sp, None, ch, parts[4] if len(parts)>4 else 'WPA2'))
+                sec      = parts[4] if len(parts)>4 else 'WPA2'
+                rsn_flag = parts[5] if len(parts)>5 else ''
+                # Derive cipher from RSN flags
+                cipher = 'CCMP' if 'ccmp' in rsn_flag.lower() else \
+                         'TKIP' if 'tkip' in rsn_flag.lower() else '—'
+                net_type = parts[7].strip() if len(parts)>7 else 'Infrastructure'
+                nets.append(make_ap(ssid, bssid, sp, None, ch, sec,
+                                    '—', None, cipher, net_type))
             if nets: return nets, raw, f"nmcli({len(nets)})"
     except FileNotFoundError: raw+="\n[nmcli not found]"
     except Exception as e: raw+=f"\n[nmcli: {e}]"
@@ -355,16 +443,29 @@ def scan_linux():
         r = subprocess.run(['iwlist','scan'], capture_output=True, text=True, timeout=20)
         raw += r.stdout
         for cell in re.split(r'Cell \d+ - ', r.stdout)[1:]:
-            sm=re.search(r'ESSID:"([^"]*)"',cell); bm=re.search(r'Address: ([0-9A-Fa-f:]{17})',cell)
-            gm=re.search(r'Signal level[=:](-?\d+)',cell); cm=re.search(r'Channel[=:](\d+)',cell)
+            sm=re.search(r'ESSID:"([^"]*)"',cell)
+            bm=re.search(r'Address: ([0-9A-Fa-f:]{17})',cell)
+            gm=re.search(r'Signal level[=:](-?\d+)',cell)
+            nm=re.search(r'Noise level[=:](-?\d+)',cell)
+            cm=re.search(r'Channel[=:](\d+)',cell)
             em=re.search(r'Encryption key:(on|off)',cell)
+            rm=re.search(r'IEEE\s+802\.11(\w+)',cell)
+            # Rates: "Bit Rates:54 Mb/s; 48 Mb/s; ..."
+            rates_raw = re.findall(r'(\d+(?:\.\d+)?)\s*Mb/s', cell)
+            rates = ' '.join(rates_raw) if rates_raw else None
             if not bm: continue
-            sig_dbm=int(gm.group(1)) if gm else -80
-            nets.append(make_ap(sm.group(1) if sm else '<hidden>', bm.group(1),
-                                max(0,min(100,2*(sig_dbm+100))), sig_dbm,
-                                int(cm.group(1)) if cm else 6,
-                                ('WPA2' if 'WPA2' in cell else 'WPA' if 'WPA' in cell else 'WEP')
-                                if em and em.group(1)=='on' else 'OPEN'))
+            sig_dbm  = int(gm.group(1)) if gm else -80
+            noise    = int(nm.group(1)) if nm else None
+            radio    = f'802.11{rm.group(1)}' if rm else '—'
+            # Cipher from IE info
+            cipher   = 'CCMP' if 'CCMP' in cell else 'TKIP' if 'TKIP' in cell else '—'
+            nets.append(make_ap(
+                sm.group(1) if sm else '<hidden>', bm.group(1),
+                max(0,min(100,2*(sig_dbm+100))), sig_dbm,
+                int(cm.group(1)) if cm else 6,
+                ('WPA2' if 'WPA2' in cell else 'WPA' if 'WPA' in cell else 'WEP')
+                if em and em.group(1)=='on' else 'OPEN',
+                radio, noise, cipher, 'Infrastructure', rates))
         if nets: return nets, raw, f"iwlist({len(nets)})"
     except: pass
     return nets, raw, "linux_none"
@@ -457,14 +558,17 @@ def api_export_csv():
         nets = state['networks'][:]
     buf = io.StringIO()
     w   = csv.writer(buf)
-    w.writerow(['SSID','BSSID','Vendor','Signal_dBm','Signal_%',
-                'Channel','Band','Security','Status','First_Seen','Last_Seen'])
-    ts = time.strftime('%Y-%m-%d %H:%M:%S')
+    w.writerow(['SSID','BSSID','Vendor','Signal_dBm','Signal_%','Noise_dBm','SNR_dB',
+                'Channel','Band','Security','Cipher','Radio_Type','Net_Type',
+                'Max_Rate_Mbps','Rates_Mbps','Status','First_Seen','Last_Seen'])
     for n in sorted(nets, key=lambda x: -x['signal_pct']):
         w.writerow([
             n['ssid'], n['bssid'], n.get('vendor','Unknown'),
             n['signal_dbm'], n['signal_pct'],
+            n.get('noise_dbm','—'), n.get('snr','—'),
             n['channel'], n['band'], n['security'],
+            n.get('cipher','—'), n.get('radio_type','—'), n.get('net_type','—'),
+            n.get('max_rate','—'), n.get('rates','—'),
             'STALE' if n.get('stale') else 'ACTIVE',
             time.strftime('%H:%M:%S', time.localtime(n.get('first_seen',0))),
             time.strftime('%H:%M:%S', time.localtime(n.get('last_seen',0))),
@@ -484,8 +588,11 @@ def api_debug():
                  f"  Scans={state['scan_count']}  Networks={len(state['networks'])}",
                  f"  Error={state['last_error'] or 'none'}","","  NETWORKS:"]
         for n in state['networks']:
+            snr_str  = f"SNR:{n.get('snr','?'):>3}dB" if n.get('snr') else ''
+            rate_str = f"{n.get('max_rate','?')}Mbps" if n.get('max_rate') else ''
             lines.append(f"    {n['ssid']:<26} {n['bssid']}  {n['signal_dbm']:>4}dBm"
-                         f"  ch{n['channel']:>3}  {n['security']:<10}  {n.get('vendor','?')}")
+                         f"  ch{n['channel']:>3}  {n['security']:<10}  {n.get('radio_type','—'):<14}"
+                         f"  {n.get('cipher','—'):<6}  {snr_str:<10}  {rate_str:<10}  {n.get('vendor','?')}")
         lines += ["","  RAW:","─"*60, state['raw_output']]
         return Response('\n'.join(lines), mimetype='text/plain')
 

@@ -30,14 +30,19 @@ No cloud. No tracking. No nonsense. **100% local.**
 |---|---|
 | 🔄 **Live Radar Sweep** | Rotating sweep refreshes every 4 seconds with real scan data |
 | 📡 **Real Scan Data** | Uses native OS tools — `netsh`, `airport`, `nmcli` — actual radio hardware |
-| 🏭 **Vendor Identification** | Identifies 200+ router manufacturers from MAC OUI (TP-Link, ASUS, Netgear…) |
-| 📈 **Signal History Graph** | Live multi-line chart tracking signal strength over time — pin any AP |
-| 🎨 **Color-Coded Threats** | Security level visible at a glance — teal=WPA3, red=OPEN, orange=WEP |
+| 🏭 **Vendor Identification** | Manufacturer resolved via macvendors.com API — cached locally after first lookup |
+| 📈 **Signal History Graph** | Auto-scaled dBm graph tracking signal strength over time — pin any AP |
+| 🎨 **Color-Coded Security** | Security level visible at a glance — teal=WPA3, red=OPEN, orange=WEP |
 | 📋 **Multi-Band Grouping** | WiFi 6/7 routers with multiple radios shown as one entry with sub-bands |
+| 📶 **Radio Generation** | WiFi 4 / 5 / 6 / 7 detection (802.11n/ac/ax/be) shown as badges |
+| 🔊 **Noise Floor + SNR** | Signal-to-noise ratio displayed per AP — Good/Fair/Poor quality rating |
+| 🔐 **Cipher Detection** | CCMP vs TKIP per AP — TKIP flagged in red as weak cipher |
+| 🌐 **Network Type** | Infrastructure vs Ad-Hoc detection |
 | ⚠️ **New AP Alerts** | Audio beep + popup when a new unknown network appears |
-| ⬇️ **CSV Export** | One-click snapshot of all visible networks with full metadata |
+| ⬇️ **CSV Export** | Full metadata snapshot including noise, SNR, cipher, radio type |
 | 🖥️ **CRT Aesthetic** | Scanlines, phosphor glow, flicker — because style matters |
 | 🌐 **Cross-Platform** | Windows, macOS, Linux — one codebase, native scan on each |
+| ⚡ **ETag Caching** | 304 Not Modified support — no wasted bandwidth when data is unchanged |
 
 ---
 
@@ -71,8 +76,6 @@ Then open → **http://localhost:5000**
 
 ## 🎨 The Color Code
 
-The radar speaks in colors. Learn to read it.
-
 | Color | Security | Meaning |
 |---|---|---|
 | 🩵 **Teal** | WPA3 | Fort Knox. Best in class. |
@@ -82,6 +85,25 @@ The radar speaks in colors. Learn to read it.
 | 🟡 **Amber** | WPA | Old. Should upgrade. |
 | 🟠 **Orange** | WEP | Broken. Hackable in minutes. |
 | 🔴 **Red** | OPEN | No password. Walk right in. |
+
+---
+
+## 📊 Data Fields Collected Per Network
+
+| Field | Source | Notes |
+|---|---|---|
+| SSID | OS scan | Network name |
+| BSSID | OS scan | MAC address |
+| Vendor | macvendors.com API | Cached locally after first lookup |
+| Signal (dBm / %) | OS scan | Native dBm on macOS/Linux, derived on Windows |
+| Noise Floor (dBm) | macOS airport, Linux iwlist | Not available on Windows |
+| SNR (dB) | Derived | Signal − Noise; rated Excellent/Good/Fair/Poor |
+| Channel | OS scan | 1–196 |
+| Band | Derived | 2.4 GHz / 5 GHz / 6 GHz |
+| Radio Type | OS scan | WiFi 4/5/6/7 (802.11n/ac/ax/be) |
+| Security | OS scan | OPEN / WEP / WPA / WPA2 / WPA3 / WPA2/WPA3 |
+| Cipher | OS scan | CCMP (strong) vs TKIP (weak/flagged) |
+| Network Type | OS scan | Infrastructure vs Ad-Hoc |
 
 ---
 
@@ -102,6 +124,7 @@ wifi-radar/
 ├── server.py            ← Python backend · WiFi scanner + Flask API
 ├── index.html           ← Military radar UI · pure HTML/CSS/JS
 ├── requirements.txt     ← Python deps (flask, flask-cors)
+├── vendor_cache.json    ← Auto-generated vendor cache (grows over time)
 ├── START_WINDOWS.bat    ← Windows one-click launcher
 ├── START_UNIX.sh        ← macOS / Linux launcher
 └── README.md            ← You are here
@@ -114,9 +137,10 @@ wifi-radar/
 | Endpoint | Description |
 |---|---|
 | `GET /` | Radar UI |
-| `GET /api/scan` | Live scan data as JSON |
+| `GET /api/scan` | Live scan data as JSON (ETag supported) |
 | `GET /api/export/csv` | Download snapshot as CSV |
 | `GET /api/debug` | Raw scan output + diagnostics |
+| `GET /api/vendor_cache` | Vendor cache stats + contents |
 
 ---
 
@@ -128,10 +152,7 @@ wifi-radar/
 1. Make sure Wi-Fi is **ON** in Windows Settings
 2. Verify WLAN AutoConfig service is running:
    `Win+R` → `services.msc` → find **WLAN AutoConfig** → Start
-3. Test manually in CMD:
-   ```
-   netsh wlan show networks mode=Bssid
-   ```
+3. Test manually in CMD: `netsh wlan show networks mode=Bssid`
 4. Try running `START_WINDOWS.bat` **as Administrator**
 5. Visit `http://localhost:5000/api/debug` to see raw output
 </details>
@@ -152,8 +173,6 @@ If still failing:
 
 ```bash
 sudo python3 server.py
-# or
-sudo nmcli dev wifi list --rescan yes
 ```
 
 Make sure NetworkManager is running:
@@ -163,30 +182,36 @@ sudo systemctl start NetworkManager
 </details>
 
 <details>
+<summary><b>⟳ Vendor shows "resolving…"</b></summary>
+
+The app queries **macvendors.com** (free, no key needed) the first time each MAC prefix is seen.
+Results are cached in `vendor_cache.json` — instant on next startup.
+Rate-limited to 1 request/sec to respect free tier limits.
+</details>
+
+<details>
 <summary><b>🔍 Why does my router show multiple blips?</b></summary>
 
-Modern **WiFi 6/6E/7 routers** with MLO (Multi-Link Operation) broadcast the **same SSID from multiple physical radios** (2.4 GHz, 5 GHz, 6 GHz) — each with its own MAC address.
-
-WiFi-Radar detects this and **groups them** under one entry in the list, showing each band as a sub-row. On the radar, one label is shown at the strongest radio with a `3× 2.4+5+6G` badge.
+Modern **WiFi 6/6E/7 routers** broadcast the same SSID from multiple physical radios (2.4 GHz, 5 GHz, 6 GHz) — each with its own MAC address.
+WiFi-Radar detects this and groups them under one entry, showing each band as a sub-row.
 </details>
 
 ---
 
 ## 🛠️ Requirements
 
-- **Python 3.8+** — [python.org/downloads](https://python.org/downloads)
-- **Flask** + **Flask-CORS** — auto-installed by launcher scripts
+- **Python 3.8+**
+- **Flask + Flask-CORS** — auto-installed by launcher scripts
 - **Wi-Fi adapter** — must be enabled in OS settings
 - **Browser** — any modern browser (Chrome, Firefox, Edge, Safari)
+- **Internet** — for vendor lookups (macvendors.com) — works offline after cache is built
 
 ---
 
 ## ⚠️ Disclaimer
 
 This tool is intended for **educational and network diagnostic purposes only**.
-
 Only scan networks **you own or have explicit permission to scan**.
-Use responsibly. Know your local laws regarding wireless scanning.
 
 ---
 
@@ -195,7 +220,8 @@ Use responsibly. Know your local laws regarding wireless scanning.
 - **Python 3** · Flask · threading
 - **Vanilla JS** · Canvas API · Web Audio API
 - **HTML5 / CSS3** · no frameworks, no dependencies
-- **netsh / airport / nmcli** · native OS WiFi tools
+- **netsh / airport / nmcli / iwlist** · native OS WiFi tools
+- **macvendors.com** · MAC vendor API
 - **Orbitron + Share Tech Mono** · because it has to look right
 
 ---

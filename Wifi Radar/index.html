@@ -81,6 +81,13 @@ body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
 .b-mixed{color:var(--lime);  border-color:rgba(170,255,0,.35)}
 .b-5g   {color:var(--cyan);  border-color:rgba(0,204,255,.3)}
 .b-24g  {color:#88ff88;      border-color:rgba(136,255,136,.3)}
+.b-6g   {color:#cc88ff;      border-color:rgba(204,136,255,.3)}
+.b-wifi6{color:var(--teal);  border-color:rgba(0,255,204,.3)}
+.b-wifi5{color:var(--cyan);  border-color:rgba(0,204,255,.3)}
+.b-wifi4{color:#88ff88;      border-color:rgba(136,255,136,.3)}
+.b-ccmp {color:var(--teal);  border-color:rgba(0,255,204,.25)}
+.b-tkip {color:var(--amber); border-color:rgba(255,170,0,.3)}
+.b-adhoc{color:var(--red);   border-color:rgba(255,34,68,.3)}
 .sigbar-wrap{width:42px;height:5px;background:#001a07;border:1px solid var(--border);border-radius:1px;overflow:hidden}
 .sigbar{height:100%;transition:width .5s ease;background:linear-gradient(90deg,var(--green-dark),var(--green));box-shadow:0 0 4px var(--green)}
 .sigbar.weak{background:linear-gradient(90deg,#330000,var(--red));box-shadow:0 0 4px var(--red)}
@@ -250,7 +257,11 @@ body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
     </div>
     <div class="stats-grid">
       <div class="stat-block nb br"><div class="stat-lbl">WPA3 / WPA2/3</div><div class="stat-val teal small" id="s-wpa3">0</div></div>
-      <div class="stat-block nb">   <div class="stat-lbl">2.4 / 5 GHz</div>  <div class="stat-val amber small" id="s-bands">—/—</div></div>
+      <div class="stat-block nb">   <div class="stat-lbl">WEAK CIPHER</div>  <div class="stat-val amber small" id="s-tkip">0</div></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-block nb br"><div class="stat-lbl">2.4/5/6 GHz</div><div class="stat-val small amber" id="s-bands">—</div></div>
+      <div class="stat-block nb">   <div class="stat-lbl">WiFi 6/5/4</div> <div class="stat-val small" id="s-wifi">—</div></div>
     </div>
     <div class="stat-block"><div class="stat-lbl">STRONGEST</div><div class="stat-val small amber" id="s-best">—</div></div>
 
@@ -347,31 +358,42 @@ setInterval(tickClock,1000); tickClock();
 // ── DEMO DATA ────────────────────────────────────────────────────
 const DEMO=(()=>{
   const cfg=[
-    {s:'GC',           sec:'WPA3',      ch:36,  sig:72, v:'ASUS'},
-    {s:'GC_IoT',       sec:'WPA2',      ch:6,   sig:68, v:'ASUS'},
-    {s:'GC_Kids',      sec:'WPA2',      ch:11,  sig:65, v:'ASUS'},
-    {s:'TP-Link_5G',   sec:'WPA2/WPA3', ch:149, sig:58, v:'TP-Link'},
-    {s:'NETGEAR-Home', sec:'WPA2',      ch:6,   sig:51, v:'Netgear'},
-    {s:'Neighbor_WiFi',sec:'WPA2',      ch:1,   sig:44, v:'Unknown'},
-    {s:'xfinitywifi',  sec:'OPEN',      ch:6,   sig:38, v:'Arris'},
-    {s:'AndroidAP',    sec:'WPA2',      ch:40,  sig:33, v:'Unknown'},
-    {s:'ASUS_5GHz',    sec:'WPA3',      ch:157, sig:29, v:'ASUS'},
-    {s:'<hidden>',     sec:'WPA2',      ch:11,  sig:24, v:'Unknown'},
-    {s:'CenturyLink',  sec:'WPA2',      ch:1,   sig:20, v:'ZTE'},
-    {s:'Ring_Device',  sec:'WPA2',      ch:6,   sig:16, v:'Amazon'},
+    {s:'GC',           sec:'WPA3',      ch:36,  sig:72, v:'ASUS',    radio:'WiFi 6 (ax)', noise:-92, cipher:'CCMP', rates:'574 430 288 216 144 72'},
+    {s:'GC_IoT',       sec:'WPA2',      ch:6,   sig:68, v:'ASUS',    radio:'WiFi 5 (ac)', noise:-90, cipher:'CCMP', rates:'300 270 243 216 162 108 54'},
+    {s:'GC_Kids',      sec:'WPA2',      ch:11,  sig:65, v:'ASUS',    radio:'WiFi 4 (n)',  noise:-89, cipher:'CCMP', rates:'150 130 115 86 57 43 28 14'},
+    {s:'TP-Link_5G',   sec:'WPA2/WPA3', ch:149, sig:58, v:'TP-Link', radio:'WiFi 6 (ax)', noise:-91, cipher:'CCMP', rates:'574 430 288 216 144 72'},
+    {s:'NETGEAR-Home', sec:'WPA2',      ch:6,   sig:51, v:'Netgear', radio:'WiFi 5 (ac)', noise:-90, cipher:'CCMP', rates:'300 270 243 216 162 108 54'},
+    {s:'Neighbor_WiFi',sec:'WPA2',      ch:1,   sig:44, v:'Unknown', radio:'WiFi 4 (n)',  noise:-88, cipher:'TKIP', rates:'54 48 36 24 18 12 9 6'},
+    {s:'xfinitywifi',  sec:'OPEN',      ch:6,   sig:38, v:'Arris',   radio:'WiFi 4 (n)',  noise:-90, cipher:'—',    rates:'54 48 36 24 18 12 9 6'},
+    {s:'AndroidAP',    sec:'WPA2',      ch:40,  sig:33, v:'Unknown', radio:'WiFi 5 (ac)', noise:-89, cipher:'CCMP', rates:'300 270 243 216 162'},
+    {s:'ASUS_5GHz',    sec:'WPA3',      ch:157, sig:29, v:'ASUS',    radio:'WiFi 6 (ax)', noise:-92, cipher:'CCMP', rates:'574 430 288 216'},
+    {s:'<hidden>',     sec:'WPA2',      ch:11,  sig:24, v:'Unknown', radio:'WiFi 4 (n)',  noise:-88, cipher:'CCMP', rates:'54 48 36 24'},
+    {s:'CenturyLink',  sec:'WPA2',      ch:1,   sig:20, v:'ZTE',     radio:'WiFi 4 (n)',  noise:-91, cipher:'TKIP', rates:'54 48 36 24 18 12 9 6'},
+    {s:'Ring_Device',  sec:'WPA2',      ch:6,   sig:16, v:'Amazon',  radio:'WiFi 4 (n)',  noise:-90, cipher:'CCMP', rates:'54 48 36 24 18'},
   ];
   function sp(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return{angle:h%360,distance:18+(h>>8)%70}}
-  return cfg.map(({s,sec,ch,sig,v})=>{
+  return cfg.map(({s,sec,ch,sig,v,radio,noise,cipher,rates})=>{
     const {angle,distance}=sp(s);
     const mac=Array.from({length:6},(_,j)=>((s.charCodeAt(j%s.length)*31+j)&0xff).toString(16).padStart(2,'0')).join(':').toUpperCase();
-    return {ssid:s,bssid:mac,vendor:v,signal_pct:sig,signal_dbm:-100+Math.round(sig/2),
-      channel:ch,security:sec,band:ch>14?'5GHz':'2.4GHz',angle,distance,stale:false};
+    const sig_dbm = -100+Math.round(sig/2);
+    const rateArr = rates.split(' ').map(Number).sort((a,b)=>b-a);
+    return {ssid:s, bssid:mac, vendor:v, signal_pct:sig, signal_dbm:sig_dbm,
+      noise_dbm:noise, snr:sig_dbm-noise,
+      channel:ch, security:sec, cipher:cipher, radio_type:radio,
+      net_type:'Infrastructure',
+      rates:rates, max_rate:rateArr[0]||null,
+      band:ch>180?'6GHz':ch>14?'5GHz':'2.4GHz', angle, distance, stale:false};
   });
 })();
 function getDemoNets(){
-  return DEMO.map(n=>({...n,
-    signal_pct:Math.max(5,Math.min(100,n.signal_pct+Math.round((Math.random()-.5)*6))),
-    signal_dbm:Math.max(-100,Math.min(-20,n.signal_dbm+Math.round((Math.random()-.5)*3)))}));
+  return DEMO.map(n=>{
+    const sig_dbm = Math.max(-100,Math.min(-20, n.signal_dbm+Math.round((Math.random()-.5)*3)));
+    return {...n,
+      signal_pct: Math.max(5,Math.min(100, n.signal_pct+Math.round((Math.random()-.5)*6))),
+      signal_dbm: sig_dbm,
+      snr: n.noise_dbm!=null ? sig_dbm - n.noise_dbm : null,
+    };
+  });
 }
 
 // ── Fetch ────────────────────────────────────────────────────────
@@ -412,7 +434,35 @@ function secBadge(sec){
   const m={OPEN:'b-open',WPA:'b-wpa',WEP:'b-wep',WPA3:'b-wpa3','WPA2/WPA3':'b-mixed'};
   return `<span class="badge ${m[sec]||'b-wpa2'}">${sec==='WPA2/WPA3'?'WPA2/3':sec}</span>`;
 }
-function bandBadge(b){return b==='5GHz'?'<span class="badge b-5g">5GHz</span>':'<span class="badge b-24g">2.4G</span>'}
+function bandBadge(b){
+  if(b==='5GHz') return '<span class="badge b-5g">5GHz</span>';
+  if(b==='6GHz') return '<span class="badge b-6g">6GHz</span>';
+  return '<span class="badge b-24g">2.4G</span>';
+}
+function radioBadge(r){
+  if(!r||r==='—') return '';
+  const ru=r.toUpperCase();
+  let cls='badge';
+  if(ru.includes('7')||ru.includes('BE'))      cls+=' b-wifi6';
+  else if(ru.includes('6')||ru.includes('AX')) cls+=' b-wifi6';
+  else if(ru.includes('5')||ru.includes('AC')) cls+=' b-wifi5';
+  else if(ru.includes('4')||ru.includes('N'))  cls+=' b-wifi4';
+  else                                          cls+=' b-24g';
+  const lbl = ru.includes('BE')?'WiFi7':ru.includes('AX')?'WiFi6':
+              ru.includes('AC')?'WiFi5':ru.includes(' N')||ru.endsWith('N')?'WiFi4':r;
+  return `<span class="${cls}">${esc(lbl)}</span>`;
+}
+function cipherBadge(c){
+  if(!c||c==='—') return '';
+  const cls = c.toUpperCase().includes('CCMP')?'b-ccmp':
+              c.toUpperCase().includes('TKIP')?'b-tkip':'b-wpa2';
+  return `<span class="badge ${cls}">${esc(c)}</span>`;
+}
+function snrBadge(snr){
+  if(snr===null||snr===undefined) return '';
+  const cls = snr>=25?'b-wpa3':snr>=15?'b-wpa2':snr>=10?'b-wpa':'b-open';
+  return `<span class="badge ${cls}" title="Signal-to-Noise Ratio">SNR:${snr}dB</span>`;
+}
 function sigClass(p){return p<30?'weak':p<60?'mid':''}
 
 // ── Tabs ─────────────────────────────────────────────────────────
@@ -469,9 +519,17 @@ function closeAlert(){
 // ── CSV Export ───────────────────────────────────────────────────
 function exportCSV(){
   if(serverOnline){window.open('/api/export/csv','_blank');return;}
-  const rows=[['SSID','BSSID','Vendor','Signal_dBm','Signal_%','Channel','Band','Security','Status']];
+  const rows=[['SSID','BSSID','Vendor','Signal_dBm','Signal_%','Noise_dBm','SNR_dB',
+               'Channel','Band','Security','Cipher','Radio_Type','Net_Type',
+               'Max_Rate_Mbps','Rates_Mbps','Status']];
   for(const n of [...networks].sort((a,b)=>b.signal_pct-a.signal_pct))
-    rows.push([n.ssid,n.bssid,n.vendor||'Unknown',n.signal_dbm,n.signal_pct,n.channel,n.band,n.security,n.stale?'STALE':'ACTIVE']);
+    rows.push([n.ssid, n.bssid, n.vendor||'Unknown',
+               n.signal_dbm, n.signal_pct,
+               n.noise_dbm??'—', n.snr??'—',
+               n.channel, n.band, n.security,
+               n.cipher||'—', n.radio_type||'—', n.net_type||'—',
+               n.max_rate??'—', n.rates||'—',
+               n.stale?'STALE':'ACTIVE']);
   const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
@@ -519,6 +577,9 @@ function renderList(){
         <span style="font-size:10px;color:var(--green-dim)">${best.signal_dbm}dBm</span>
         ${secBadge(best.security)}
         ${multiband ? '' : bandBadge(best.band)}
+        ${radioBadge(best.radio_type||'')}
+        ${cipherBadge(best.cipher||'')}
+        ${snrBadge(best.snr)}
       </div>
       ${bandRows}
     </div>`;
@@ -528,16 +589,32 @@ function renderList(){
 
 // ── Render: Stats ────────────────────────────────────────────────
 function renderStats(){
-  const t=networks.length, open=networks.filter(n=>n.security==='OPEN').length;
-  const wpa3=networks.filter(n=>n.security==='WPA3'||n.security==='WPA2/WPA3').length;
-  const n24=networks.filter(n=>n.band==='2.4GHz').length, n5=networks.filter(n=>n.band==='5GHz').length;
-  const best=[...networks].sort((a,b)=>b.signal_pct-a.signal_pct)[0];
-  document.getElementById('s-total').textContent=t;
-  document.getElementById('s-open').textContent=open;
-  document.getElementById('s-wpa3').textContent=wpa3;
-  document.getElementById('s-bands').textContent=`${n24}/${n5}`;
-  document.getElementById('s-best').textContent=best?`${best.ssid.slice(0,16)} (${best.signal_dbm}dBm)`:'—';
-  document.getElementById('lbl-aps').textContent=t;
+  const t    = networks.length;
+  const open = networks.filter(n=>n.security==='OPEN').length;
+  const wpa3 = networks.filter(n=>n.security==='WPA3'||n.security==='WPA2/WPA3').length;
+  const tkip = networks.filter(n=>n.cipher==='TKIP').length;
+  const n24  = networks.filter(n=>n.band==='2.4GHz').length;
+  const n5   = networks.filter(n=>n.band==='5GHz').length;
+  const n6   = networks.filter(n=>n.band==='6GHz').length;
+  const wifi6= networks.filter(n=>n.radio_type&&(n.radio_type.includes('ax')||n.radio_type.includes('7')||n.radio_type.includes('be'))).length;
+  const wifi5= networks.filter(n=>n.radio_type&&n.radio_type.includes('ac')).length;
+  const wifi4= networks.filter(n=>n.radio_type&&(n.radio_type.includes(' n')||n.radio_type.toUpperCase().endsWith('(N)'))).length;
+  const best = [...networks].sort((a,b)=>b.signal_pct-a.signal_pct)[0];
+
+  document.getElementById('s-total').textContent = t;
+  document.getElementById('s-open').textContent  = open;
+  document.getElementById('s-wpa3').textContent  = wpa3;
+  document.getElementById('s-tkip').textContent  = tkip;
+  document.getElementById('s-bands').textContent = `${n24}/${n5}/${n6}`;
+  document.getElementById('s-wifi').textContent  = `${wifi6}/${wifi5}/${wifi4}`;
+  document.getElementById('s-best').textContent  = best?`${best.ssid.slice(0,14)} (${best.signal_dbm}dBm)`:'—';
+  document.getElementById('lbl-aps').textContent = t;
+
+  // Colour TKIP counter red if any found
+  const tkipEl = document.getElementById('s-tkip');
+  tkipEl.className = 'stat-val small ' + (tkip>0?'red':'teal');
+  // Colour WiFi gen stat
+  document.getElementById('s-wifi').className = 'stat-val small ' + (wifi6>0?'teal':wifi5>0?'':'amber');
 }
 
 // ── Render: Channels ─────────────────────────────────────────────
@@ -558,16 +635,25 @@ function renderDetail(){
   const el=document.getElementById('detail-block');
   if(!n){el.innerHTML='<div class="detail-empty">— click an AP to inspect —</div>';return;}
   const sc=SEC_COLOR[n.security]||'var(--green)';
+  const snrStr = n.snr!=null ? `${n.snr} dB ${n.snr>=25?'▲ Excellent':n.snr>=15?'▲ Good':n.snr>=10?'▼ Fair':'▼ Poor'}` : '—';
+  const noiseStr = n.noise_dbm!=null ? `${n.noise_dbm} dBm` : '—';
   const rows=[
-    ['SSID',      n.ssid],
-    ['BSSID',     n.bssid],
-    ['VENDOR',    n.vendor||'Unknown'],
-    ['SIGNAL',    `${n.signal_dbm} dBm  (${n.signal_pct}%)`],
-    ['CHANNEL',   `${n.channel}`],
-    ['BAND',      n.band],
-    ['SECURITY',  n.security],
-    ['STATUS',    n.stale?'⚠ STALE':'● ACTIVE'],
-    ['FIRST SEEN',n.first_seen?new Date(n.first_seen*1000).toTimeString().slice(0,8):'—'],
+    ['SSID',       n.ssid],
+    ['BSSID',      n.bssid],
+    ['VENDOR',     n.vendor||'Unknown'],
+    ['SIGNAL',     `${n.signal_dbm} dBm  (${n.signal_pct}%)`],
+    ['NOISE',      noiseStr],
+    ['SNR',        snrStr],
+    ['CHANNEL',    `${n.channel}`],
+    ['BAND',       n.band],
+    ['RADIO',      n.radio_type||'—'],
+    ['SECURITY',   n.security],
+    ['CIPHER',     n.cipher||'—'],
+    ['NET TYPE',   n.net_type||'—'],
+    ['MAX RATE',   n.max_rate ? `${n.max_rate} Mbps` : '—'],
+    ['RATES',      n.rates||'—'],
+    ['STATUS',     n.stale?'⚠ STALE':'● ACTIVE'],
+    ['FIRST SEEN', n.first_seen?new Date(n.first_seen*1000).toTimeString().slice(0,8):'—'],
   ];
   el.innerHTML=rows.map(([k,v])=>`<div class="drow">
     <span class="dk">${k}</span>
@@ -721,16 +807,23 @@ function selectAP(bssid){
 
 // ── Ticker ───────────────────────────────────────────────────────
 function renderTicker(){
-  const open=networks.filter(n=>n.security==='OPEN');
-  const wpa3=networks.filter(n=>n.security==='WPA3');
+  const open  = networks.filter(n=>n.security==='OPEN');
+  const wpa3  = networks.filter(n=>n.security==='WPA3');
+  const tkip  = networks.filter(n=>n.cipher==='TKIP');
+  const wifi6 = networks.filter(n=>n.radio_type&&n.radio_type.includes('ax')).length;
+  const wifi5 = networks.filter(n=>n.radio_type&&n.radio_type.includes('ac')).length;
+  const wifi4 = networks.filter(n=>n.radio_type&&n.radio_type.includes(' n')||
+                                   (n.radio_type&&n.radio_type.toLowerCase().endsWith('n'))).length;
   const parts=[
     `SCAN #${scanCount}  ◈  NETWORKS: ${networks.length}`,
     ...open.map(n=>`⚠ OPEN NETWORK: ${n.ssid} [${n.vendor||'?'}]`),
     ...wpa3.map(n=>`✦ WPA3: ${n.ssid} [${n.vendor||'?'}]`),
-    `2.4GHz: ${networks.filter(n=>n.band==='2.4GHz').length}  ◈  5GHz: ${networks.filter(n=>n.band==='5GHz').length}`,
+    ...tkip.map(n=>`⚠ WEAK CIPHER (TKIP): ${n.ssid}`),
+    `2.4GHz: ${networks.filter(n=>n.band==='2.4GHz').length}  ◈  5GHz: ${networks.filter(n=>n.band==='5GHz').length}  ◈  6GHz: ${networks.filter(n=>n.band==='6GHz').length}`,
+    wifi6||wifi5||wifi4?`WiFi6: ${wifi6}  ◈  WiFi5: ${wifi5}  ◈  WiFi4: ${wifi4}`:'',
     `TEAL=WPA3  LIME=WPA2/WPA3  GREEN=WPA2  AMBER=WPA  ORANGE=WEP  RED=OPEN`,
     serverOnline?'SERVER: CONNECTED  ◈  REAL SCAN DATA':'SERVER: OFFLINE  ◈  DEMO MODE',
-  ];
+  ].filter(Boolean);
   document.getElementById('ticker').textContent=parts.join('   ◈   ');
 }
 
@@ -888,37 +981,51 @@ function drawRadar(){
     const [lx, ly, rect] = findLabelPos(bx, by, sz, textW, fontSize);
     placedLabels.push(rect);
 
-    // Dark background pill for readability over grid lines
-    rc.globalAlpha = isStale ? 0.4 : 0.78;
-    rc.fillStyle = 'rgba(0,5,1,0.88)';
-    rc.fillRect(rect.x - 2, rect.y - 1, rect.w + 4, rect.h + 2);
-    rc.globalAlpha = 1;
+    // Draw label with dark stroke outline for crisp readability — no background, no blur
+    const alpha = isStale ? 0.4 : (sel ? 1 : 0.95);
+    rc.font = `${sel ? 'bold ' : ''}${fontSize}px Share Tech Mono`;
+    rc.globalAlpha = alpha;
 
-    // Label text — stale gets dimmed
-    const alpha = isStale ? 0.38 : (sel ? 1 : 0.92);
-    rc.fillStyle=col; rc.globalAlpha=alpha;
-    rc.shadowColor=col; rc.shadowBlur=isStale?1:(sel?6:2);
+    // 1. Dark outline stroke — separates text from radar grid cleanly
+    rc.strokeStyle = 'rgba(0,0,0,0.9)';
+    rc.lineWidth   = 3;
+    rc.lineJoin    = 'round';
+    rc.strokeText(lbl, lx, ly);
+
+    // 2. Coloured fill on top
+    rc.fillStyle   = col;
+    rc.shadowColor = col;
+    rc.shadowBlur  = sel ? 8 : 4;
     rc.fillText(lbl, lx, ly);
-    rc.globalAlpha=1; rc.shadowBlur=0;
+
+    rc.globalAlpha = 1;
+    rc.shadowBlur  = 0;
+    rc.lineWidth   = 1;
 
     // Multi-band badge (only for non-hidden, non-stale with multiple radios)
     if(siblings.length > 1 && !isStale){
       const bands = [...new Set(siblings.map(s=>s.band))].sort();
       const bandStr = siblings.length + '× ' + bands.map(b=>b==='5GHz'?'5G':b==='2.4GHz'?'2.4':'6G').join('+');
       const badgeFontSize = 8;
-      rc.font=`${badgeFontSize}px Share Tech Mono`;
+      rc.font = `${badgeFontSize}px Share Tech Mono`;
       const badgeW = measureLabel(bandStr, badgeFontSize);
       const badgeLy = ly + 13;
-      // clamp badge too
       let blx = lx;
       [blx] = clampToCanvas(lx, badgeLy, badgeW, badgeFontSize + 2);
-      rc.fillStyle='rgba(0,255,200,.6)';
-      rc.globalAlpha=0.9;
-      rc.shadowBlur=0;
-      const bRect = labelRect(blx, badgeLy - badgeFontSize, badgeW, badgeFontSize + 2);
-      placedLabels.push(bRect);
+      placedLabels.push(labelRect(blx, badgeLy - badgeFontSize, badgeW, badgeFontSize + 2));
+
+      rc.globalAlpha = 0.9;
+      rc.strokeStyle = 'rgba(0,0,0,0.9)';
+      rc.lineWidth   = 2.5;
+      rc.lineJoin    = 'round';
+      rc.strokeText(bandStr, blx, badgeLy);
+      rc.fillStyle   = 'rgba(0,255,200,.85)';
+      rc.shadowColor = 'rgba(0,255,200,.4)';
+      rc.shadowBlur  = 3;
       rc.fillText(bandStr, blx, badgeLy);
-      rc.globalAlpha=1;
+      rc.globalAlpha = 1;
+      rc.shadowBlur  = 0;
+      rc.lineWidth   = 1;
     }
   }
   rc.beginPath(); rc.arc(cx,cy,R,0,Math.PI*2);
@@ -964,8 +1071,8 @@ RC.addEventListener('mousemove',e=>{
     tip.innerHTML=`<div class="tt-ssid" style="color:${col}">${esc(hit.ssid)}</div>
       <div class="tt-vendor">📡 ${hit.vendor==='Looking up…'?'<span style="color:var(--amber)">⟳ resolving…</span>':esc(hit.vendor||'Unknown')}</div>
       <div class="tt-dim">${hit.bssid}</div>
-      <div>Signal: ${hit.signal_dbm} dBm &nbsp;(${hit.signal_pct}%)</div>
-      <div>Ch <b>${hit.channel}</b> &nbsp;·&nbsp; ${hit.band} &nbsp;·&nbsp; <b style="color:${col}">${hit.security}</b></div>`;
+      <div>Signal: ${hit.signal_dbm} dBm &nbsp;(${hit.signal_pct}%)${hit.snr!=null?` &nbsp;·&nbsp; SNR: <b>${hit.snr} dB</b>`:''}</div>
+      <div>Ch <b>${hit.channel}</b> &nbsp;·&nbsp; ${hit.band} &nbsp;·&nbsp; <b style="color:${col}">${hit.security}</b>${hit.radio_type&&hit.radio_type!=='—'?` &nbsp;·&nbsp; ${esc(hit.radio_type)}`:''}</div>`;
   }else tip.style.display='none';
 });
 RC.addEventListener('mouseleave',()=>document.getElementById('tooltip').style.display='none');
