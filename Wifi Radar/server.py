@@ -13,6 +13,7 @@ Debug ->  http://localhost:5000/api/debug
 """
 
 import subprocess, re, time, threading, platform, hashlib, os, sys, csv, io
+import urllib.request, urllib.error, urllib.parse, json
 
 # ── Auto-install deps ─────────────────────────────────────────────────────────
 def ensure_deps():
@@ -48,117 +49,102 @@ state = {
 lock = threading.Lock()
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  OUI VENDOR DATABASE  (top ~200 most common router vendors)
-#  Format: first 6 hex chars (no colons, uppercase) -> vendor name
+#  VENDOR CACHE  — in-memory cache for API lookups + persistent file cache
 # ─────────────────────────────────────────────────────────────────────────────
-OUI = {
-    # TP-Link
-    "1C61B4":"TP-Link","50C7BF":"TP-Link","A0F3C1":"TP-Link","C46E1F":"TP-Link",
-    "8C8590":"TP-Link","B0487A":"TP-Link","E4F14E":"TP-Link","00E04C":"TP-Link",
-    "D46E5C":"TP-Link","9C5322":"TP-Link","B4B024":"TP-Link","F8D111":"TP-Link",
-    "10BF48":"TP-Link","2C4D54":"TP-Link","70085B":"TP-Link","3C52A1":"TP-Link",
-    # ASUS
-    "04D9F5":"ASUS","10BF48":"ASUS","107B44":"ASUS","1C872C":"ASUS",
-    "2C56DC":"ASUS","2CFD55":"ASUS","305A3A":"ASUS","382C4A":"ASUS",
-    "40167E":"ASUS","50465D":"ASUS","60A44C":"ASUS","6045CB":"ASUS",
-    "74D02B":"ASUS","88D7F6":"ASUS","AC220B":"ASUS","B06EBF":"ASUS",
-    "BC9946":"ASUS","E03F49":"ASUS","F832E4":"ASUS","04921F":"ASUS",
-    # Netgear
-    "00095B":"Netgear","001B2F":"Netgear","002275":"Netgear","00266C":"Netgear",
-    "204E7F":"Netgear","28C68E":"Netgear","2CB05D":"Netgear","44947C":"Netgear",
-    "4F58CD":"Netgear","6CB0CE":"Netgear","84189F":"Netgear","A021B7":"Netgear",
-    "C03F0E":"Netgear","C4042A":"Netgear","E091F5":"Netgear","E4F4C6":"Netgear",
-    # Linksys / Cisco
-    "000C41":"Cisco","001225":"Cisco","0016B6":"Linksys","00183B":"Linksys",
-    "001A70":"Linksys","001C10":"Linksys","001D7E":"Linksys","001E58":"Linksys",
-    "002369":"Linksys","00259C":"Linksys","0026B9":"Linksys","C8BE19":"Linksys",
-    # D-Link
-    "001195":"D-Link","0015E9":"D-Link","00176F":"D-Link","001A2B":"D-Link",
-    "001CF0":"D-Link","001E58":"D-Link","002191":"D-Link","00265A":"D-Link",
-    "1CAFF7":"D-Link","2840B4":"D-Link","340A33":"D-Link","7C8BCA":"D-Link",
-    "9094E4":"D-Link","B8A386":"D-Link","C8BE19":"D-Link","F07D68":"D-Link",
-    # Huawei
-    "001E10":"Huawei","002568":"Huawei","0025D3":"Huawei","00259E":"Huawei",
-    "047503":"Huawei","086349":"Huawei","0C37DC":"Huawei","0C96BF":"Huawei",
-    "2C9D65":"Huawei","3440B5":"Huawei","4C1FCC":"Huawei","5439DF":"Huawei",
-    "6885C1":"Huawei","90E7C4":"Huawei","AC853D":"Huawei","D4612E":"Huawei",
-    # Apple (Airport)
-    "00030E":"Apple","000A27":"Apple","000A95":"Apple","000D93":"Apple",
-    "001124":"Apple","001451":"Apple","0016CB":"Apple","0017F2":"Apple",
-    "0019E3":"Apple","001B63":"Apple","001CB3":"Apple","001E52":"Apple",
-    "0021E9":"Apple","002312":"Apple","002500":"Apple","002608":"Apple",
-    "34363B":"Apple","38C986":"Apple","3C0754":"Apple","40A6D9":"Apple",
-    "70E72C":"Apple","781FDB":"Apple","7CAF97":"Apple","98FE94":"Apple",
-    # Ubiquiti
-    "002722":"Ubiquiti","04186D":"Ubiquiti","0418D6":"Ubiquiti","044BC8":"Ubiquiti",
-    "18E829":"Ubiquiti","24A43C":"Ubiquiti","44D9E7":"Ubiquiti","687278":"Ubiquiti",
-    "788A20":"Ubiquiti","802AA8":"Ubiquiti","DC9FDB":"Ubiquiti","E063DA":"Ubiquiti",
-    "F09FC2":"Ubiquiti","F492BF":"Ubiquiti","FCECDA":"Ubiquiti",
-    # MikroTik
-    "000C42":"MikroTik","18FD74":"MikroTik","2CC8E9":"MikroTik","4C5E0C":"MikroTik",
-    "6C3B6B":"MikroTik","74AD5C":"MikroTik","B8690E":"MikroTik","C4AD34":"MikroTik",
-    "D4CA6D":"MikroTik","DC2C6E":"MikroTik","E48D8C":"MikroTik",
-    # Aruba / HP
-    "000B86":"Aruba","001A1E":"Aruba","24DE C6":"Aruba","40E3D6":"Aruba",
-    "6C7220":"Aruba","70888B":"Aruba","84D47E":"Aruba","885BB4":"Aruba",
-    "94B40F":"Aruba","9C1C12":"Aruba","AC:A3:1E":"Aruba","D8C7C8":"Aruba",
-    # Synology
-    "001132":"Synology","0011FA":"Synology","BC5FF4":"Synology",
-    # FRITZ!Box (AVM)
-    "3C3712":"AVM","542D7F":"AVM","7851B2":"AVM","9489EA":"AVM",
-    "A4B1E9":"AVM","AC1608":"AVM","B4795E":"AVM","C82360":"AVM","D43100":"AVM",
-    # Belkin
-    "001150":"Belkin","001CDF":"Belkin","082698":"Belkin","103755":"Belkin",
-    "147D22":"Belkin","20AA4B":"Belkin","94103E":"Belkin","B44BD0":"Belkin",
-    "EC1A59":"Belkin",
-    # ZTE
-    "001E73":"ZTE","0824AF":"ZTE","1C8779":"ZTE","203D66":"ZTE",
-    "28CF39":"ZTE","34E0CF":"ZTE","3816D1":"ZTE","40F384":"ZTE",
-    "48C654":"ZTE","4C09D4":"ZTE","5440AD":"ZTE","64136C":"ZTE",
-    "6C8132":"ZTE","7871E5":"ZTE","8009D7":"ZTE","8C2DAA":"ZTE",
-    # Xiaomi
-    "001C14":"Xiaomi","0C1DAF":"Xiaomi","28D1273":"Xiaomi","34CE00":"Xiaomi",
-    "50EC50":"Xiaomi","58:44:98":"Xiaomi","64B473":"Xiaomi","7851CB":"Xiaomi",
-    "98FAE3":"Xiaomi","A45841":"Xiaomi","F48B32":"Xiaomi","FC64BA":"Xiaomi",
-    # Samsung
-    "001247":"Samsung","001599":"Samsung","0016DB":"Samsung","001A8A":"Samsung",
-    "0021D2":"Samsung","002339":"Samsung","0024E9":"Samsung","002566":"Samsung",
-    "10D542":"Samsung","1C66AA":"Samsung","2073E0":"Samsung","28987B":"Samsung",
-    "3425E2":"Samsung","40E5CF":"Samsung","5C0A5B":"Samsung","5CD2E4":"Samsung",
-    "6031CE":"Samsung","8018A7":"Samsung","8C71F8":"Samsung","90F1AA":"Samsung",
-    "A06090":"Samsung","B47443":"Samsung","C867AF":"Samsung","D0176A":"Samsung",
-    # Google (Nest/OnHub)
-    "1C09EB":"Google","304167":"Google","38CA84":"Google","4C31FE":"Google",
-    "54607E":"Google","587A62":"Google","704FF5":"Google","748A7C":"Google",
-    "A47733":"Google","F88FCA":"Google",
-    # Amazon (Eero/Echo)
-    "107EFE":"Amazon","18742E":"Amazon","40B4CD":"Amazon","44650D":"Amazon",
-    "5475D0":"Amazon","68370B":"Amazon","6C5697":"Amazon","74C246":"Amazon",
-    "A002DC":"Amazon","AC63BE":"Amazon","B47C9C":"Amazon","F0272D":"Amazon",
-    "FC65DE":"Amazon",
-    # Comcast / Xfinity
-    "000C46":"Arris","001469":"Arris","00905D":"Arris","1C6311":"Arris",
-    "286ABA":"Arris","3840A6":"Arris","40D32D":"Arris","507688":"Arris",
-    "60EF55":"Arris","74873C":"Arris","800009":"Arris","9C34BF":"Arris",
-    # Motorola
-    "000AF5":"Motorola","001B77":"Motorola","003A99":"Motorola","00E030":"Motorola",
-    "1451D1":"Motorola","40409B":"Motorola","58B035":"Motorola",
-    # Ruckus
-    "000C2C":"Ruckus","001392":"Ruckus","189461":"Ruckus","24C9A1":"Ruckus",
-    "2C5A0F":"Ruckus","4C0082":"Ruckus","58B633":"Ruckus","607B6A":"Ruckus",
-    "74911A":"Ruckus","9C1C12":"Ruckus",
-    # Eero
-    "F45D76":"Eero","FC01DC":"Eero","AC84C9":"Eero","48A512":"Eero",
-    # GL.iNet
-    "94835B":"GL.iNet","E4956E":"GL.iNet","B4E842":"GL.iNet",
-    # OpenWRT common
-    "000CE6":"ChinaNet","000D88":"Actiontec","001871":"Actiontec",
-}
+_vendor_cache      = {}          # oui6 -> vendor string
+_vendor_pending    = set()       # ouis currently being looked up
+_vendor_cache_lock = threading.Lock()
+CACHE_FILE         = os.path.join(os.path.dirname(__file__), 'vendor_cache.json')
+
+def _load_cache_file():
+    """Load persisted vendor cache from disk on startup."""
+    global _vendor_cache
+    try:
+        if os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, 'r') as f:
+                data = json.load(f)
+            with _vendor_cache_lock:
+                _vendor_cache.update(data)
+            print(f"[VENDOR] Loaded {len(data)} cached vendors from disk", flush=True)
+    except Exception as e:
+        print(f"[VENDOR] Cache load error: {e}", flush=True)
+
+def _save_cache_file():
+    """Persist vendor cache to disk."""
+    try:
+        with _vendor_cache_lock:
+            data = dict(_vendor_cache)
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(data, f)
+    except Exception as e:
+        print(f"[VENDOR] Cache save error: {e}", flush=True)
+
+def _fetch_vendor_api(bssid: str) -> str:
+    """
+    Query macvendors.com with the full MAC address.
+    Accepts any format — we send XX:XX:XX:XX:XX:XX
+    Returns vendor string or 'Unknown'.
+    """
+    url = f"https://api.macvendors.com/{urllib.parse.quote(bssid)}"
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'WiFi-Radar/5'})
+        with urllib.request.urlopen(req, timeout=5) as r:
+            vendor = r.read().decode('utf-8', errors='replace').strip()
+            if vendor and len(vendor) < 80:
+                return vendor
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return 'Unknown'        # legitimate "not found"
+    except Exception:
+        pass
+    return 'Unknown'
+
+def _vendor_lookup_thread(bssids: list):
+    """
+    Background thread: look up a batch of (oui6, full_bssid) pairs.
+    Rate-limit: macvendors.com free tier = 1 req/sec.
+    """
+    changed = False
+    for oui6, bssid in bssids:
+        time.sleep(1.05)            # stay under 1 req/sec free limit
+        vendor = _fetch_vendor_api(bssid)
+        with _vendor_cache_lock:
+            _vendor_cache[oui6] = vendor
+            _vendor_pending.discard(oui6)
+        print(f"[VENDOR] {bssid} ({oui6}) -> {vendor}", flush=True)
+        changed = True
+    if changed:
+        _save_cache_file()
 
 def lookup_vendor(bssid: str) -> str:
-    """Look up manufacturer from first 3 bytes of MAC address."""
-    oui = bssid.replace(':','').replace('-','').upper()[:6]
-    return OUI.get(oui, 'Unknown')
+    """
+    Look up manufacturer for a BSSID.
+    1) In-memory / disk cache (instant — populated by macvendors.com API)
+    2) Async API fetch via macvendors.com if not cached yet
+    Returns immediately — resolved vendor appears on the next scan cycle.
+    """
+    clean = bssid.replace(':','').replace('-','').replace(' ','').upper()
+    oui   = clean[:6]
+    if len(oui) < 6:
+        return 'Unknown'
+
+    # 1. Memory / disk cache (instant)
+    with _vendor_cache_lock:
+        cached = _vendor_cache.get(oui)
+        if cached is not None:
+            return cached
+        # 2. Queue async API lookup with full BSSID if not already pending
+        if oui not in _vendor_pending:
+            _vendor_pending.add(oui)
+            threading.Thread(
+                target=_vendor_lookup_thread,
+                args=([(oui, bssid)],),
+                daemon=True
+            ).start()
+
+    return 'Looking up…'
+
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  HELPERS
@@ -442,9 +428,9 @@ def scanner_loop():
 @app.route('/api/scan')
 def api_scan():
     with lock:
-        new = state['new_bssids'][:]
-        state['new_bssids'] = []          # clear after delivery
-        return jsonify({
+        new  = state['new_bssids'][:]
+        state['new_bssids'] = []
+        payload = {
             'networks':     state['networks'],
             'last_updated': state['last_updated'],
             'scan_count':   state['scan_count'],
@@ -453,7 +439,16 @@ def api_scan():
             'method':       state['method'],
             'total':        len(state['networks']),
             'new_bssids':   new,
-        })
+        }
+    # Build ETag from scan_count + network count (cheap fingerprint)
+    etag = f'"{state["scan_count"]}-{len(state["networks"])}"'
+    if_none = request.headers.get('If-None-Match','')
+    if if_none == etag and not new:
+        return Response(status=304)
+    resp = jsonify(payload)
+    resp.headers['ETag']          = etag
+    resp.headers['Cache-Control'] = 'no-cache'
+    return resp
 
 @app.route('/api/export/csv')
 def api_export_csv():
@@ -494,6 +489,24 @@ def api_debug():
         lines += ["","  RAW:","─"*60, state['raw_output']]
         return Response('\n'.join(lines), mimetype='text/plain')
 
+@app.route('/api/vendor_cache')
+def api_vendor_cache():
+    """Show current vendor cache stats and contents."""
+    with _vendor_cache_lock:
+        data = dict(_vendor_cache)
+        pending = list(_vendor_pending)
+    lines = [f"Cached entries : {len(data)}",
+             f"Pending lookups: {len(pending)}",
+             "",
+             "── CACHE ──"]
+    for k, v in sorted(data.items()):
+        lines.append(f"  {k}  →  {v}")
+    if pending:
+        lines += ["", "── PENDING ──"]
+        for k in pending:
+            lines.append(f"  {k}  (fetching…)")
+    return Response('\n'.join(lines), mimetype='text/plain')
+
 @app.route('/')
 def serve_index():
     return send_from_directory('.', 'index.html')
@@ -502,6 +515,7 @@ def serve_index():
 #  MAIN
 # ─────────────────────────────────────────────────────────────────────────────
 if __name__=='__main__':
+    _load_cache_file()          # restore persisted vendor cache
     print(f"""
 ╔══════════════════════════════════════════════════╗
 ║   WiFi MILITARY RADAR  v5 PROD  –  {OS:<13}      ║
@@ -509,6 +523,7 @@ if __name__=='__main__':
 ║  Radar  →  http://localhost:5000                 ║
 ║  Export →  http://localhost:5000/api/export/csv  ║
 ║  Debug  →  http://localhost:5000/api/debug       ║
+║  Vendor →  http://localhost:5000/api/vendor_cache║
 ╚══════════════════════════════════════════════════╝""", flush=True)
     threading.Thread(target=scanner_loop, daemon=True).start()
     app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)

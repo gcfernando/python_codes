@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --green:#00ff41; --green-dim:#00aa2a; --green-dark:#003a0f;
+  --green:#00ff41; --green-dim:#00cc44; --green-dark:#003a0f;
   --green-glow:rgba(0,255,65,.18); --amber:#ffaa00; --red:#ff2244;
   --cyan:#00ccff; --teal:#00ffcc; --lime:#aaff00;
   --bg:#000a02; --panel:rgba(0,8,1,.93); --border:rgba(0,255,65,.2);
@@ -16,10 +16,10 @@
 html,body{width:100%;height:100%;background:var(--bg);color:var(--green);
   font-family:'Share Tech Mono',monospace;overflow:hidden;cursor:crosshair}
 body::before{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px)}
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.018) 3px,rgba(0,0,0,.018) 4px)}
 body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
-  background:rgba(0,255,65,.012);animation:flicker 9s infinite}
-@keyframes flicker{0%,94%,100%{opacity:1}95%{opacity:.82}96.5%{opacity:1}97.5%{opacity:.9}}
+  background:rgba(0,255,65,.004);animation:flicker 14s infinite}
+@keyframes flicker{0%,97%,100%{opacity:1}97.5%{opacity:.97}98.5%{opacity:1}99%{opacity:.98}}
 
 .layout{display:grid;grid-template-columns:280px 1fr 290px;grid-template-rows:46px 1fr 40px;height:100vh}
 
@@ -30,31 +30,31 @@ body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
 .topbar::after{content:'';position:absolute;bottom:0;left:-100%;height:1px;width:100%;
   background:linear-gradient(90deg,transparent,var(--green),transparent);animation:topline 4s linear infinite}
 @keyframes topline{to{left:100%}}
-.title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;
+.title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:14px;
   letter-spacing:5px;color:var(--green);text-shadow:0 0 18px var(--green);white-space:nowrap}
 .title em{color:var(--amber);font-style:normal}
-.topbar-right{display:flex;align-items:center;gap:13px;font-size:10px;letter-spacing:2px;flex-shrink:0}
-.stat-pill{display:flex;align-items:center;gap:5px;color:var(--green-dim)}
+.topbar-right{display:flex;align-items:center;gap:13px;font-size:11px;letter-spacing:2px;flex-shrink:0}
+.stat-pill{display:flex;align-items:center;gap:5px;color:#44cc66}
 .stat-pill b{color:var(--green)}
 .pill-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
   box-shadow:0 0 7px var(--green);animation:blink 1.6s ease-in-out infinite}
 .pill-dot.amber{background:var(--amber);box-shadow:0 0 7px var(--amber);animation:blink-fast .35s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 @keyframes blink-fast{0%,100%{opacity:1}50%{opacity:.4}}
-.top-btn{color:var(--green-dim);text-decoration:none;font-size:9px;letter-spacing:2px;
+.top-btn{color:#44cc66;text-decoration:none;font-size:10px;letter-spacing:2px;
   border:1px solid var(--border);padding:2px 8px;cursor:pointer;background:none;
   font-family:'Share Tech Mono',monospace;transition:all .2s}
 .top-btn:hover{color:var(--green);border-color:var(--green)}
 .top-btn.export{color:var(--amber);border-color:rgba(255,170,0,.3)}
 .top-btn.export:hover{border-color:var(--amber);box-shadow:0 0 8px rgba(255,170,0,.25)}
-#clock{font-size:12px;letter-spacing:3px;color:var(--green)}
+#clock{font-size:13px;letter-spacing:3px;color:var(--green)}
 
 /* SIDE PANELS */
 .lpanel,.rpanel{display:flex;flex-direction:column;background:var(--panel);overflow:hidden}
 .lpanel{border-right:1px solid var(--border)}
 .rpanel{border-left:1px solid var(--border)}
-.phead{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:4px;
-  color:var(--green-dim);padding:7px 13px;border-bottom:1px solid var(--border);
+.phead{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:4px;
+  color:#44cc66;padding:7px 13px;border-bottom:1px solid var(--border);
   text-transform:uppercase;flex-shrink:0}
 
 /* NETWORK LIST */
@@ -68,11 +68,11 @@ body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
 .net-item.active::before{content:'▶';position:absolute;left:3px;top:50%;
   transform:translateY(-50%);font-size:7px;color:var(--green)}
 .net-item.stale{opacity:.35}
-.net-ssid{font-size:11.5px;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
-.net-ssid.hidden{color:var(--green-dim);font-style:italic}
-.net-vendor{font-size:9px;color:var(--green-dim);margin-bottom:3px;opacity:.8}
-.net-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.badge{padding:0 4px;border:1px solid currentColor;font-size:8.5px;letter-spacing:.5px;border-radius:2px}
+.net-ssid{font-size:13px;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.net-ssid.hidden{color:#44cc66;font-style:italic}
+.net-vendor{font-size:10.5px;color:#44cc66;margin-bottom:3px;opacity:.9}
+.net-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.badge{padding:1px 5px;border:1px solid currentColor;font-size:9.5px;letter-spacing:.5px;border-radius:2px}
 .b-open {color:var(--red);   border-color:rgba(255,34,68,.4)}
 .b-wpa2 {color:var(--green); border-color:rgba(0,255,65,.35)}
 .b-wpa  {color:var(--amber); border-color:rgba(255,170,0,.35)}
@@ -100,22 +100,22 @@ body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
 .c-e{right:-26px;top:50%;transform:translateY(-50%)}
 .c-w{left:-26px;top:50%;transform:translateY(-50%)}
 .tooltip{position:absolute;background:#000d04f2;border:1px solid var(--green);
-  padding:9px 13px;font-size:10.5px;line-height:1.9;pointer-events:none;z-index:200;
+  padding:9px 13px;font-size:11.5px;line-height:2;pointer-events:none;z-index:200;
   display:none;white-space:nowrap;box-shadow:0 0 24px var(--green-glow)}
-.tt-ssid{font-size:12px}.tt-vendor{color:var(--green-dim);font-size:9.5px}.tt-dim{color:var(--green-dim)}
+.tt-ssid{font-size:13px}.tt-vendor{color:#44cc66;font-size:10.5px}.tt-dim{color:#44cc66}
 
 /* RIGHT PANEL */
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
 .stat-block{padding:8px 13px;border-bottom:1px solid var(--border)}
 .stat-block.nb{border-bottom:none}
 .stat-block.br{border-right:1px solid var(--border)}
-.stat-lbl{font-size:8.5px;letter-spacing:3px;color:var(--green-dim);text-transform:uppercase;margin-bottom:3px}
+.stat-lbl{font-size:9.5px;letter-spacing:3px;color:#44cc66;text-transform:uppercase;margin-bottom:3px}
 .stat-val{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;
   color:var(--green);text-shadow:0 0 14px var(--green);line-height:1}
 .stat-val.amber{color:var(--amber);text-shadow:0 0 14px var(--amber)}
 .stat-val.red  {color:var(--red);  text-shadow:0 0 14px var(--red)}
 .stat-val.teal {color:var(--teal); text-shadow:0 0 14px var(--teal)}
-.stat-val.small{font-size:11.5px}
+.stat-val.small{font-size:13px}
 
 /* CHANNEL */
 .chan-block{padding:8px 13px;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -124,12 +124,12 @@ body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
 .cbar{width:100%;min-height:2px;background:linear-gradient(to top,var(--green-dark),var(--green));
   box-shadow:0 0 3px var(--green-glow);transition:height .5s ease}
 .cbar.hi{background:linear-gradient(to top,#330000,var(--red));box-shadow:0 0 4px rgba(255,34,68,.4)}
-.cnum{font-size:7.5px;color:var(--green-dim);margin-top:2px}
+.cnum{font-size:9px;color:var(--green-dim);margin-top:2px}
 
 /* TABS */
 .tab-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
-.tab{flex:1;padding:6px 0;font-size:9px;letter-spacing:2px;text-align:center;cursor:pointer;
-  color:var(--green-dim);border:none;background:none;font-family:'Share Tech Mono',monospace;
+.tab{flex:1;padding:6px 0;font-size:10px;letter-spacing:2px;text-align:center;cursor:pointer;
+  color:#44cc66;border:none;background:none;font-family:'Share Tech Mono',monospace;
   text-transform:uppercase;transition:all .2s}
 .tab:hover{color:var(--green)}
 .tab.active{color:var(--green);border-bottom:2px solid var(--green);background:rgba(0,255,65,.05);margin-bottom:-1px}
@@ -139,24 +139,24 @@ body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
 
 /* GRAPH */
 .graph-area{padding:10px 13px;flex:1;display:flex;flex-direction:column;gap:6px;overflow:hidden}
-.graph-title{font-size:9px;color:var(--green-dim);letter-spacing:1.5px;flex-shrink:0}
+.graph-title{font-size:10px;color:#44cc66;letter-spacing:1.5px;flex-shrink:0}
 .graph-title b{color:var(--green)}
 #sig-graph{width:100%;flex:1;display:block;min-height:0}
 .graph-legend{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
-.legend-item{font-size:9px;display:flex;align-items:center;gap:4px;cursor:pointer;
+.legend-item{font-size:10px;display:flex;align-items:center;gap:4px;cursor:pointer;
   padding:2px 5px;border:1px solid transparent;transition:border-color .2s}
 .legend-item:hover{border-color:rgba(0,255,65,.3)}
 .legend-item.pinned{border-color:rgba(0,255,65,.4);background:rgba(0,255,65,.05)}
 .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.graph-hint{font-size:8.5px;color:rgba(0,255,65,.3);text-align:center;flex-shrink:0}
+.graph-hint{font-size:9.5px;color:rgba(0,255,65,.45);text-align:center;flex-shrink:0}
 
 /* DETAIL */
 .detail-block{flex:1;overflow-y:auto;padding:0 0 4px}
-.drow{display:flex;justify-content:space-between;padding:4px 13px;
-  border-bottom:1px solid rgba(0,255,65,.06);font-size:10.5px}
-.drow .dk{color:var(--green-dim);letter-spacing:1px;flex-shrink:0}
+.drow{display:flex;justify-content:space-between;padding:5px 13px;
+  border-bottom:1px solid rgba(0,255,65,.06);font-size:11.5px}
+.drow .dk{color:#44cc66;letter-spacing:1px;flex-shrink:0}
 .drow .dv{color:var(--green);text-align:right;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.detail-empty{color:var(--green-dim);font-size:11px;margin-top:20px;text-align:center;padding:13px}
+.detail-empty{color:#44cc66;font-size:12px;margin-top:20px;text-align:center;padding:13px}
 .band-row{display:flex;align-items:center;gap:5px;padding:2px 0 2px 8px;
   border-left:2px solid rgba(0,255,65,.15);margin:2px 0;cursor:pointer;transition:border-color .15s}
 .band-row:hover,.band-row.band-sel{border-left-color:var(--green)}
@@ -164,9 +164,9 @@ body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
 /* BOTTOM BAR */
 .bottombar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
   padding:0 16px;border-top:1px solid var(--border);background:var(--panel);
-  font-size:9.5px;letter-spacing:2px;color:var(--green-dim);overflow:hidden}
+  font-size:10.5px;letter-spacing:2px;color:#44cc66;overflow:hidden}
 .ticker{flex:1;overflow:hidden}
-.ticker-inner{white-space:nowrap;animation:ticker 40s linear infinite;font-size:9.5px}
+.ticker-inner{white-space:nowrap;animation:ticker 40s linear infinite;font-size:10.5px}
 @keyframes ticker{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
 
 /* ALERT */
@@ -175,13 +175,13 @@ body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
   border:1px solid var(--amber);padding:12px 20px;min-width:360px;max-width:540px;
   box-shadow:0 0 40px rgba(255,170,0,.3);animation:apop .25s ease-out}
 @keyframes apop{0%{opacity:0;transform:translateX(-50%) translateY(-8px)}100%{opacity:1;transform:translateX(-50%) translateY(0)}}
-.alert-hdr{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:4px;
+.alert-hdr{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:4px;
   color:var(--amber);margin-bottom:9px;display:flex;align-items:center;gap:8px}
-.alert-entry{font-size:11px;padding:4px 0;border-bottom:1px solid rgba(255,170,0,.1);
+.alert-entry{font-size:12px;padding:4px 0;border-bottom:1px solid rgba(255,170,0,.1);
   display:flex;justify-content:space-between;align-items:center;color:var(--green)}
-.ae-vendor{color:var(--green-dim);font-size:9px}
+.ae-vendor{color:#00cc44;font-size:10.5px}
 .ae-right{display:flex;gap:6px;align-items:center}
-.ae-mac{font-size:8.5px;color:var(--green-dim)}
+.ae-mac{font-size:10px;color:#00cc44}
 .alert-close{position:absolute;top:8px;right:10px;cursor:pointer;
   color:var(--amber);font-size:14px;background:none;border:none;font-family:monospace}
 
@@ -268,10 +268,10 @@ body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
       <!-- GRAPH TAB -->
       <div class="tab-pane active" id="tab-graph">
         <div class="graph-area">
-          <div class="graph-title" id="graph-title">Top <b>5</b> networks · click legend to pin</div>
+          <div class="graph-title" id="graph-title">Top <b>5</b> networks · signal strength (dBm) · click to pin</div>
           <canvas id="sig-graph"></canvas>
           <div class="graph-legend" id="graph-legend"></div>
-          <div class="graph-hint">live · 4s interval · 60 data points</div>
+          <div class="graph-hint">auto-scaled dBm · 4s interval · 60 data points</div>
         </div>
       </div>
       <!-- DETAIL TAB -->
@@ -375,10 +375,20 @@ function getDemoNets(){
 }
 
 // ── Fetch ────────────────────────────────────────────────────────
+let _lastEtag = '';
 async function fetchNets(){
   try{
-    const r=await fetch('/api/scan',{signal:AbortSignal.timeout(4000)});
+    const headers = {};
+    if(_lastEtag) headers['If-None-Match'] = _lastEtag;
+    const r=await fetch('/api/scan',{signal:AbortSignal.timeout(5000), headers});
+    // 304 = no change, skip full parse
+    if(r.status===304){
+      serverOnline=true;
+      document.getElementById('b-offline').style.display='none';
+      return networks; // return cached
+    }
     if(!r.ok) throw 0;
+    _lastEtag = r.headers.get('ETag') || '';
     const d=await r.json();
     serverOnline=true;
     document.getElementById('b-offline').style.display='none';
@@ -503,7 +513,7 @@ function renderList(){
     return `<div class="net-item ${isAnySelected?'active':''} ${isStale?'stale':''}"
                onclick="selectAP('${best.bssid}')">
       <div class="net-ssid ${isHidden?'hidden':''}">${esc(best.ssid)}${multiband?` <span style="font-size:8.5px;color:var(--green-dim);font-style:normal">(${group.length} radios)</span>`:''}</div>
-      <div class="net-vendor">📡 ${esc(best.vendor||'Unknown')}</div>
+      <div class="net-vendor">📡 ${best.vendor==='Looking up…'?'<span style="color:var(--amber);font-size:9.5px;animation:blink 1.4s infinite">⟳ resolving…</span>':esc(best.vendor||'Unknown')}</div>
       <div class="net-meta">
         <div class="sigbar-wrap"><div class="sigbar ${sigClass(pct)}" style="width:${pct}%"></div></div>
         <span style="font-size:10px;color:var(--green-dim)">${best.signal_dbm}dBm</span>
@@ -570,7 +580,8 @@ function renderDetail(){
 function updateHistory(){
   for(const n of networks){
     if(!sigHistory[n.bssid]) sigHistory[n.bssid]=[];
-    sigHistory[n.bssid].push(n.signal_pct);
+    // Store object with both dBm and pct for flexible graphing
+    sigHistory[n.bssid].push({dbm: n.signal_dbm, pct: n.signal_pct});
     if(sigHistory[n.bssid].length>60) sigHistory[n.bssid].shift();
   }
 }
@@ -581,57 +592,111 @@ function drawGraph(){
   if(W<10||H<10) return;
   gc.clearRect(0,0,W,H);
 
-  // Grid
-  for(let i=0;i<=4;i++){
-    const y=H*i/4;
-    gc.strokeStyle='rgba(0,255,65,.07)'; gc.lineWidth=.5;
-    gc.beginPath(); gc.moveTo(0,y); gc.lineTo(W,y); gc.stroke();
-    gc.fillStyle='rgba(0,255,65,.25)'; gc.font='8px Share Tech Mono';
-    gc.fillText(`${100-i*25}%`,2,y+9);
-  }
-
   // Which BSSIDs to show (pinned + top by signal, max 8)
   const top=[...networks].sort((a,b)=>b.signal_pct-a.signal_pct).slice(0,5).map(n=>n.bssid);
   const shown=[...new Set([...pinnedBSSIDs,...top])].slice(0,8);
 
   if(!shown.length){
-    gc.fillStyle='rgba(0,255,65,.2)'; gc.font='10px Share Tech Mono'; gc.textAlign='center';
+    gc.fillStyle='rgba(0,255,65,.35)'; gc.font='11px Share Tech Mono'; gc.textAlign='center';
     gc.fillText('Scanning for networks…',W/2,H/2); gc.textAlign='left'; return;
   }
 
+  // ── Auto-scale: find min/max dBm across all visible histories ──
+  let minDbm=0, maxDbm=-100;
+  shown.forEach(bssid=>{
+    const hist=sigHistory[bssid];
+    if(!hist||!hist.length) return;
+    hist.forEach(p=>{
+      if(p.dbm < minDbm) minDbm=p.dbm;
+      if(p.dbm > maxDbm) maxDbm=p.dbm;
+    });
+  });
+  // Add comfortable padding so lines never touch edges
+  const pad = Math.max(5, Math.round((maxDbm-minDbm)*0.15)) || 10;
+  const yMin = minDbm - pad;
+  const yMax = maxDbm + pad;
+  const yRange = yMax - yMin || 1;
+
+  // Layout margins
+  const ML=42, MR=46, MT=14, MB=22;
+  const gW=W-ML-MR, gH=H-MT-MB;
+
+  function toY(dbm){ return MT + gH - ((dbm-yMin)/yRange)*gH; }
+
+  // ── Grid lines + Y-axis labels ──
+  // Pick ~5 round dBm tick marks within range
+  const tickStep = [1,2,5,10,15,20].find(s=>(yRange/s)<=6) || 10;
+  const tickStart = Math.ceil(yMin/tickStep)*tickStep;
+  gc.font='9px Share Tech Mono';
+  for(let dbm=tickStart; dbm<=yMax; dbm+=tickStep){
+    const y=toY(dbm);
+    // Grid line
+    gc.strokeStyle='rgba(0,255,65,.12)'; gc.lineWidth=.6;
+    gc.setLineDash([3,4]);
+    gc.beginPath(); gc.moveTo(ML,y); gc.lineTo(ML+gW,y); gc.stroke();
+    gc.setLineDash([]);
+    // Y label
+    gc.fillStyle='rgba(0,255,65,.55)'; gc.textAlign='right';
+    gc.fillText(`${dbm}`, ML-5, y+3.5);
+  }
+
+  // Axis border lines
+  gc.strokeStyle='rgba(0,255,65,.2)'; gc.lineWidth=1;
+  gc.beginPath(); gc.moveTo(ML,MT); gc.lineTo(ML,MT+gH); gc.lineTo(ML+gW,MT+gH); gc.stroke();
+
+  // ── Plot each network ──
   shown.forEach((bssid,idx)=>{
     const hist=sigHistory[bssid];
     if(!hist||hist.length<2) return;
     const col=graphColor(bssid,idx);
     const pinned=pinnedBSSIDs.has(bssid)||bssid===selectedBSSID;
+
     gc.beginPath();
-    hist.forEach((v,i)=>{
-      const x=(i/(Math.max(hist.length-1,1)))*W;
-      const y=H-(v/100)*(H-10)-5;
-      i===0?gc.moveTo(x,y):gc.lineTo(x,y);
+    hist.forEach((p,i)=>{
+      const x = ML + (i/(Math.max(hist.length-1,1)))*gW;
+      const y = toY(p.dbm);
+      i===0 ? gc.moveTo(x,y) : gc.lineTo(x,y);
     });
-    gc.strokeStyle=col; gc.lineWidth=pinned?2:1.2;
-    gc.shadowColor=col; gc.shadowBlur=pinned?8:3;
-    gc.setLineDash(pinned?[]:[3,4]); gc.stroke();
+    gc.strokeStyle=col;
+    gc.lineWidth=pinned?2.5:1.4;
+    gc.shadowColor=col; gc.shadowBlur=pinned?10:4;
+    gc.setLineDash(pinned?[]:[4,4]); gc.stroke();
     gc.shadowBlur=0; gc.setLineDash([]);
-    // Last value bubble
-    const lv=hist[hist.length-1];
-    const lx=W-4, ly=H-(lv/100)*(H-10)-5;
-    gc.beginPath(); rc.arc; gc.arc(lx,ly,3,0,Math.PI*2);
-    gc.fillStyle=col; gc.fill();
-    gc.fillStyle=col; gc.font='8px Share Tech Mono'; gc.textAlign='right';
-    gc.fillText(`${lv}%`,lx-5,ly+3); gc.textAlign='left';
+
+    // End-of-line dot + value label
+    const last=hist[hist.length-1];
+    const lx=ML+gW, ly=toY(last.dbm);
+    gc.beginPath(); gc.arc(lx,ly,pinned?4:3,0,Math.PI*2);
+    gc.fillStyle=col;
+    gc.shadowColor=col; gc.shadowBlur=pinned?10:5;
+    gc.fill(); gc.shadowBlur=0;
+
+    // Value label on right side
+    gc.fillStyle=col; gc.font=`${pinned?'bold ':''}10px Share Tech Mono`;
+    gc.textAlign='left';
+    gc.shadowColor=col; gc.shadowBlur=3;
+    gc.fillText(`${last.dbm}`, lx+6, ly+3.5);
+    gc.shadowBlur=0;
   });
 
-  // Legend
+  // ── X-axis label ──
+  gc.fillStyle='rgba(0,255,65,.3)'; gc.font='8px Share Tech Mono';
+  gc.textAlign='left'; gc.fillText('← 60 scans', ML+2, MT+gH+14);
+  gc.textAlign='right'; gc.fillText('live →', ML+gW, MT+gH+14);
+
+  // ── Legend ──
+  gc.textAlign='left';
   document.getElementById('graph-legend').innerHTML=shown.map((bssid,idx)=>{
     const n=networks.find(x=>x.bssid===bssid);
     const col=graphColor(bssid,idx);
     const lbl=(n?.ssid||bssid).slice(0,16);
     const pinned=pinnedBSSIDs.has(bssid)||bssid===selectedBSSID;
+    const last=sigHistory[bssid];
+    const dbm=last?.length ? last[last.length-1].dbm : '?';
     return `<div class="legend-item ${pinned?'pinned':''}" onclick="togglePin('${bssid}')" title="${bssid}">
       <div class="legend-dot" style="background:${col};box-shadow:0 0 4px ${col}"></div>
       <span style="color:${col};font-size:9px">${esc(lbl)}</span>
+      <span style="color:${col};opacity:.6;font-size:8.5px">${dbm}dBm</span>
     </div>`;
   }).join('');
 }
@@ -746,37 +811,115 @@ function drawRadar(){
   }
 
   // Pass 2: labels — one per SSID group, placed at the STRONGEST signal AP
-  // Multi-band routers show:  "GC  ●2.4 ●5 ●6"
-  const labelledSSIDs = new Set();
+  // Uses collision detection + canvas-bounds clamping
+  // Stale blips still get a label (dimmed), hidden SSIDs each get their own label
+  const labelledKeys = new Set();  // key = ssid (or bssid for <hidden>)
   const sortedBySignal = [...networks].sort((a,b)=>b.signal_pct-a.signal_pct);
-  for(const n of sortedBySignal){
-    if(n.stale) continue;
-    if(labelledSSIDs.has(n.ssid)) continue;
-    labelledSSIDs.add(n.ssid);
+  const placedLabels = []; // [{x,y,w,h}] for collision detection
 
-    const siblings = ssidGroups[n.ssid] || [n];
+  function labelRect(x, y, w, h) {
+    return {x, y, w, h};
+  }
+  function measureLabel(text, fontSize) {
+    return text.length * fontSize * 0.63 + 6;
+  }
+  function overlaps(a, b) {
+    const pad = 3;
+    return !(a.x+a.w+pad < b.x || b.x+b.w+pad < a.x ||
+             a.y+a.h+pad < b.y || b.y+b.h+pad < a.y);
+  }
+  function clampToCanvas(lx, ly, w, h) {
+    // Keep label inside radar canvas with a small margin
+    const margin = 4;
+    lx = Math.max(margin, Math.min(W - w - margin, lx));
+    ly = Math.max(h + margin, Math.min(H - margin, ly));
+    return [lx, ly];
+  }
+  function findLabelPos(bx, by, sz, textW, fontSize) {
+    const h = fontSize + 2;
+    // Candidate offsets: right, right-up, right-down, left, left-up, left-down,
+    //                    above, below, far variants
+    const offsets = [
+      [sz + 5,         fontSize * 0.35],          // right-center
+      [sz + 5,         -h + 2],                   // right-up
+      [sz + 5,         h + 2],                    // right-down
+      [-(textW+sz+5),  fontSize * 0.35],          // left-center
+      [-(textW+sz+5),  -h + 2],                   // left-up
+      [-(textW+sz+5),  h + 2],                    // left-down
+      [-textW/2,       -(sz + 8)],                // above-center
+      [-textW/2,       sz + fontSize + 4],        // below-center
+      [sz + 5,         -h * 2],                   // right-far-up
+      [sz + 5,         h * 2 + 2],               // right-far-down
+      [-(textW+sz+5),  -h * 2],                   // left-far-up
+    ];
+    for (const [dx, dy] of offsets) {
+      let lx = bx + dx, ly = by + dy;
+      [lx, ly] = clampToCanvas(lx, ly, textW, h);
+      const r = labelRect(lx, ly - fontSize, textW, h);
+      if (!placedLabels.some(p => overlaps(r, p))) {
+        return [lx, ly, r];
+      }
+    }
+    // Fallback: force-place to the right, clamped — always show something
+    let lx = bx + sz + 5, ly = by + fontSize * 0.35;
+    [lx, ly] = clampToCanvas(lx, ly, textW, h);
+    return [lx, ly, labelRect(lx, ly - fontSize, textW, h)];
+  }
+
+  for(const n of sortedBySignal){
+    // Key: hidden SSIDs use bssid so each gets its own label; others dedupe by ssid
+    const key = n.ssid === '<hidden>' ? n.bssid : n.ssid;
+    if(labelledKeys.has(key)) continue;
+    labelledKeys.add(key);
+
+    const siblings = n.ssid === '<hidden>' ? [n] : (ssidGroups[n.ssid] || [n]);
     const a=(n.angle-90)*Math.PI/180, d=(n.distance/100)*R;
     const bx=cx+d*Math.cos(a), by=cy+d*Math.sin(a);
     const col=blipColor(n), sz=2.5+(n.signal_pct/100)*4;
     const sel=siblings.some(s=>s.bssid===selectedBSSID);
+    const isStale = n.stale;
 
-    // Main SSID label
-    const lbl=n.ssid.length>13?n.ssid.slice(0,12)+'…':n.ssid;
-    rc.font=`${sel?'bold ':''}10px Share Tech Mono`;
-    rc.fillStyle=col; rc.globalAlpha=.85;
-    rc.shadowColor=col; rc.shadowBlur=3;
-    rc.fillText(lbl, bx+sz+5, by+3.5);
+    const rawLbl = n.ssid==='<hidden>' ? '<hidden>' : n.ssid;
+    const lbl = rawLbl.length > 14 ? rawLbl.slice(0,13)+'…' : rawLbl;
+    const fontSize = sel ? 11 : 10;
+    rc.font=`${sel?'bold ':''}${fontSize}px Share Tech Mono`;
+    const textW = measureLabel(lbl, fontSize);
 
-    // Multi-band badge: show bands for all siblings
-    if(siblings.length > 1){
+    const [lx, ly, rect] = findLabelPos(bx, by, sz, textW, fontSize);
+    placedLabels.push(rect);
+
+    // Dark background pill for readability over grid lines
+    rc.globalAlpha = isStale ? 0.4 : 0.78;
+    rc.fillStyle = 'rgba(0,5,1,0.88)';
+    rc.fillRect(rect.x - 2, rect.y - 1, rect.w + 4, rect.h + 2);
+    rc.globalAlpha = 1;
+
+    // Label text — stale gets dimmed
+    const alpha = isStale ? 0.38 : (sel ? 1 : 0.92);
+    rc.fillStyle=col; rc.globalAlpha=alpha;
+    rc.shadowColor=col; rc.shadowBlur=isStale?1:(sel?6:2);
+    rc.fillText(lbl, lx, ly);
+    rc.globalAlpha=1; rc.shadowBlur=0;
+
+    // Multi-band badge (only for non-hidden, non-stale with multiple radios)
+    if(siblings.length > 1 && !isStale){
       const bands = [...new Set(siblings.map(s=>s.band))].sort();
       const bandStr = siblings.length + '× ' + bands.map(b=>b==='5GHz'?'5G':b==='2.4GHz'?'2.4':'6G').join('+');
-      rc.font='8px Share Tech Mono';
-      rc.fillStyle='rgba(0,255,65,.5)';
+      const badgeFontSize = 8;
+      rc.font=`${badgeFontSize}px Share Tech Mono`;
+      const badgeW = measureLabel(bandStr, badgeFontSize);
+      const badgeLy = ly + 13;
+      // clamp badge too
+      let blx = lx;
+      [blx] = clampToCanvas(lx, badgeLy, badgeW, badgeFontSize + 2);
+      rc.fillStyle='rgba(0,255,200,.6)';
+      rc.globalAlpha=0.9;
       rc.shadowBlur=0;
-      rc.fillText(bandStr, bx+sz+5, by+14);
+      const bRect = labelRect(blx, badgeLy - badgeFontSize, badgeW, badgeFontSize + 2);
+      placedLabels.push(bRect);
+      rc.fillText(bandStr, blx, badgeLy);
+      rc.globalAlpha=1;
     }
-    rc.globalAlpha=1; rc.shadowBlur=0;
   }
   rc.beginPath(); rc.arc(cx,cy,R,0,Math.PI*2);
   rc.strokeStyle='rgba(0,255,65,.65)'; rc.lineWidth=2;
@@ -819,7 +962,7 @@ RC.addEventListener('mousemove',e=>{
     tip.style.left=(e.offsetX+16)+'px'; tip.style.top=(e.offsetY-8)+'px';
     const col=blipColor(hit);
     tip.innerHTML=`<div class="tt-ssid" style="color:${col}">${esc(hit.ssid)}</div>
-      <div class="tt-vendor">📡 ${esc(hit.vendor||'Unknown')}</div>
+      <div class="tt-vendor">📡 ${hit.vendor==='Looking up…'?'<span style="color:var(--amber)">⟳ resolving…</span>':esc(hit.vendor||'Unknown')}</div>
       <div class="tt-dim">${hit.bssid}</div>
       <div>Signal: ${hit.signal_dbm} dBm &nbsp;(${hit.signal_pct}%)</div>
       <div>Ch <b>${hit.channel}</b> &nbsp;·&nbsp; ${hit.band} &nbsp;·&nbsp; <b style="color:${col}">${hit.security}</b></div>`;
@@ -857,7 +1000,9 @@ async function poll(){
   dot.className='pill-dot';
   document.getElementById('scan-status').textContent='ACTIVE';
   prevCount=nets.length;
-  setTimeout(poll, serverOnline?4000:3000);
+  // Poll faster (2s) while any vendor is still resolving, else 4s
+  const hasResolving = nets.some(n=>n.vendor==='Looking up…');
+  setTimeout(poll, serverOnline?(hasResolving?2000:4000):3000);
 }
 
 drawRadar();
