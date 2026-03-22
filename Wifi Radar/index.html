@@ -873,13 +873,25 @@ function drawRadar(){
   rc.beginPath(); rc.arc(cx,cy,3,0,Math.PI*2); rc.fillStyle='#00ff41';
   rc.shadowColor='#00ff41'; rc.shadowBlur=14; rc.fill(); rc.shadowBlur=0;
 
-  // Group networks by SSID to avoid label clutter for multi-band routers
-  // Draw all blips first, then labels (so labels render on top)
+  // Group by SSID so duplicate radios can get distinct, traceable labels
   const ssidGroups = {};
   for(const n of networks){
     if(!ssidGroups[n.ssid]) ssidGroups[n.ssid]=[];
     ssidGroups[n.ssid].push(n);
   }
+
+  const bandShort = b => b==='5GHz' ? '5G' : b==='2.4GHz' ? '2.4G' : b==='6GHz' ? '6G' : b;
+  const shortBssid = bssid => {
+    const clean = String(bssid||'').replace(/[^A-Fa-f0-9]/g,'').toUpperCase();
+    return clean ? clean.slice(-4) : '----';
+  };
+  const clipLabel = (text, max=22) => text.length > max ? text.slice(0, max-1) + '…' : text;
+  const makeRadarLabel = (n, siblings) => {
+    const band = bandShort(n.band);
+    if(n.ssid === '<hidden>') return `<hidden> · ${band} · ${shortBssid(n.bssid)}`;
+    if(siblings.length === 1) return clipLabel(n.ssid, 20);
+    return clipLabel(`${n.ssid} · ${band} · ${shortBssid(n.bssid)}`, 24);
+  };
 
   // Pass 1: dots + rings
   for(const n of networks){
@@ -903,130 +915,105 @@ function drawRadar(){
     blips[n.bssid]=blip;
   }
 
-  // Pass 2: labels — one per SSID group, placed at the STRONGEST signal AP
-  // Uses collision detection + canvas-bounds clamping
-  // Stale blips still get a label (dimmed), hidden SSIDs each get their own label
-  const labelledKeys = new Set();  // key = ssid (or bssid for <hidden>)
+  // Pass 2: label every visible blip with a readable chip so there are no anonymous dots
   const sortedBySignal = [...networks].sort((a,b)=>b.signal_pct-a.signal_pct);
-  const placedLabels = []; // [{x,y,w,h}] for collision detection
+  const placedLabels = [];
 
   function labelRect(x, y, w, h) {
     return {x, y, w, h};
   }
-  function measureLabel(text, fontSize) {
-    return text.length * fontSize * 0.63 + 6;
+  function measureLabel(text, fontSize, isBold=false) {
+    rc.save();
+    rc.font = `${isBold ? 'bold ' : ''}${fontSize}px Share Tech Mono`;
+    const width = Math.ceil(rc.measureText(text).width);
+    rc.restore();
+    return width;
   }
   function overlaps(a, b) {
-    const pad = 3;
+    const pad = 4;
     return !(a.x+a.w+pad < b.x || b.x+b.w+pad < a.x ||
              a.y+a.h+pad < b.y || b.y+b.h+pad < a.y);
   }
   function clampToCanvas(lx, ly, w, h) {
-    // Keep label inside radar canvas with a small margin
-    const margin = 4;
+    const margin = 6;
     lx = Math.max(margin, Math.min(W - w - margin, lx));
     ly = Math.max(h + margin, Math.min(H - margin, ly));
     return [lx, ly];
   }
-  function findLabelPos(bx, by, sz, textW, fontSize) {
-    const h = fontSize + 2;
-    // Candidate offsets: right, right-up, right-down, left, left-up, left-down,
-    //                    above, below, far variants
+  function findLabelPos(bx, by, sz, labelW, labelH) {
     const offsets = [
-      [sz + 5,         fontSize * 0.35],          // right-center
-      [sz + 5,         -h + 2],                   // right-up
-      [sz + 5,         h + 2],                    // right-down
-      [-(textW+sz+5),  fontSize * 0.35],          // left-center
-      [-(textW+sz+5),  -h + 2],                   // left-up
-      [-(textW+sz+5),  h + 2],                    // left-down
-      [-textW/2,       -(sz + 8)],                // above-center
-      [-textW/2,       sz + fontSize + 4],        // below-center
-      [sz + 5,         -h * 2],                   // right-far-up
-      [sz + 5,         h * 2 + 2],               // right-far-down
-      [-(textW+sz+5),  -h * 2],                   // left-far-up
+      [sz + 10,        0],
+      [sz + 10,       -labelH - 2],
+      [sz + 10,        labelH + 2],
+      [-(labelW+sz+10), 0],
+      [-(labelW+sz+10), -labelH - 2],
+      [-(labelW+sz+10),  labelH + 2],
+      [-(labelW/2),   -(sz + labelH + 8)],
+      [-(labelW/2),    sz + labelH + 8],
+      [sz + 16,       -(labelH * 1.7)],
+      [sz + 16,        labelH * 1.7],
+      [-(labelW+sz+16), -(labelH * 1.7)],
+      [-(labelW+sz+16),  labelH * 1.7],
     ];
     for (const [dx, dy] of offsets) {
       let lx = bx + dx, ly = by + dy;
-      [lx, ly] = clampToCanvas(lx, ly, textW, h);
-      const r = labelRect(lx, ly - fontSize, textW, h);
-      if (!placedLabels.some(p => overlaps(r, p))) {
-        return [lx, ly, r];
+      [lx, ly] = clampToCanvas(lx, ly, labelW, labelH);
+      const rect = labelRect(lx, ly - labelH/2, labelW, labelH);
+      if (!placedLabels.some(p => overlaps(rect, p))) {
+        return [lx, ly, rect, false];
       }
     }
-    // Fallback: force-place to the right, clamped — always show something
-    let lx = bx + sz + 5, ly = by + fontSize * 0.35;
-    [lx, ly] = clampToCanvas(lx, ly, textW, h);
-    return [lx, ly, labelRect(lx, ly - fontSize, textW, h)];
+    let lx = bx + sz + 10, ly = by;
+    [lx, ly] = clampToCanvas(lx, ly, labelW, labelH);
+    return [lx, ly, labelRect(lx, ly - labelH/2, labelW, labelH), true];
+  }
+  function drawLabelChip(lx, ly, labelW, labelH, text, color, selected, stale) {
+    const radius = labelH / 2;
+    const chipX = lx;
+    const chipY = ly - labelH / 2;
+    rc.save();
+    rc.globalAlpha = stale ? 0.45 : 1;
+    rc.beginPath();
+    rc.roundRect(chipX, chipY, labelW, labelH, radius);
+    rc.fillStyle = selected ? 'rgba(0,18,8,0.96)' : 'rgba(0,10,4,0.9)';
+    rc.fill();
+    rc.strokeStyle = selected ? 'rgba(255,255,255,0.65)' : 'rgba(0,255,120,0.45)';
+    rc.lineWidth = selected ? 1.6 : 1.1;
+    rc.stroke();
+    rc.shadowColor = 'rgba(0,0,0,0)';
+    rc.fillStyle = color;
+    rc.font = `${selected ? 'bold ' : ''}${selected ? 13 : 12}px Share Tech Mono`;
+    rc.textBaseline = 'middle';
+    rc.fillText(text, chipX + 8, ly + 0.5);
+    rc.restore();
   }
 
   for(const n of sortedBySignal){
-    // Key: hidden SSIDs use bssid so each gets its own label; others dedupe by ssid
-    const key = n.ssid === '<hidden>' ? n.bssid : n.ssid;
-    if(labelledKeys.has(key)) continue;
-    labelledKeys.add(key);
-
     const siblings = n.ssid === '<hidden>' ? [n] : (ssidGroups[n.ssid] || [n]);
     const a=(n.angle-90)*Math.PI/180, d=(n.distance/100)*R;
     const bx=cx+d*Math.cos(a), by=cy+d*Math.sin(a);
     const col=blipColor(n), sz=2.5+(n.signal_pct/100)*4;
-    const sel=siblings.some(s=>s.bssid===selectedBSSID);
+    const sel=n.bssid===selectedBSSID;
     const isStale = n.stale;
+    const lbl = makeRadarLabel(n, siblings);
+    const fontSize = sel ? 13 : 12;
+    const textW = measureLabel(lbl, fontSize, sel);
+    const labelW = textW + 16;
+    const labelH = sel ? 22 : 20;
 
-    const rawLbl = n.ssid==='<hidden>' ? '<hidden>' : n.ssid;
-    const lbl = rawLbl.length > 14 ? rawLbl.slice(0,13)+'…' : rawLbl;
-    const fontSize = sel ? 11 : 10;
-    rc.font=`${sel?'bold ':''}${fontSize}px Share Tech Mono`;
-    const textW = measureLabel(lbl, fontSize);
-
-    const [lx, ly, rect] = findLabelPos(bx, by, sz, textW, fontSize);
+    const [lx, ly, rect, forced] = findLabelPos(bx, by, sz, labelW, labelH);
     placedLabels.push(rect);
 
-    // Draw label with dark stroke outline for crisp readability — no background, no blur
-    const alpha = isStale ? 0.4 : (sel ? 1 : 0.95);
-    rc.font = `${sel ? 'bold ' : ''}${fontSize}px Share Tech Mono`;
-    rc.globalAlpha = alpha;
+    rc.save();
+    rc.strokeStyle = forced ? 'rgba(0,255,120,0.35)' : 'rgba(0,255,120,0.22)';
+    rc.lineWidth = forced ? 1.1 : 0.8;
+    rc.beginPath();
+    rc.moveTo(bx, by);
+    rc.lineTo(lx, ly);
+    rc.stroke();
+    rc.restore();
 
-    // 1. Dark outline stroke — separates text from radar grid cleanly
-    rc.strokeStyle = 'rgba(0,0,0,0.9)';
-    rc.lineWidth   = 3;
-    rc.lineJoin    = 'round';
-    rc.strokeText(lbl, lx, ly);
-
-    // 2. Coloured fill on top
-    rc.fillStyle   = col;
-    rc.shadowColor = col;
-    rc.shadowBlur  = sel ? 8 : 4;
-    rc.fillText(lbl, lx, ly);
-
-    rc.globalAlpha = 1;
-    rc.shadowBlur  = 0;
-    rc.lineWidth   = 1;
-
-    // Multi-band badge (only for non-hidden, non-stale with multiple radios)
-    if(siblings.length > 1 && !isStale){
-      const bands = [...new Set(siblings.map(s=>s.band))].sort();
-      const bandStr = siblings.length + '× ' + bands.map(b=>b==='5GHz'?'5G':b==='2.4GHz'?'2.4':'6G').join('+');
-      const badgeFontSize = 8;
-      rc.font = `${badgeFontSize}px Share Tech Mono`;
-      const badgeW = measureLabel(bandStr, badgeFontSize);
-      const badgeLy = ly + 13;
-      let blx = lx;
-      [blx] = clampToCanvas(lx, badgeLy, badgeW, badgeFontSize + 2);
-      placedLabels.push(labelRect(blx, badgeLy - badgeFontSize, badgeW, badgeFontSize + 2));
-
-      rc.globalAlpha = 0.9;
-      rc.strokeStyle = 'rgba(0,0,0,0.9)';
-      rc.lineWidth   = 2.5;
-      rc.lineJoin    = 'round';
-      rc.strokeText(bandStr, blx, badgeLy);
-      rc.fillStyle   = 'rgba(0,255,200,.85)';
-      rc.shadowColor = 'rgba(0,255,200,.4)';
-      rc.shadowBlur  = 3;
-      rc.fillText(bandStr, blx, badgeLy);
-      rc.globalAlpha = 1;
-      rc.shadowBlur  = 0;
-      rc.lineWidth   = 1;
-    }
+    drawLabelChip(lx, ly, labelW, labelH, lbl, col, sel, isStale);
   }
   rc.beginPath(); rc.arc(cx,cy,R,0,Math.PI*2);
   rc.strokeStyle='rgba(0,255,65,.65)'; rc.lineWidth=2;

@@ -33,7 +33,7 @@ No cloud. No tracking. No nonsense. **100% local.**
 | 🏭 **Vendor Identification** | Manufacturer resolved via macvendors.com API — cached locally after first lookup |
 | 📈 **Signal History Graph** | Auto-scaled dBm graph tracking signal strength over time — pin any AP |
 | 🎨 **Color-Coded Security** | Security level visible at a glance — teal=WPA3, red=OPEN, orange=WEP |
-| 📋 **Multi-Band Grouping** | WiFi 6/7 routers with multiple radios shown as one entry with sub-bands |
+| 📋 **Per-Blip Radar Labels** | Every visible radar blip now carries its own identifier, including band/BSSID hints for duplicate SSIDs |
 | 📶 **Radio Generation** | WiFi 4 / 5 / 6 / 7 detection (802.11n/ac/ax/be) shown as badges |
 | 🔊 **Noise Floor + SNR** | Signal-to-noise ratio displayed per AP — Good/Fair/Poor quality rating |
 | 🔐 **Cipher Detection** | CCMP vs TKIP per AP — TKIP flagged in red as weak cipher |
@@ -193,7 +193,7 @@ Rate-limited to 1 request/sec to respect free tier limits.
 <summary><b>🔍 Why does my router show multiple blips?</b></summary>
 
 Modern **WiFi 6/6E/7 routers** broadcast the same SSID from multiple physical radios (2.4 GHz, 5 GHz, 6 GHz) — each with its own MAC address.
-WiFi-Radar detects this and groups them under one entry, showing each band as a sub-row.
+WiFi-Radar keeps them grouped in the list, but the radar now labels each visible blip individually so no dot appears anonymous.
 </details>
 
 ---
