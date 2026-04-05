@@ -47,16 +47,67 @@ def main():
         return
 
     steps = [
+        # -------------------------
+        # Diagnostics (before fix)
+        # -------------------------
+        ("Show IP configuration", "ipconfig /all"),
+        ("Show routing table", "route print"),
+        ("Show WinHTTP proxy", "netsh winhttp show proxy"),
+
+        # -------------------------
+        # DHCP + DNS cleanup
+        # -------------------------
+        ("Release DHCP lease", "ipconfig /release"),
         ("Flush DNS cache", "ipconfig /flushdns"),
         ("Register DNS", "ipconfig /registerdns"),
         ("Renew DHCP lease", "ipconfig /renew"),
+
+        # -------------------------
+        # Cache resets
+        # -------------------------
         ("Clear ARP cache", "arp -d *"),
         ("Clear NetBIOS cache", "nbtstat -R"),
         ("Reload NetBIOS names", "nbtstat -RR"),
-        ("Reset IPv4 stack", "netsh int ipv4 reset"),
-        ("Reset IPv6 stack", "netsh int ipv6 reset"),
+
+        # -------------------------
+        # Proxy & SSL fixes
+        # -------------------------
+        ("Reset WinHTTP proxy", "netsh winhttp reset proxy"),
+        ("Clear SSL state", "RunDll32.exe InetCpl.cpl,ClearMyTracksByProcess 8"),
+
+        # -------------------------
+        # Service restart (safe only)
+        # -------------------------
+        ("Restart WLAN service", 'powershell -Command "Restart-Service WlanSvc -Force"'),
+
+        # -------------------------
+        # Core network resets
+        # -------------------------
         ("Reset TCP/IP stack", "netsh int ip reset"),
         ("Repair Winsock catalog", "netsh winsock reset"),
+
+        # -------------------------
+        # Optional deeper resets
+        # -------------------------
+        ("Reset IPv4 stack (optional)", "netsh int ipv4 reset"),
+        ("Reset IPv6 stack (optional)", "netsh int ipv6 reset"),
+
+        # -------------------------
+        # Adapter restart (safe)
+        # -------------------------
+        ("Restart active adapters",
+        'powershell -Command "Get-NetAdapter | Where-Object {$_.Status -eq \'Up\'} | Disable-NetAdapter -Confirm:$false; '
+        'Start-Sleep -Seconds 2; '
+        'Get-NetAdapter | Enable-NetAdapter -Confirm:$false"'),
+
+        # -------------------------
+        # Connectivity tests (after fix)
+        # -------------------------
+        ("Ping localhost", "ping -n 2 127.0.0.1"),
+        ("Ping gateway",
+        'powershell -Command "$gw=(Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Select -First 1).NextHop; if($gw){ping -n 2 $gw}else{Write-Output \'No gateway found\'}"'),
+        ("Ping public IP (Google DNS)", "ping -n 2 8.8.8.8"),
+        ("Test DNS resolution", "nslookup google.com"),
     ]
 
     print(Fore.CYAN + "\nSafe Network Stabilization Routine\n" + Style.RESET_ALL)
