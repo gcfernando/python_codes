@@ -1,4 +1,0 @@
-Install ->
-	psutil
-	rich
-	time

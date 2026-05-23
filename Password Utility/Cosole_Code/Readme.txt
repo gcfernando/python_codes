@@ -1,4 +1,0 @@
-Install ->
-	random
-	string
-	re

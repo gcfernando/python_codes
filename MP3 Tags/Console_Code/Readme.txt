@@ -1,2 +1,0 @@
-Install ->
-	eyed3

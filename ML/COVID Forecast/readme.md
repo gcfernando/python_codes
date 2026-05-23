@@ -1,11 +1,76 @@
-The provided code performs time series analysis and forecasting on COVID-19 daily cases data for a specific country (India or Brazil). It uses libraries such as pmdarima, statsmodels, and matplotlib to implement the forecasting process.
+# COVID Forecast
 
-The code first initializes variables for the forecasting, including the number of forecast steps, frequency, country, file name, index column, and title. It checks if the data file exists and if not, it downloads the data for the specified country, renames columns, fills null values, and saves the data to a CSV file.
+A time series forecasting script that predicts daily COVID-19 cases for a country using SARIMAX and auto-ARIMA models.
 
-Next, the code loads the data, applies data preprocessing steps such as detrending and differencing, and performs a stationarity test using the augmented Dickey-Fuller (ADF) test. It also visualizes the rolling mean and standard deviation.
+## Overview
 
-The code then uses the auto_arima function from pmdarima to automatically determine the optimal parameters for the SARIMAX model. It fits the SARIMAX model to the data using statsmodels and generates a summary of the model.
+This script downloads daily COVID-19 case data, performs stationarity analysis, automatically selects the best ARIMA/SARIMA model, fits it, and generates both an in-sample static forecast and a future forecast for the next N days. All results are visualized with `matplotlib`.
 
-The code provides a static forecast by predicting future values based on the last 120 days of data. It also provides a forecast for the specified number of steps using the get_forecast method of the fitted model. The forecasted values are plotted along with the confidence intervals.
+## Features
 
-Overall, the code performs time series forecasting and provides insights into the COVID-19 daily cases data for the specified country.
+- Automatically downloads COVID-19 daily case data if not cached locally
+- Augmented Dickey-Fuller (ADF) stationarity test with detailed output
+- Rolling mean and standard deviation visualization for stationarity inspection
+- Automatic ARIMA/SARIMA parameter selection via `pmdarima.auto_arima`
+- SARIMAX model fitting using `statsmodels`
+- Static (in-sample) forecast for the last 120 days
+- Future forecast for the next N days with confidence intervals
+- All plots displayed with gridlines, auto-scaled axes, and monthly date formatting
+
+## Requirements
+
+```
+numpy
+pandas
+pmdarima
+covid_daily
+statsmodels
+matplotlib
+```
+
+Install dependencies:
+
+```bash
+pip install numpy pandas pmdarima covid_daily statsmodels matplotlib
+```
+
+## Configuration
+
+Edit the variables at the top of `CovidForecast.py`:
+
+| Variable | Default | Description |
+|---|---|---|
+| `country` | `'india'` | Country to forecast (`'india'`, `'brazil'`, etc.) |
+| `stepCount` | `50` | Number of future days to forecast |
+| `frequency` | `'D'` | Time series frequency (`'D'` = daily) |
+
+## Usage
+
+```bash
+python CovidForecast.py
+```
+
+On first run, a CSV file (e.g., `india_corvid19.csv`) is downloaded and saved in the working directory. Subsequent runs load from this cached file.
+
+### Output
+
+1. ADF test results printed to console
+2. Rolling statistics chart (stationarity check)
+3. Static forecast chart (last 120 days vs. in-sample prediction)
+4. Future forecast chart with confidence interval shading and a table of predicted values
+
+## How It Works
+
+1. Data is loaded and resampled to daily frequency
+2. A 12-period rolling detrend and differencing step is applied to achieve stationarity
+3. `auto_arima` searches for the best ARIMA order using AIC and an ADF test for differencing
+4. The SARIMAX model is fit with Powell optimization
+5. Static and dynamic forecasts are generated and plotted
+
+## File Structure
+
+```
+COVID Forecast/
+└── Console_Code/
+    └── CovidForecast.py    # Main script
+```

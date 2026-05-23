@@ -1,2 +1,0 @@
-Install ->
-	opencv-python

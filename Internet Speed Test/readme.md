@@ -1,1 +1,55 @@
-The provided code utilizes the Speedtest module in Python to measure internet speed. It starts by importing necessary modules and creating a Speedtest object. The code defines functions to calculate download speed, upload speed, and ping result using the Speedtest object’s methods. It also includes a helper function to convert bytes to megabits per second. In the main section, the speed test is executed by calling the appropriate functions and displaying the results. This code enables you to measure your internet speed, providing information on download speed, upload speed, and ping result.
+# Internet Speed Test
+
+Measures your internet connection's download speed, upload speed, and ping using the Speedtest.net infrastructure.
+
+## Overview
+
+This script connects to the best available Speedtest.net server, runs a full speed test, and prints the results to the console. All speeds are reported in Mbps.
+
+## Features
+
+- Automatically selects the best available test server
+- Measures download speed (Mbps)
+- Measures upload speed (Mbps)
+- Reports ping latency (ms)
+- Displays the selected server's host, country, and sponsor
+
+## Requirements
+
+```
+speedtest-cli
+```
+
+Install the dependency:
+
+```bash
+pip install speedtest-cli
+```
+
+## Usage
+
+```bash
+python SpeedTest.py
+```
+
+### Example Output
+
+```
+Loading servers
+Calulating download speed...
+Calulating upload speed...
+Calulating ping result...
+
+Choose best server example.server.net located at United States Sponsor by Example ISP
+Download    : 95.42 Mbps
+Upload      : 48.17 Mbps
+Ping        : 12.34 ms
+```
+
+## File Structure
+
+```
+Internet Speed Test/
+└── Console_Code/
+    └── SpeedTest.py    # Main script
+```

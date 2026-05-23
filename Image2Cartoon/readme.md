@@ -1,1 +1,55 @@
-This code uses the OpenCV library in Python to transform a regular image into a cartoon-like image. It begins by importing the required library and then reads an input image, resizing it to a desired size. The image is processed through a series of steps, including converting it to grayscale, applying a median blur to reduce noise, and detecting edges using adaptive thresholding. Finally, a bilateral filter is used to smooth the image while preserving the edges. The resulting cartoon-like image is displayed alongside the original image for comparison.
+# Image2Cartoon
+
+Converts a regular photograph into a cartoon-style image using OpenCV image processing techniques.
+
+## Overview
+
+This script applies a series of computer vision operations to transform an input image into a cartoon-like rendering. The original and cartoon images are displayed side by side for comparison.
+
+## How It Works
+
+The cartoon effect is produced in five steps:
+
+1. **Grayscale conversion** — the image is converted from BGR to grayscale
+2. **Median blur** — a 5×5 median blur reduces noise
+3. **Edge detection** — adaptive mean thresholding identifies edges
+4. **Bilateral filter** — the color image is smoothed while sharp edges are preserved
+5. **Bitwise AND** — the smoothed color image is combined with the edge mask to produce the cartoon effect
+
+The output is resized to 500×500 pixels.
+
+## Requirements
+
+```
+opencv-python
+```
+
+Install the dependency:
+
+```bash
+pip install opencv-python
+```
+
+## Usage
+
+Open `CartoonImage.py` and set the input image path:
+
+```python
+input_image_path = 'path/to/your/image.jpg'
+```
+
+Then run the script:
+
+```bash
+python CartoonImage.py
+```
+
+Two windows will open — one showing the original resized image and one showing the cartoon version. Press any key to close them.
+
+## File Structure
+
+```
+Image2Cartoon/
+└── Console_Code/
+    └── CartoonImage.py    # Main script
+```
