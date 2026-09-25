@@ -18,7 +18,7 @@ _FIXES = (
     ),
     (
         "Input file does not exist",
-        "check the song's name and folder. Easiest: drag the song into this window.",
+        "check the name and folder. Easiest: type audio8d alone, press Enter, drag the song in.",
     ),
     ("Input path is not a regular file", "that is a folder. Give a song file inside it instead."),
     ("Input file is empty", "the file is empty (0 bytes). Copy or download the song again."),
@@ -111,7 +111,8 @@ def usage_fix_for(message: str) -> str:
     if "required: input" in message:
         return "you forgot the song. Type its name after audio8d, or run audio8d alone for help."
     if "--quality" in message:
-        return f"quality must be a whole number from 0 to 9. Best: --quality {_BEST.mp3_quality}"
+        best = _BEST.mp3_bitrate
+        return f"quality is a whole number from 0 to 9. For the very best: --bitrate {best}"
     if "--bitrate" in message:
         return "bitrate must be 128, 160, 192, 224, 256 or 320. Best: --bitrate 320"
     if "--preset" in message:
