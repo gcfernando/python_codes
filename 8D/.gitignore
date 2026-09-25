@@ -1,0 +1,19 @@
+# Developed by Gehan Fernando
+# Python bytecode and build output
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+
+# Local environments and tool caches
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Audio produced while trying the tool out
+*.partial.mp3
+
+# Songs you convert here stay on your PC and are never uploaded
+*.mp3

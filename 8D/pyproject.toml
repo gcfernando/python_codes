@@ -1,0 +1,51 @@
+# Developed by Gehan Fernando
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "audio8d"
+version = "1.0.0"
+description = "Production-oriented 8D-style MP3 converter powered by FFmpeg"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Gehan Fernando" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.8",
+]
+
+[project.scripts]
+audio8d = "audio8d.cli:main"
+
+[tool.setuptools]
+# The src folder *is* the audio8d package, so map the import name straight onto it
+package-dir = {"audio8d" = "src"}
+# Add any new sub-folder of src here or it will be left out of installs
+packages = ["audio8d", "audio8d.core", "audio8d.effects", "audio8d.ffmpeg", "audio8d.files"]
+
+[tool.setuptools.package-data]
+# Bundled FFmpeg binaries travel with the package when present
+audio8d = ["ffmpeg.exe", "ffprobe.exe"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# cli.py hands over to __main__.py before its package imports when run as a plain script
+"src/cli.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+# The folder is named src, so tell import sorting that audio8d is this project
+known-first-party = ["audio8d"]
