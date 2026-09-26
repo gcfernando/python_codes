@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-import audio8d
-from audio8d import PRESETS, RECOMMENDED_PRESET, EffectConfig, InputValidationError
+import src
+from src import PRESETS, RECOMMENDED_PRESET, EffectConfig, InputValidationError
 
 
 @pytest.mark.parametrize("name", list(PRESETS))
@@ -68,4 +68,4 @@ def test_version_matches_pyproject() -> None:
         "version"
     ]
 
-    assert audio8d.__version__ == declared
+    assert src.__version__ == declared

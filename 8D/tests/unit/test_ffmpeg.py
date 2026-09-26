@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from audio8d import ConversionError, DependencyError, InputValidationError
-from audio8d.ffmpeg import (
+from src import ConversionError, DependencyError, InputValidationError
+from src.ffmpeg import (
     build_encode_command,
     parse_ebur128_summary,
     parse_probe_output,
     toolchain,
 )
-from audio8d.ffmpeg.toolchain import FFmpegToolchain, _has_audio_encoder, _has_filter
+from src.ffmpeg.toolchain import FFmpegToolchain, _has_audio_encoder, _has_filter
 
 
 def test_encode_command_is_exact() -> None:

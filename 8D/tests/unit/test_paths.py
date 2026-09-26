@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from audio8d import InputValidationError
-from audio8d.files import ensure_different_files, resolve_input, resolve_output
+from src import InputValidationError
+from src.files import ensure_different_files, resolve_input, resolve_output
 
 
 def test_missing_input_is_rejected(tmp_path: Path) -> None:

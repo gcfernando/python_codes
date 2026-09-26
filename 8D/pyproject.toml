@@ -35,6 +35,8 @@ audio8d = ["ffmpeg.exe", "ffprobe.exe"]
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
+# Lets tests import the working copy as `src`, installed or not
+pythonpath = ["."]
 
 [tool.ruff]
 # 88 matches Black and the pylint limit used in the editor
@@ -49,12 +51,8 @@ select = ["E", "F", "I", "B", "UP"]
 "src/cli.py" = ["E402"]
 
 [tool.ruff.lint.isort]
-# The folder is named src, so tell import sorting that audio8d is this project
-known-first-party = ["audio8d"]
-
-[tool.pylint.main]
-# Tests load src under the name audio8d at run time, which pylint cannot follow
-ignored-modules = ["audio8d"]
+# Installed code is called audio8d and tests import the folder as src; both are ours
+known-first-party = ["audio8d", "src"]
 
 [tool.pylint.format]
 max-line-length = 88

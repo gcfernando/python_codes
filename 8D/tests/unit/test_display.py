@@ -4,9 +4,9 @@
 import io
 from pathlib import Path
 
-from audio8d import PRESETS, AudioStreamInfo, EffectConfig, display
-from audio8d.ffmpeg import LoudnessMeasurement
-from audio8d.pipeline import LoudnessPlan
+from src import PRESETS, AudioStreamInfo, EffectConfig, display
+from src.ffmpeg import LoudnessMeasurement
+from src.pipeline import LoudnessPlan
 
 
 class _AsciiConsole(io.StringIO):
@@ -137,7 +137,7 @@ def test_risky_values_get_a_heads_up_with_a_fix() -> None:
 
 
 def test_best_settings_need_no_heads_up() -> None:
-    assert display.advice(PRESETS["studio"].config) == []
+    assert not display.advice(PRESETS["studio"].config)
 
 
 def test_style_menu_puts_the_best_first() -> None:

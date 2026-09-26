@@ -1,37 +1,13 @@
 # Developed by Gehan Fernando
 """Shared pytest fixtures."""
 
-import importlib.util
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
-SOURCE_DIR = Path(__file__).resolve().parent.parent / "src"
-
-
-def _load_package_from_source() -> None:
-    """Import 8D/src as `audio8d` so tests always exercise the working tree."""
-    spec = importlib.util.spec_from_file_location(
-        "audio8d",
-        SOURCE_DIR / "__init__.py",
-        submodule_search_locations=[str(SOURCE_DIR)],
-    )
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["audio8d"] = module
-    spec.loader.exec_module(module)
-
-
-# Must run before any test module does `import audio8d`
-_load_package_from_source()
-
-# pylint: disable=wrong-import-position
-from audio8d import DependencyError  # noqa: E402
-from audio8d.ffmpeg import FFmpegToolchain  # noqa: E402
-
-# pylint: enable=wrong-import-position
+from src import DependencyError
+from src.ffmpeg import FFmpegToolchain
 
 
 def find_toolchain() -> FFmpegToolchain | None:

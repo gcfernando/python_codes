@@ -9,16 +9,16 @@ from pathlib import Path
 
 import pytest
 
-from audio8d import (
+from src import (
     PRESETS,
     DependencyError,
     EffectConfig,
     InputValidationError,
     convert,
 )
-from audio8d.ffmpeg.toolchain import BUNDLED_DIR, FFmpegToolchain
+from src.ffmpeg.toolchain import BUNDLED_DIR, FFmpegToolchain
 
-# conftest has already loaded audio8d, so this discovery matches the app's own
+# The same discovery the app itself uses, so both find the same FFmpeg
 try:
     TOOLCHAIN: FFmpegToolchain | None = FFmpegToolchain.discover()
 except DependencyError:

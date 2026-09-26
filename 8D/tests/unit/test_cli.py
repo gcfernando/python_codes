@@ -5,16 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from audio8d import PRESETS, ConversionError, EffectConfig, InputValidationError, cli
-from audio8d.files import resolve_input
-
-_REAL_RESOLVE_INPUT = resolve_input
+from src import PRESETS, ConversionError, EffectConfig, InputValidationError, cli
+from src.files import resolve_input as real_resolve_input
 
 
 @pytest.fixture(autouse=True)
 def _pretend_songs_exist(monkeypatch: pytest.MonkeyPatch) -> None:
     """Let tests use made-up song names without real files on disk."""
-    # Most tests use made-up song names, so skip the file-exists check by default
     monkeypatch.setattr(cli, "resolve_input", lambda path: path)
 
 
@@ -297,7 +294,7 @@ def test_missing_song_is_explained_before_the_settings_panel(
     capsys: pytest.CaptureFixture[str],
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    monkeypatch.setattr(cli, "resolve_input", _REAL_RESOLVE_INPUT)
+    monkeypatch.setattr(cli, "resolve_input", real_resolve_input)
     monkeypatch.setattr(cli, "convert", lambda **_: pytest.fail("should not convert"))
 
     assert cli.main([str(tmp_path / "My Sonng.mp3")]) == 1

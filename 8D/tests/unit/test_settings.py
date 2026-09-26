@@ -1,9 +1,11 @@
 # Developed by Gehan Fernando
 """Checks the allowed range of every knob."""
 
+from dataclasses import replace
+
 import pytest
 
-from audio8d import EffectConfig, InputValidationError
+from src import EffectConfig, InputValidationError
 
 
 def test_default_config_is_valid() -> None:
@@ -26,7 +28,7 @@ def test_default_config_is_valid() -> None:
     ],
 )
 def test_boundary_values_are_accepted(field: str, value: float) -> None:
-    EffectConfig(**{field: value}).validate()
+    replace(EffectConfig(), **{field: value}).validate()
 
 
 @pytest.mark.parametrize(
@@ -46,7 +48,7 @@ def test_boundary_values_are_accepted(field: str, value: float) -> None:
 )
 def test_out_of_range_values_are_rejected(field: str, value: float) -> None:
     with pytest.raises(InputValidationError):
-        EffectConfig(**{field: value}).validate()
+        replace(EffectConfig(), **{field: value}).validate()
 
 
 def test_config_is_immutable() -> None:

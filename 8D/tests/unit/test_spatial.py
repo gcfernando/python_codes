@@ -3,8 +3,8 @@
 
 import pytest
 
-from audio8d import EffectConfig, InputValidationError
-from audio8d.effects import (
+from src import EffectConfig, InputValidationError
+from src.effects import (
     build_filter_chain,
     build_measure_chain,
     extra_filters_for,
@@ -59,7 +59,7 @@ def test_invalid_config_is_rejected_before_building() -> None:
 
 def test_loudness_off_adds_no_extra_stages() -> None:
     assert "volume=" not in build_filter_chain(EffectConfig())
-    assert extra_filters_for(EffectConfig()) == ()
+    assert not extra_filters_for(EffectConfig())
 
 
 def test_volume_stage_sits_between_pan_and_limiter() -> None:

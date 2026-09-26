@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from audio8d import InputValidationError
-from audio8d.files import commit_output, create_temporary_output
+from src import InputValidationError
+from src.files import commit_output, create_temporary_output
 
 
 def _scratch(tmp_path: Path, payload: bytes = b"new") -> Path:

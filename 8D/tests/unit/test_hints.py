@@ -3,7 +3,8 @@
 
 import pytest
 
-from audio8d import (
+from src import (
+    Audio8DError,
     ConversionError,
     DependencyError,
     EffectConfig,
@@ -36,7 +37,7 @@ from audio8d import (
         (ConversionError("I/O error during conversion: disk full"), "free space"),
     ],
 )
-def test_every_common_error_has_a_plain_fix(error: Exception, expected: str) -> None:
+def test_every_common_error_has_a_plain_fix(error: Audio8DError, expected: str) -> None:
     fix = hints.fix_for(error)
 
     assert fix is not None and expected in fix
