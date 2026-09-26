@@ -4,11 +4,18 @@
 import json
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
-from audio8d import DependencyError, EffectConfig, InputValidationError, convert
+from audio8d import (
+    PRESETS,
+    DependencyError,
+    EffectConfig,
+    InputValidationError,
+    convert,
+)
 from audio8d.ffmpeg.toolchain import BUNDLED_DIR, FFmpegToolchain
 
 # conftest has already loaded audio8d, so this discovery matches the app's own
@@ -40,7 +47,9 @@ def _leftover_scratch_files(folder: Path) -> list[Path]:
     return list(folder.glob(".*.partial.mp3"))
 
 
-def test_stereo_source_becomes_tagged_stereo_mp3(stereo_tone: Path, tmp_path: Path) -> None:
+def test_stereo_source_becomes_tagged_stereo_mp3(
+    stereo_tone: Path, tmp_path: Path
+) -> None:
     output = tmp_path / "out" / "tone_8d.mp3"
 
     info = convert(stereo_tone, output, EffectConfig())
@@ -62,7 +71,9 @@ def test_mono_source_is_upmixed_to_stereo(mono_wav: Path, tmp_path: Path) -> Non
     assert _probe(output)["streams"][0]["channels"] == 2
 
 
-def test_existing_output_is_protected_until_overwrite(stereo_tone: Path, tmp_path: Path) -> None:
+def test_existing_output_is_protected_until_overwrite(
+    stereo_tone: Path, tmp_path: Path
+) -> None:
     output = tmp_path / "tone_8d.mp3"
     output.write_bytes(b"keep me")
 
@@ -124,14 +135,14 @@ def _loudness(path: Path) -> tuple[float, float]:
     return integrated, peak
 
 
-def test_studio_preset_hits_streaming_loudness(stereo_tone: Path, tmp_path: Path) -> None:
-    from audio8d import PRESETS
-
+def test_studio_preset_hits_streaming_loudness(
+    stereo_tone: Path, tmp_path: Path
+) -> None:
     output = tmp_path / "tone_studio.mp3"
     convert(stereo_tone, output, PRESETS["studio"].config)
 
     integrated, peak = _loudness(output)
-    # Within 1.5 LU of the -14 LUFS target, and peaks kept under the ceiling (+ MP3 slack)
+    # Within 1.5 LU of -14 LUFS, with peaks under the ceiling plus a little MP3 slack
     assert -15.5 <= integrated <= -12.5
     assert peak <= -0.3
     probed = _probe(output)["streams"][0]
@@ -150,11 +161,9 @@ def _loudness_range(path: Path) -> float:
     return float(summary.split("LRA:")[1].split("LU")[0])
 
 
-def test_studio_changes_volume_but_never_the_dynamics(dynamic_song: Path, tmp_path: Path) -> None:
-    from dataclasses import replace
-
-    from audio8d import PRESETS
-
+def test_studio_changes_volume_but_never_the_dynamics(
+    dynamic_song: Path, tmp_path: Path
+) -> None:
     song = dynamic_song
     studio = PRESETS["studio"].config
     loud = tmp_path / "studio.mp3"

@@ -9,6 +9,7 @@ from ..core.errors import ConversionError
 from .runner import run_capture
 from .toolchain import FFmpegToolchain
 
+# FFmpeg prints -inf for silence, so accept that as well as ordinary numbers
 _NUMBER = r"(-?inf|-?\d+(?:\.\d+)?)"
 
 
@@ -22,7 +23,7 @@ class LoudnessMeasurement:
 
 
 def parse_ebur128_summary(log: str) -> LoudnessMeasurement:
-    """Pull the integrated loudness, true peak and loudness range out of FFmpeg's log."""
+    """Pull integrated loudness, true peak and loudness range out of FFmpeg's log."""
     start = log.rfind("Summary:")
     if start < 0:
         raise ConversionError("FFmpeg did not report a loudness measurement")
@@ -52,7 +53,7 @@ def measure_loudness(
             "-hide_banner",
             "-nostdin",
             "-nostats",
-            # The meter prints its summary at info level, so this pass cannot use -loglevel error
+            # The meter's summary is logged at info level, so -loglevel error hides it
             "-loglevel",
             "info",
             "-i",

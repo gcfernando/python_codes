@@ -14,7 +14,7 @@ _REAL_RESOLVE_INPUT = resolve_input
 @pytest.fixture(autouse=True)
 def _pretend_songs_exist(monkeypatch: pytest.MonkeyPatch) -> None:
     """Let tests use made-up song names without real files on disk."""
-    # Most tests use made-up song names, so skip the "does the file exist" check by default
+    # Most tests use made-up song names, so skip the file-exists check by default
     monkeypatch.setattr(cli, "resolve_input", lambda path: path)
 
 
@@ -38,7 +38,9 @@ def test_main_passes_options_through(monkeypatch: pytest.MonkeyPatch) -> None:
         seen.update(kwargs)
 
     monkeypatch.setattr(cli, "convert", fake_convert)
-    code = cli.main(["a.wav", "b.mp3", "--intensity", "0.5", "--quality", "0", "--overwrite"])
+    code = cli.main(
+        ["a.wav", "b.mp3", "--intensity", "0.5", "--quality", "0", "--overwrite"]
+    )
 
     assert code == 0
     assert seen["input_path"] == Path("a.wav")
@@ -57,7 +59,9 @@ def test_main_returns_1_on_known_errors(monkeypatch: pytest.MonkeyPatch) -> None
 
 
 def test_default_output_sits_next_to_the_input() -> None:
-    assert cli.default_output_for(Path("music/song.flac")) == Path("music/song (8D).mp3")
+    assert cli.default_output_for(Path("music/song.flac")) == Path(
+        "music/song (8D).mp3"
+    )
 
 
 def test_output_name_is_optional(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -79,6 +83,7 @@ def test_output_name_is_optional(monkeypatch: pytest.MonkeyPatch) -> None:
     ],
 )
 def test_dragged_or_pasted_paths_are_cleaned(typed: str) -> None:
+    # pylint: disable-next=protected-access
     assert cli._clean_typed_path(typed) == r"C:\Music\My Song.mp3"
 
 
@@ -130,7 +135,9 @@ def test_guided_mode_asks_again_for_a_missing_song(
     assert seen["input_path"] == song
 
 
-@pytest.mark.parametrize(("answer", "style"), [("", "studio"), ("4", "smooth"), ("voice", "voice")])
+@pytest.mark.parametrize(
+    ("answer", "style"), [("", "studio"), ("4", "smooth"), ("voice", "voice")]
+)
 def test_guided_mode_style_menu(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, answer: str, style: str
 ) -> None:
@@ -152,14 +159,18 @@ def test_guided_mode_explains_a_bad_style_answer(
     assert "Please type a number from 1 to 8" in capsys.readouterr().out
 
 
-def test_double_click_with_no_answer_does_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_double_click_with_no_answer_does_nothing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(cli, "convert", lambda **_: pytest.fail("should not convert"))
     _pretend_double_click(monkeypatch, ["", ""])
 
     assert cli.main() == 2
 
 
-def test_scripts_without_arguments_still_get_a_usage_error(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_scripts_without_arguments_still_get_a_usage_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(cli.sys, "argv", ["audio8d"])
     monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: False, raising=False)
 
@@ -259,7 +270,9 @@ def test_errors_during_conversion_get_a_plain_fix(
 ) -> None:
     def refuse(**_: object) -> None:
         """Fail the way an already-existing output would."""
-        raise InputValidationError("Output already exists: x.mp3. Use --overwrite to replace it.")
+        raise InputValidationError(
+            "Output already exists: x.mp3. Use --overwrite to replace it."
+        )
 
     monkeypatch.setattr(cli, "convert", refuse)
 
@@ -295,7 +308,9 @@ def test_missing_song_is_explained_before_the_settings_panel(
 
 
 def test_bitrate_and_exact_loudness_can_be_typed() -> None:
-    args = cli.create_parser().parse_args(["a.mp3", "--bitrate", "320", "--exact-loudness"])
+    args = cli.create_parser().parse_args(
+        ["a.mp3", "--bitrate", "320", "--exact-loudness"]
+    )
     config = cli.resolve_config(args)
 
     assert config.mp3_bitrate == 320

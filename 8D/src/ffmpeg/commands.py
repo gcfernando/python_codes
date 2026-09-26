@@ -5,8 +5,10 @@ from pathlib import Path
 
 
 def _quality_arguments(mp3_quality: int, mp3_bitrate: int | None) -> list[str]:
-    """Constant bitrate when one is asked for, otherwise LAME's variable quality scale."""
-    arguments = ["-b:a", f"{mp3_bitrate}k"] if mp3_bitrate else ["-q:a", str(mp3_quality)]
+    """A constant bitrate when one is set, otherwise LAME's variable quality scale."""
+    arguments = (
+        ["-b:a", f"{mp3_bitrate}k"] if mp3_bitrate else ["-q:a", str(mp3_quality)]
+    )
     # Top-quality requests also get LAME's slowest, most careful algorithm (LAME -q 0)
     if mp3_bitrate or mp3_quality == 0:
         arguments += ["-compression_level", "0"]

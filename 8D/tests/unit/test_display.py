@@ -53,7 +53,16 @@ def test_settings_panel_lists_every_knob() -> None:
     )
     shown = stream.getvalue()
 
-    labels = ("Song in", "Song out", "Style", "Spin", "Movement", "Room", "Peak roof", "Quality")
+    labels = (
+        "Song in",
+        "Song out",
+        "Style",
+        "Spin",
+        "Movement",
+        "Room",
+        "Peak roof",
+        "Quality",
+    )
     for label in (*labels, "Loudness"):
         assert label in shown
     assert "Gehan Fernando" in shown
@@ -116,7 +125,14 @@ def test_risky_values_get_a_heads_up_with_a_fix() -> None:
     joined = " ".join(notes)
 
     assert len(notes) == 6
-    for words in ("dizzy", "tire your ears", "blurry", "swishy", "crackle", "very loud"):
+    for words in (
+        "dizzy",
+        "tire your ears",
+        "blurry",
+        "swishy",
+        "crackle",
+        "very loud",
+    ):
         assert words in joined
 
 
@@ -137,9 +153,13 @@ _HI_RES_FLAC = AudioStreamInfo("flac", 2, 96000, 200.0, 2_900_000)
 
 
 def test_sources_are_described_in_plain_words() -> None:
-    assert display.describe_source(_MP3) == "MP3, 320 kbps, 48 kHz, stereo  (already compressed)"
     assert (
-        display.describe_source(_HI_RES_FLAC) == "FLAC, 96 kHz, stereo  (lossless, perfect source)"
+        display.describe_source(_MP3)
+        == "MP3, 320 kbps, 48 kHz, stereo  (already compressed)"
+    )
+    assert (
+        display.describe_source(_HI_RES_FLAC)
+        == "FLAC, 96 kHz, stereo  (lossless, perfect source)"
     )
 
 

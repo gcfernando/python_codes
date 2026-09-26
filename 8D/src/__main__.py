@@ -5,13 +5,14 @@ import sys
 
 # Running from src skips pip's version gate, so stop politely on old Pythons here
 if sys.version_info < (3, 10):  # noqa: UP036
-    sys.exit(f"Audio8D needs Python 3.10 or newer, but this is Python {sys.version.split()[0]}.")
+    found = sys.version.split()[0]
+    sys.exit(f"Audio8D needs Python 3.10 or newer, but this is Python {found}.")
 
 if __package__:
     # Normal route: the installed `audio8d` command or `python -m audio8d`
     from .cli import main
 else:
-    # Not installed (`python .`, `python src`, `python __main__.py`): register src as audio8d
+    # Not installed (`python src`, `python __main__.py`): register src as audio8d
     import importlib.util
     from pathlib import Path
 
@@ -28,7 +29,8 @@ else:
     sys.modules["audio8d"] = package
     spec.loader.exec_module(package)
 
-    from audio8d.cli import main
+    # Imported by name because linters can't see the package registered just above
+    main = importlib.import_module("audio8d.cli").main
 
 if __name__ == "__main__":
     raise SystemExit(main())

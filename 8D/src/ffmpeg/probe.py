@@ -20,7 +20,9 @@ def parse_probe_output(raw_json: str) -> AudioStreamInfo:
 
     streams = payload.get("streams") or []
     if not streams:
-        raise InputValidationError("The input file does not contain a usable audio stream")
+        raise InputValidationError(
+            "The input file does not contain a usable audio stream"
+        )
 
     stream = streams[0]
 
@@ -32,15 +34,23 @@ def parse_probe_output(raw_json: str) -> AudioStreamInfo:
 
         # Raw streams and some live captures report "N/A" instead of a length
         duration_value = (payload.get("format") or {}).get("duration")
-        duration = float(duration_value) if duration_value not in (None, "N/A") else None
+        duration = (
+            float(duration_value) if duration_value not in (None, "N/A") else None
+        )
 
         codec_name = str(stream.get("codec_name") or "unknown")
 
-        # Some containers only store the bitrate for the whole file, so fall back to that
-        bit_rate_value = stream.get("bit_rate") or (payload.get("format") or {}).get("bit_rate")
-        bit_rate = int(bit_rate_value) if bit_rate_value not in (None, "", "N/A") else None
+        # Some containers only store the whole file's bitrate, so fall back to that
+        bit_rate_value = stream.get("bit_rate") or (payload.get("format") or {}).get(
+            "bit_rate"
+        )
+        bit_rate = (
+            int(bit_rate_value) if bit_rate_value not in (None, "", "N/A") else None
+        )
     except (KeyError, TypeError, ValueError) as exc:
-        raise InputValidationError("FFprobe returned incomplete or invalid audio metadata") from exc
+        raise InputValidationError(
+            "FFprobe returned incomplete or invalid audio metadata"
+        ) from exc
 
     if channels < 1:
         raise InputValidationError("The input audio reports an invalid channel count")

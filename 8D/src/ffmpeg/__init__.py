@@ -4,7 +4,7 @@
 from .commands import build_encode_command
 from .loudness import LoudnessMeasurement, measure_loudness, parse_ebur128_summary
 from .probe import parse_probe_output, probe_audio
-from .runner import run_capture
+from .runner import run_capture, run_tool
 from .toolchain import FFmpegToolchain
 
 __all__ = [
@@ -16,4 +16,5 @@ __all__ = [
     "parse_probe_output",
     "probe_audio",
     "run_capture",
+    "run_tool",
 ]

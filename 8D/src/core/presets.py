@@ -15,7 +15,7 @@ class Preset:
     config: EffectConfig
 
 
-# The best of best: highest MP3 bitrate, lossy-safe peak headroom, loudness without squashing
+# Best of best: top MP3 bitrate, MP3-safe peak headroom, loudness without squashing
 _STUDIO = EffectConfig(
     rotation_seconds=8.0,
     intensity=0.80,
@@ -26,7 +26,7 @@ _STUDIO = EffectConfig(
     mp3_bitrate=320,
 )
 
-# Listed in the order --list-presets shows them; studio first because it is the one to pick
+# Shown in this order by --list-presets; studio first because it is the one to pick
 _ALL_PRESETS = (
     Preset(
         name="studio",

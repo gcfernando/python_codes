@@ -5,7 +5,18 @@ from dataclasses import dataclass
 
 # Codecs that store sound perfectly, so the MP3 encode is the only lossy step
 LOSSLESS_CODECS = frozenset(
-    {"flac", "alac", "wavpack", "ape", "tta", "truehd", "mlp", "shorten", "mp4als", "tak"}
+    {
+        "flac",
+        "alac",
+        "wavpack",
+        "ape",
+        "tta",
+        "truehd",
+        "mlp",
+        "shorten",
+        "mp4als",
+        "tak",
+    }
 )
 
 

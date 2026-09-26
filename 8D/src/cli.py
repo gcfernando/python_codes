@@ -12,9 +12,10 @@ from pathlib import Path
 from typing import NoReturn
 
 if __name__ == "__main__" and not __package__:
-    # Started as `python cli.py` without installing; __main__.py knows how to set that up
+    # `python cli.py` without installing: __main__.py sets up the package and runs it
     runpy.run_path(str(Path(__file__).with_name("__main__.py")), run_name="__main__")
 
+# pylint: disable=wrong-import-position
 from . import __version__, display, hints
 from .core.errors import Audio8DError
 from .core.presets import PRESETS, RECOMMENDED_PRESET
@@ -24,6 +25,8 @@ from .ffmpeg import FFmpegToolchain, probe_audio
 from .files import resolve_input
 from .pipeline import LoudnessPlan, convert
 
+# pylint: enable=wrong-import-position
+
 LOG = logging.getLogger("audio8d")
 
 # What `--loudness off` turns into, so it can switch off a preset's loudness target
@@ -32,27 +35,79 @@ LOUDNESS_OFF = "off"
 _DEFAULTS = EffectConfig()
 _BEST = PRESETS[RECOMMENDED_PRESET].config
 
-_QUICK_START = f"""\
-Turn any song into an 8D song that moves around your head (use headphones!).
 
-QUICK START - just copy one of these:
-  audio8d "My Song.mp3" --preset {RECOMMENDED_PRESET}    best quality, same loudness as Spotify
-  audio8d "My Song.mp3"                    classic sound, new file: "My Song (8D).mp3"
-  audio8d                                  step-by-step helper that asks you questions
-  audio8d --list-presets                   show every ready-made style
+def _columns(rows: Sequence[tuple[str, str]], width: int) -> str:
+    """Line up commands and their explanations in two neat columns for --help."""
+    return "\n".join(f"  {left:<{width}}{right}" for left, right in rows)
 
-BEST VALUES (this is exactly what --preset {RECOMMENDED_PRESET} uses):
-  --rotation-seconds {_BEST.rotation_seconds:g}      --intensity {_BEST.intensity:.2f}
-  --ambience {_BEST.ambience:.2f}           --limiter-ceiling {_BEST.limiter_ceiling:.2f}
-  --bitrate {_BEST.mp3_bitrate}             --loudness {_BEST.loudness_target:g}"""
 
-_EXAMPLES = f"""\
-MORE EXAMPLES:
-  audio8d "My Song.mp3" --preset {RECOMMENDED_PRESET} --loudness -16      Apple Music loudness
-  audio8d "My Song.mp3" --preset {RECOMMENDED_PRESET} --intensity 0.95    stronger movement
-  audio8d "My Song.mp3" "C:\\Music\\8D\\My Song.mp3"           choose where to save it
+_QUICK_START = "\n".join(
+    [
+        "Turn any song into an 8D song that moves around your head (use headphones!).",
+        "",
+        "QUICK START - just copy one of these:",
+        _columns(
+            [
+                (
+                    f'audio8d "My Song.mp3" --preset {RECOMMENDED_PRESET}',
+                    "best quality, same loudness as Spotify",
+                ),
+                (
+                    'audio8d "My Song.mp3"',
+                    'classic sound, new file: "My Song (8D).mp3"',
+                ),
+                ("audio8d", "step-by-step helper that asks you questions"),
+                ("audio8d --list-presets", "show every ready-made style"),
+            ],
+            width=41,
+        ),
+        "",
+        f"BEST VALUES (this is exactly what --preset {RECOMMENDED_PRESET} uses):",
+        _columns(
+            [
+                (
+                    f"--rotation-seconds {_BEST.rotation_seconds:g}",
+                    f"--intensity {_BEST.intensity:.2f}",
+                ),
+                (
+                    f"--ambience {_BEST.ambience:.2f}",
+                    f"--limiter-ceiling {_BEST.limiter_ceiling:.2f}",
+                ),
+                (
+                    f"--bitrate {_BEST.mp3_bitrate}",
+                    f"--loudness {_BEST.loudness_target:g}",
+                ),
+            ],
+            width=26,
+        ),
+    ]
+)
 
-Developed by Gehan Fernando. Full guide: README.md"""
+_EXAMPLE_SONG = 'audio8d "My Song.mp3"'
+_EXAMPLES = "\n".join(
+    [
+        "MORE EXAMPLES:",
+        _columns(
+            [
+                (
+                    f"{_EXAMPLE_SONG} --preset {RECOMMENDED_PRESET} --loudness -16",
+                    "Apple Music loudness",
+                ),
+                (
+                    f"{_EXAMPLE_SONG} --preset {RECOMMENDED_PRESET} --intensity 0.95",
+                    "stronger movement",
+                ),
+                (
+                    f'{_EXAMPLE_SONG} "C:\\Music\\8D\\My Song.mp3"',
+                    "choose where to save it",
+                ),
+            ],
+            width=58,
+        ),
+        "",
+        "Developed by Gehan Fernando. Full guide: README.md",
+    ]
+)
 
 
 def _loudness_value(text: str) -> float | str:
@@ -68,10 +123,16 @@ def _loudness_value(text: str) -> float | str:
 class _ListPresetsAction(argparse.Action):
     """Print the preset table and stop, the same way --help does."""
 
-    def __init__(self, option_strings: Sequence[str], dest: str, **kwargs: object) -> None:
+    def __init__(
+        self, option_strings: Sequence[str], dest: str, **kwargs: object
+    ) -> None:
         """Take no value, like --help, so `audio8d --list-presets` works on its own."""
         super().__init__(
-            option_strings, dest, nargs=0, default=argparse.SUPPRESS, help=str(kwargs.get("help"))
+            option_strings,
+            dest,
+            nargs=0,
+            default=argparse.SUPPRESS,
+            help=str(kwargs.get("help")),
         )
 
     def __call__(self, parser: argparse.ArgumentParser, *_: object) -> None:
@@ -121,7 +182,7 @@ def create_parser() -> argparse.ArgumentParser:
         metavar="NAME",
         help=f"a ready-made style: {', '.join(PRESETS)}. BEST: {RECOMMENDED_PRESET}",
     )
-    # Knobs default to None so we can tell "not given" apart from "given the default value"
+    # Knobs default to None, so "not typed" differs from "typed the default value"
     parser.add_argument(
         "--rotation-seconds",
         type=float,
@@ -206,7 +267,7 @@ def create_parser() -> argparse.ArgumentParser:
 
 
 def resolve_config(args: argparse.Namespace) -> EffectConfig:
-    """Start from the chosen preset (or the defaults) and apply any knobs the user typed."""
+    """Start from the chosen preset (or the defaults), then apply any typed knobs."""
     base = PRESETS[args.preset].config if args.preset else EffectConfig()
 
     typed = {
@@ -218,9 +279,13 @@ def resolve_config(args: argparse.Namespace) -> EffectConfig:
         "mp3_bitrate": args.bitrate,
         "exact_loudness": args.exact_loudness,
     }
-    overrides: dict[str, object] = {key: value for key, value in typed.items() if value is not None}
+    overrides: dict[str, object] = {
+        key: value for key, value in typed.items() if value is not None
+    }
     if args.loudness is not None:
-        overrides["loudness_target"] = None if args.loudness == LOUDNESS_OFF else args.loudness
+        overrides["loudness_target"] = (
+            None if args.loudness == LOUDNESS_OFF else args.loudness
+        )
 
     return dataclasses.replace(base, **overrides)
 
@@ -249,8 +314,10 @@ def configure_logging(verbose: bool) -> None:
         if verbose
         else "%(levelname)s %(name)s: %(message)s",
     )
-    # The settings panel already says what is happening, so hide the duplicate INFO lines
-    logging.getLogger(convert.__module__).setLevel(logging.NOTSET if verbose else logging.WARNING)
+    # The settings panel already says what is happening, so hide duplicate INFO lines
+    logging.getLogger(convert.__module__).setLevel(
+        logging.NOTSET if verbose else logging.WARNING
+    )
 
 
 def default_output_for(input_path: Path) -> Path:
@@ -267,7 +334,7 @@ def _explain(painter: display.Painter, error: Audio8DError) -> None:
 
 
 def _peek_source(input_path: Path) -> AudioStreamInfo | None:
-    """Read the song's details for the panel; any problem is reported later by convert()."""
+    """Read the song's details for the panel; convert() reports any problem later."""
     try:
         return probe_audio(FFmpegToolchain.discover(), resolve_input(input_path))
     except Audio8DError:
@@ -328,7 +395,7 @@ def _run_conversion(
 
 
 def _clean_typed_path(answer: str) -> str:
-    """Strip the quotes, spaces and PowerShell '& ' that drag-and-drop or 'Copy as path' add."""
+    """Strip the quotes, spaces and '& ' that drag-and-drop or 'Copy as path' add."""
     cleaned = answer.strip()
     if cleaned.startswith("& "):
         cleaned = cleaned[2:]
@@ -348,10 +415,13 @@ def _ask_for_song(painter: display.Painter) -> Path | None:
         if song.is_file():
             return song
         if song.is_dir():
-            display.show_problem(painter, "That is a folder. Please drag in one song file.")
+            display.show_problem(
+                painter, "That is a folder. Please drag in one song file."
+            )
         else:
             display.show_problem(
-                painter, "I can't find that file. Try dragging it in (or press Enter to stop)."
+                painter,
+                "I can't find that file. Try dragging it in (or press Enter to stop).",
             )
 
 
@@ -359,7 +429,10 @@ def _ask_for_style(painter: display.Painter) -> str:
     """Numbered style menu; pressing Enter picks the best one."""
     painter.line()
     display.show_step(
-        painter, 2, "Which style?", f"Just press Enter for the BEST one ({RECOMMENDED_PRESET})."
+        painter,
+        2,
+        "Which style?",
+        f"Just press Enter for the BEST one ({RECOMMENDED_PRESET}).",
     )
     names = display.show_style_menu(painter)
     while True:
@@ -408,7 +481,12 @@ def _run_interactive() -> int:
 
 def _should_ask_interactively(argv: Sequence[str] | None) -> bool:
     """True only for a real person with no arguments, never for scripts or pipes."""
-    return argv is None and len(sys.argv) <= 1 and sys.stdin.isatty() and sys.stdout.isatty()
+    return (
+        argv is None
+        and len(sys.argv) <= 1
+        and sys.stdin.isatty()
+        and sys.stdout.isatty()
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:

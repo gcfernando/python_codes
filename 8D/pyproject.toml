@@ -14,6 +14,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = [
+    "pylint>=3.3",
     "pytest>=8.0",
     "ruff>=0.8",
 ]
@@ -36,7 +37,8 @@ addopts = "-q"
 testpaths = ["tests"]
 
 [tool.ruff]
-line-length = 100
+# 88 matches Black and the pylint limit used in the editor
+line-length = 88
 target-version = "py310"
 
 [tool.ruff.lint]
@@ -49,3 +51,19 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.ruff.lint.isort]
 # The folder is named src, so tell import sorting that audio8d is this project
 known-first-party = ["audio8d"]
+
+[tool.pylint.main]
+# Tests load src under the name audio8d at run time, which pylint cannot follow
+ignored-modules = ["audio8d"]
+
+[tool.pylint.format]
+max-line-length = 88
+
+[tool.pylint.basic]
+# Test names already say what they check, so they do not need docstrings as well
+no-docstring-rgx = "^(_|test_)"
+
+[tool.pylint.design]
+# convert() and EffectConfig carry one value per user-facing setting
+max-args = 8
+max-attributes = 8

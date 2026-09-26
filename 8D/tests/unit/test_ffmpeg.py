@@ -96,7 +96,9 @@ def _fake_binary(folder: Path, name: str) -> Path:
     return path
 
 
-def test_discover_prefers_bundled_binaries(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_discover_prefers_bundled_binaries(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr(toolchain, "BUNDLED_DIR", tmp_path)
     ffmpeg = _fake_binary(tmp_path, "ffmpeg")
     ffprobe = _fake_binary(tmp_path, "ffprobe")
@@ -107,7 +109,9 @@ def test_discover_prefers_bundled_binaries(tmp_path: Path, monkeypatch: pytest.M
     assert found.ffprobe == ffprobe.resolve()
 
 
-def test_discover_explains_what_is_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_discover_explains_what_is_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr(toolchain, "BUNDLED_DIR", tmp_path)
     monkeypatch.setattr(toolchain.shutil, "which", lambda _name: None)
     _fake_binary(tmp_path, "ffmpeg")
@@ -118,11 +122,19 @@ def test_discover_explains_what_is_missing(tmp_path: Path, monkeypatch: pytest.M
 
 def test_top_quality_encodes_use_lames_most_careful_mode() -> None:
     cbr = build_encode_command(
-        Path("ffmpeg"), Path("in.wav"), Path("out.mp3"), filter_chain="anull", mp3_quality=0,
+        Path("ffmpeg"),
+        Path("in.wav"),
+        Path("out.mp3"),
+        filter_chain="anull",
+        mp3_quality=0,
         mp3_bitrate=320,
-    )  # fmt: skip
+    )
     vbr = build_encode_command(
-        Path("ffmpeg"), Path("in.wav"), Path("out.mp3"), filter_chain="anull", mp3_quality=0
+        Path("ffmpeg"),
+        Path("in.wav"),
+        Path("out.mp3"),
+        filter_chain="anull",
+        mp3_quality=0,
     )
 
     assert cbr[cbr.index("-b:a") + 1] == "320k"
@@ -167,7 +179,12 @@ def test_missing_meter_summary_is_a_conversion_error() -> None:
 def test_probe_reads_the_source_bitrate() -> None:
     payload = {
         "streams": [
-            {"codec_name": "mp3", "channels": 2, "sample_rate": "48000", "bit_rate": "320000"}
+            {
+                "codec_name": "mp3",
+                "channels": 2,
+                "sample_rate": "48000",
+                "bit_rate": "320000",
+            }
         ],
         "format": {"duration": "292.4"},
     }

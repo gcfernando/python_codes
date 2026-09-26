@@ -2,7 +2,6 @@
 """The end-to-end conversion: validate, probe, measure, render, publish."""
 
 import logging
-import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,13 +9,19 @@ from pathlib import Path
 from .core.errors import ConversionError
 from .core.settings import EffectConfig
 from .core.types import AudioStreamInfo
-from .effects import build_filter_chain, build_measure_chain, extra_filters_for, loudness_gain_db
+from .effects import (
+    build_filter_chain,
+    build_measure_chain,
+    extra_filters_for,
+    loudness_gain_db,
+)
 from .ffmpeg import (
     FFmpegToolchain,
     LoudnessMeasurement,
     build_encode_command,
     measure_loudness,
     probe_audio,
+    run_tool,
 )
 from .files import (
     commit_output,
@@ -40,47 +45,52 @@ class LoudnessPlan:
 
     @property
     def expected_lufs(self) -> float:
-        """Where the song lands; a pure volume change moves loudness by exactly the gain."""
+        """Where the song lands; a volume change moves loudness by exactly the gain."""
+        # ebur128 reports silence as -70 LUFS, and silence stays silent
         if self.measured.integrated_lufs <= -70.0:
             return self.measured.integrated_lufs
-        return self.target_lufs if self.exact else self.measured.integrated_lufs + self.gain_db
+        return (
+            self.target_lufs
+            if self.exact
+            else self.measured.integrated_lufs + self.gain_db
+        )
 
     @property
     def held_back(self) -> bool:
-        """True when the song stays below target so its loudest peaks never get squashed."""
+        """True when the song stays below target to protect its loudest peaks."""
         return not self.exact and self.expected_lufs < self.target_lufs - 0.05
 
 
 def _render(command: list[str], temporary_file: Path) -> None:
     """Run the ffmpeg encode and confirm it actually produced audio."""
-    result = subprocess.run(
-        command,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-        shell=False,
-    )
+    # FFmpeg writes the MP3 itself, so only its error text is worth keeping
+    result = run_tool(command, keep_stdout=False)
 
     if result.returncode != 0:
-        details = result.stderr.strip() or "FFmpeg returned no additional error information"
+        details = (
+            result.stderr.strip() or "FFmpeg returned no additional error information"
+        )
         raise ConversionError(
             f"FFmpeg conversion failed with exit code {result.returncode}: {details}"
         )
 
     if not temporary_file.is_file() or temporary_file.stat().st_size <= 0:
-        raise ConversionError("FFmpeg reported success but did not create a valid output file")
+        raise ConversionError(
+            "FFmpeg reported success but did not create a valid output file"
+        )
 
 
 def _plan_loudness(
-    toolchain: FFmpegToolchain, input_file: Path, config: EffectConfig, source_rate: int | None
+    toolchain: FFmpegToolchain,
+    input_file: Path,
+    config: EffectConfig,
+    source_rate: int | None,
 ) -> LoudnessPlan:
-    """Measure the finished 8D mix once, then work out the single exact volume change."""
+    """Measure the 8D mix once, then work out the single exact volume change."""
     assert config.loudness_target is not None
-    measured = measure_loudness(toolchain, input_file, build_measure_chain(config, source_rate))
+    measured = measure_loudness(
+        toolchain, input_file, build_measure_chain(config, source_rate)
+    )
     gain = loudness_gain_db(
         measured.integrated_lufs,
         measured.true_peak_db,
@@ -131,7 +141,9 @@ def convert(
     try:
         gain_db = None
         if config.loudness_target is not None:
-            plan = _plan_loudness(toolchain, input_file, config, source_info.sample_rate)
+            plan = _plan_loudness(
+                toolchain, input_file, config, source_info.sample_rate
+            )
             gain_db = plan.gain_db
             LOG.info(
                 "Loudness: measured %.1f LUFS / %.1f dBFS peak, applying %+.2f dB",

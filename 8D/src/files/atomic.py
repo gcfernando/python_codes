@@ -20,6 +20,7 @@ def _publish_without_overwrite(temporary_file: Path, output_file: Path) -> None:
         # A hard link fails if output_file appeared after validation, so no race
         os.link(temporary_file, output_file)
     except FileExistsError:
+        # FileExistsError is also an OSError, so let it out before the fallback below
         raise
     except OSError:
         # FAT32/exFAT and some shares lack hard links; Windows rename never overwrites
@@ -28,6 +29,7 @@ def _publish_without_overwrite(temporary_file: Path, output_file: Path) -> None:
         os.rename(temporary_file, output_file)
         return
 
+    # The hard link left two names for one file, so drop the scratch name
     temporary_file.unlink()
 
 

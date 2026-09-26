@@ -29,12 +29,20 @@ def _find_executable(name: str) -> str | None:
 
 def _has_filter(filters_output: str, name: str) -> bool:
     """Look for a filter row in the output of `ffmpeg -filters`."""
-    return re.search(rf"(?m)^\s*[TSC\.]+\s+{re.escape(name)}\s+", filters_output) is not None
+    # Rows start with flag columns such as 'TSC' or '...', then the filter name
+    return (
+        re.search(rf"(?m)^\s*[TSC\.]+\s+{re.escape(name)}\s+", filters_output)
+        is not None
+    )
 
 
 def _has_audio_encoder(encoders_output: str, name: str) -> bool:
     """Look for an audio encoder row in the output of `ffmpeg -encoders`."""
-    return re.search(rf"(?m)^\s*A.....\s+{re.escape(name)}\s+", encoders_output) is not None
+    # Audio encoder rows start with 'A' followed by five more flag characters
+    return (
+        re.search(rf"(?m)^\s*A.....\s+{re.escape(name)}\s+", encoders_output)
+        is not None
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,7 +67,8 @@ class FFmpegToolchain:
             raise DependencyError(
                 "Missing required executable(s): "
                 + ", ".join(missing)
-                + f". Copy them into {BUNDLED_DIR} or install FFmpeg and add it to PATH."
+                + f". Copy them into {BUNDLED_DIR} or install FFmpeg "
+                "and add it to PATH."
             )
 
         return cls(ffmpeg=Path(ffmpeg).resolve(), ffprobe=Path(ffprobe).resolve())
@@ -87,4 +96,6 @@ class FFmpegToolchain:
             )
 
         if not _has_audio_encoder(encoders_output, REQUIRED_ENCODER):
-            raise DependencyError("This FFmpeg build does not include the libmp3lame encoder.")
+            raise DependencyError(
+                "This FFmpeg build does not include the libmp3lame encoder."
+            )

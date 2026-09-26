@@ -16,8 +16,12 @@ WAYS_TO_START = [
     pytest.param(["."], SRC, id="inside src: python ."),
     pytest.param(["cli.py"], SRC, id="inside src: python cli.py"),
     pytest.param(["src"], ROOT, id="inside 8D: python src"),
-    pytest.param([str(Path("src") / "__main__.py")], ROOT, id="inside 8D: python src/__main__.py"),
-    pytest.param([str(Path("src") / "cli.py")], ROOT, id="inside 8D: python src/cli.py"),
+    pytest.param(
+        [str(Path("src") / "__main__.py")], ROOT, id="inside 8D: python src/__main__.py"
+    ),
+    pytest.param(
+        [str(Path("src") / "cli.py")], ROOT, id="inside 8D: python src/cli.py"
+    ),
     pytest.param(["-m", "src"], ROOT, id="inside 8D: python -m src"),
     pytest.param([str(SRC)], ROOT.anchor, id="anywhere: python <full path to src>"),
 ]

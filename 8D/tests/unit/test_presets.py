@@ -4,7 +4,6 @@
 from pathlib import Path
 
 import pytest
-import tomllib
 
 import audio8d
 from audio8d import PRESETS, RECOMMENDED_PRESET, EffectConfig, InputValidationError
@@ -62,7 +61,11 @@ def test_loudness_target_rejects_silly_values(target: float) -> None:
 
 
 def test_version_matches_pyproject() -> None:
+    # tomllib arrived in Python 3.11, so this one check is skipped on 3.10
+    tomllib = pytest.importorskip("tomllib")
     pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
-    declared = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["version"]
+    declared = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"][
+        "version"
+    ]
 
     assert audio8d.__version__ == declared

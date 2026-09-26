@@ -16,7 +16,8 @@ from audio8d.effects import (
 DEFAULT_CHAIN = (
     "aformat=sample_fmts=fltp:channel_layouts=stereo,"
     "aecho=in_gain=0.88:out_gain=0.2740:delays=55|110:decays=0.1520|0.0980,"
-    "apulsator=mode=sine:amount=0.8500:offset_l=0:offset_r=0.5:width=1:timing=hz:hz=0.12500000,"
+    "apulsator=mode=sine:amount=0.8500:offset_l=0:offset_r=0.5:width=1:"
+    "timing=hz:hz=0.12500000,"
     "alimiter=limit=0.9500:attack=5:release=50:level=false:latency=true"
 )
 
@@ -73,7 +74,9 @@ def test_volume_stage_sits_between_pan_and_limiter() -> None:
 
 
 def test_exact_mode_leaves_room_for_mp3_overshoot() -> None:
-    config = EffectConfig(loudness_target=-14.0, limiter_ceiling=0.84, exact_loudness=True)
+    config = EffectConfig(
+        loudness_target=-14.0, limiter_ceiling=0.84, exact_loudness=True
+    )
 
     assert "alimiter=limit=0.7487" in build_filter_chain(config, gain_db=13.0)
 
@@ -103,11 +106,15 @@ def test_pure_gain_never_pushes_peaks_past_the_ceiling() -> None:
 
 
 def test_pure_gain_reaches_the_target_when_peaks_allow() -> None:
-    assert loudness_gain_db(-20.0, -12.0, -14.0, 0.84, exact=False) == pytest.approx(6.0)
+    assert loudness_gain_db(-20.0, -12.0, -14.0, 0.84, exact=False) == pytest.approx(
+        6.0
+    )
 
 
 def test_exact_mode_always_reaches_the_target() -> None:
-    assert loudness_gain_db(-27.4, -11.5, -14.0, 0.84, exact=True) == pytest.approx(13.4)
+    assert loudness_gain_db(-27.4, -11.5, -14.0, 0.84, exact=True) == pytest.approx(
+        13.4
+    )
 
 
 def test_silence_gets_no_gain() -> None:
@@ -128,5 +135,7 @@ def test_silence_gets_no_gain() -> None:
         (None, 44100),
     ],
 )
-def test_sample_rate_is_kept_when_mp3_allows_it(source: int | None, expected: int) -> None:
+def test_sample_rate_is_kept_when_mp3_allows_it(
+    source: int | None, expected: int
+) -> None:
     assert mp3_sample_rate_for(source) == expected

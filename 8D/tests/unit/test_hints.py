@@ -3,15 +3,29 @@
 
 import pytest
 
-from audio8d import ConversionError, DependencyError, EffectConfig, InputValidationError, hints
+from audio8d import (
+    ConversionError,
+    DependencyError,
+    EffectConfig,
+    InputValidationError,
+    hints,
+)
 
 
 @pytest.mark.parametrize(
     ("error", "expected"),
     [
         (DependencyError("Missing required executable(s): ffmpeg"), "src folder"),
-        (DependencyError("Command failed with exit code 1: boom"), "FFmpeg would not run"),
-        (InputValidationError("Input file does not exist or cannot be accessed: a.mp3"), "drag"),
+        (
+            DependencyError("Command failed with exit code 1: boom"),
+            "FFmpeg would not run",
+        ),
+        (
+            InputValidationError(
+                "Input file does not exist or cannot be accessed: a.mp3"
+            ),
+            "drag",
+        ),
         (
             InputValidationError("Command failed with exit code 1: bad data"),
             "doesn't look like music",

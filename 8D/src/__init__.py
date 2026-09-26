@@ -1,17 +1,15 @@
 # Developed by Gehan Fernando
 """Audio8D: turn any audio file into an 8D-style headphone MP3."""
 
-from .core import (
-    PRESETS,
-    RECOMMENDED_PRESET,
+from .core.errors import (
     Audio8DError,
-    AudioStreamInfo,
     ConversionError,
     DependencyError,
-    EffectConfig,
     InputValidationError,
-    Preset,
 )
+from .core.presets import PRESETS, RECOMMENDED_PRESET, Preset
+from .core.settings import EffectConfig
+from .core.types import AudioStreamInfo
 from .pipeline import convert
 
 __author__ = "Gehan Fernando"

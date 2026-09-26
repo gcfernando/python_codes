@@ -1,6 +1,7 @@
 # Developed by Gehan Fernando
 """Friendly, colourful terminal output for the `audio8d` command."""
 
+import ctypes
 import math
 import os
 from pathlib import Path
@@ -17,6 +18,7 @@ _VBR_KBPS = (245, 225, 190, 175, 165, 130, 115, 100, 85, 65)
 # The studio preset is what every "best:" hint in the panel points to
 BEST = PRESETS[RECOMMENDED_PRESET].config
 
+# ANSI colour codes; 38;5;141 is a soft violet from the 256-colour palette
 _ANSI = {
     "bold": "1",
     "dim": "2",
@@ -34,15 +36,15 @@ def _enable_windows_ansi(stream: TextIO) -> bool:
     if os.name != "nt":
         return True
     try:
-        import ctypes
-        import msvcrt
+        # msvcrt only exists on Windows, so it is imported once we know we are there
+        import msvcrt  # pylint: disable=import-outside-toplevel
 
         kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
         handle = msvcrt.get_osfhandle(stream.fileno())
         mode = ctypes.c_uint32()
         if not kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
             return False
-        # 0x0004 (ENABLE_VIRTUAL_TERMINAL_PROCESSING) lets the console understand colour codes
+        # 0x0004 is ENABLE_VIRTUAL_TERMINAL_PROCESSING, which turns colour codes on
         return bool(kernel32.SetConsoleMode(handle, mode.value | 0x0004))
     except (AttributeError, OSError, ValueError):
         return False
@@ -56,7 +58,11 @@ class Painter:
         self.stream = stream
         is_terminal = hasattr(stream, "isatty") and stream.isatty()
         # Respect NO_COLOR, the common way people ask tools for plain text
-        self.color = is_terminal and "NO_COLOR" not in os.environ and _enable_windows_ansi(stream)
+        self.color = (
+            is_terminal
+            and "NO_COLOR" not in os.environ
+            and _enable_windows_ansi(stream)
+        )
         self.fancy = self._can_encode("╭─╮│╰╯·")
 
     def _can_encode(self, sample: str) -> bool:
@@ -108,9 +114,10 @@ def describe_room(ambience: float) -> str:
 
 
 def describe_quality(quality: int, bitrate: int | None = None) -> str:
-    """Plain-word label for --quality, or for --bitrate when a constant bitrate is set."""
+    """Plain-word label for --quality, or for --bitrate when one is set."""
     if bitrate:
-        return f"{bitrate} kbps CBR  ({'the maximum MP3 allows' if bitrate == 320 else 'constant'})"
+        kind = "the maximum MP3 allows" if bitrate == 320 else "constant"
+        return f"{bitrate} kbps CBR  ({kind})"
     if quality <= 1:
         verdict = "best"
     elif quality <= 3:
@@ -139,16 +146,22 @@ def describe_loudness(target: float | None) -> str:
 
 
 def advice(config: EffectConfig) -> list[str]:
-    """Plain-word warnings for settings that may not sound their best, each with a fix."""
+    """Plain-word warnings for settings that may not sound their best, with fixes."""
     notes = []
     if config.rotation_seconds < 5:
-        notes.append("A spin this fast can make people dizzy. Most people like 6 to 10 s.")
+        notes.append(
+            "A spin this fast can make people dizzy. Most people like 6 to 10 s."
+        )
     elif config.rotation_seconds > 20:
         notes.append("A spin this slow is hard to notice. Most people like 6 to 10 s.")
     if 0 < config.intensity < 0.5:
-        notes.append("The movement is gentle and may be hard to hear. Try --intensity 0.8")
+        notes.append(
+            "The movement is gentle and may be hard to hear. Try --intensity 0.8"
+        )
     elif config.intensity > 0.95:
-        notes.append("One ear goes almost silent at times, which can tire your ears. Try 0.8")
+        notes.append(
+            "One ear goes almost silent at times, which can tire your ears. Try 0.8"
+        )
     if config.ambience > 0.6:
         notes.append("This much room sound can make voices blurry. Try --ambience 0.25")
     if config.mp3_bitrate is None and config.mp3_quality >= 6:
@@ -160,27 +173,35 @@ def advice(config: EffectConfig) -> list[str]:
         notes.append(f"Peaks this high may crackle on some phones. Best is {best_roof}")
     elif config.limiter_ceiling < 0.5:
         notes.append(
-            f"A peak roof this low makes the song very quiet. Best is {BEST.limiter_ceiling}"
+            "A peak roof this low makes the song very quiet. "
+            f"Best is {BEST.limiter_ceiling}"
         )
     if config.loudness_target is None:
         notes.append(
-            "Your 8D song will be quieter than normal music. Add --loudness -14 to fix it."
+            "Your 8D song will be quieter than normal music. "
+            "Add --loudness -14 to fix it."
         )
     elif config.loudness_target > -9:
-        notes.append("That is very loud; music apps will turn it down anyway. Best is -14")
+        notes.append(
+            "That is very loud; music apps will turn it down anyway. Best is -14"
+        )
     elif config.loudness_target < -20:
-        notes.append("Quieter than music apps (-23 is for TV and radio). Best for music is -14")
+        notes.append(
+            "Quieter than music apps (-23 is for TV and radio). Best for music is -14"
+        )
     return notes
 
 
 def describe_source(info: AudioStreamInfo) -> str:
-    """What the input file is, e.g. 'MP3, 320 kbps, 48 kHz, stereo (already compressed)'."""
+    """What the file is, e.g. 'MP3, 320 kbps, 48 kHz, stereo (already compressed)'."""
     parts = [info.codec_name.upper().replace("PCM_", "WAV/PCM ")]
     if info.bit_rate and not info.is_lossless:
         parts.append(f"{round(info.bit_rate / 1000)} kbps")
     if info.sample_rate:
         parts.append(f"{info.sample_rate / 1000:g} kHz")
-    parts.append({1: "mono", 2: "stereo"}.get(info.channels, f"{info.channels} channels"))
+    parts.append(
+        {1: "mono", 2: "stereo"}.get(info.channels, f"{info.channels} channels")
+    )
     kind = "lossless, perfect source" if info.is_lossless else "already compressed"
     return ", ".join(parts) + f"  ({kind})"
 
@@ -189,19 +210,28 @@ def source_notes(info: AudioStreamInfo, config: EffectConfig) -> list[str]:
     """Plain-word facts about this particular file and how Audio8D treats it."""
     notes = []
     if info.is_lossless:
-        notes.append("Perfect source: the MP3 encode is the only step that loses anything.")
+        notes.append(
+            "Perfect source: the MP3 encode is the only step that loses anything."
+        )
     else:
         notes.append("Already compressed, so a little detail is gone for good.")
-        notes.append("320 kbps keeps any extra loss tiny; a FLAC or WAV copy would sound best.")
+        notes.append(
+            "320 kbps keeps any extra loss tiny; a FLAC or WAV copy would sound best."
+        )
         if config.mp3_bitrate != 320:
-            notes.append("For this kind of file, --bitrate 320 (or --preset studio) matters most.")
+            notes.append(
+                "For this kind of file, --bitrate 320 (or --preset studio) "
+                "matters most."
+            )
     if info.sample_rate and info.sample_rate > 48000:
         notes.append(
-            f"MP3 stores at most 48 kHz, so this {info.sample_rate / 1000:g} kHz file is"
-            " carefully resampled."
+            f"MP3 stores at most 48 kHz, so this {info.sample_rate / 1000:g} kHz "
+            "file is carefully resampled."
         )
     if info.channels == 1:
-        notes.append("Mono file: it is copied to both ears first, then the 8D movement starts.")
+        notes.append(
+            "Mono file: it is copied to both ears first, then the 8D movement starts."
+        )
     elif info.channels > 2:
         notes.append("Surround file: it is folded down to left and right first.")
     return notes
@@ -210,7 +240,11 @@ def source_notes(info: AudioStreamInfo, config: EffectConfig) -> list[str]:
 def _banner(painter: Painter, version: str) -> None:
     """The title box at the top of every screen."""
     title = f"  Audio8D {version}  ·  developed by Gehan Fernando  "
-    corners = ("╭", "─", "╮", "│", "╰", "╯") if painter.fancy else ("+", "-", "+", "|", "+", "+")
+    corners = (
+        ("╭", "─", "╮", "│", "╰", "╯")
+        if painter.fancy
+        else ("+", "-", "+", "|", "+", "+")
+    )
     if not painter.fancy:
         title = title.replace("·", "-")
     top_left, across, top_right, side, bottom_left, bottom_right = corners
@@ -220,11 +254,25 @@ def _banner(painter: Painter, version: str) -> None:
         + painter.paint(title, "bold", "cyan")
         + painter.paint(side, "violet")
     )
-    painter.line(painter.paint(bottom_left + across * len(title) + bottom_right, "violet"))
+    painter.line(
+        painter.paint(bottom_left + across * len(title) + bottom_right, "violet")
+    )
+
+
+def _loudness_setting(config: EffectConfig) -> str:
+    """The loudness row of the settings panel, e.g. '-14 LUFS goal, dynamics kept'."""
+    if config.loudness_target is None:
+        return "off"
+    how = (
+        "exactly, light peak limiting"
+        if config.exact_loudness
+        else "goal, dynamics kept"
+    )
+    return f"{config.loudness_target:g} LUFS {how}"
 
 
 def _best_note(painter: Painter, is_best: bool, best_text: str) -> str:
-    """Green '(best)' when the value is the recommended one, else a hint naming the best."""
+    """Green '(best)' for the recommended value, otherwise a hint naming the best."""
     if is_best:
         return painter.paint("  (best)", "green")
     return painter.paint(f"  best: {best_text}", "dim")
@@ -241,7 +289,7 @@ def show_settings(
     banner: bool = True,
     source: AudioStreamInfo | None = None,
 ) -> None:
-    """Print the banner and every setting in plain words, marking which values are best."""
+    """Print the banner and every setting in plain words, marking the best values."""
     # The guided mode has already shown the title box, so it can ask us to skip it
     if banner:
         _banner(painter, version)
@@ -249,7 +297,9 @@ def show_settings(
     def row(label: str, value: str, note: str = "", color: str = "cyan") -> None:
         """One neat line: grey label, coloured value, then the best-value note."""
         label_text = painter.paint(f"{label:<11}", "dim")
-        painter.line(f"  {label_text}{painter.paint(f'{value:<44}', color)}{note}".rstrip())
+        painter.line(
+            f"  {label_text}{painter.paint(f'{value:<44}', color)}{note}".rstrip()
+        )
 
     row("Song in", str(song_in), color="bold")
     row("Song out", str(song_out), color="bold")
@@ -274,7 +324,9 @@ def show_settings(
     row(
         "Movement",
         f"{config.intensity:.2f}  ({describe_movement(config.intensity)})",
-        _best_note(painter, config.intensity == BEST.intensity, f"{BEST.intensity:.2f}"),
+        _best_note(
+            painter, config.intensity == BEST.intensity, f"{BEST.intensity:.2f}"
+        ),
     )
     row(
         "Room",
@@ -285,22 +337,21 @@ def show_settings(
         "Peak roof",
         describe_ceiling(config.limiter_ceiling),
         _best_note(
-            painter, config.limiter_ceiling == BEST.limiter_ceiling, f"{BEST.limiter_ceiling:.2f}"
+            painter,
+            config.limiter_ceiling == BEST.limiter_ceiling,
+            f"{BEST.limiter_ceiling:.2f}",
         ),
     )
     row(
         "Quality",
         describe_quality(config.mp3_quality, config.mp3_bitrate),
-        _best_note(painter, config.mp3_bitrate == BEST.mp3_bitrate, f"{BEST.mp3_bitrate} kbps"),
+        _best_note(
+            painter, config.mp3_bitrate == BEST.mp3_bitrate, f"{BEST.mp3_bitrate} kbps"
+        ),
     )
-    if config.loudness_target is None:
-        loudness = "off"
-    else:
-        how = "exactly, light peak limiting" if config.exact_loudness else "goal, dynamics kept"
-        loudness = f"{config.loudness_target:g} LUFS {how}"
     row(
         "Loudness",
-        loudness,
+        _loudness_setting(config),
         _best_note(
             painter,
             config.loudness_target == BEST.loudness_target
@@ -325,11 +376,14 @@ def show_settings(
 
     painter.line()
     if config.loudness_target is None:
-        painter.line(painter.paint("  Working... this usually takes a few seconds.", "yellow"))
+        painter.line(
+            painter.paint("  Working... this usually takes a few seconds.", "yellow")
+        )
     else:
         painter.line(
             painter.paint(
-                "  Working... measuring the loudness first, then making your song.", "yellow"
+                "  Working... measuring the loudness first, then making your song.",
+                "yellow",
             )
         )
 
@@ -364,13 +418,15 @@ def show_loudness(painter: Painter, plan: LoudnessPlan) -> None:
     if plan.held_back:
         painter.line(
             painter.paint(
-                f"  Kept below {plan.target_lufs:g} so the loudest moments are not squashed."
-                " (--exact-loudness would force it.)",
+                f"  Kept below {plan.target_lufs:g} so the loudest moments are not "
+                "squashed. (--exact-loudness would force it.)",
                 "dim",
             )
         )
     elif plan.exact:
-        painter.line(painter.paint("  The loudest peaks were shaved lightly to reach it.", "dim"))
+        painter.line(
+            painter.paint("  The loudest peaks were shaved lightly to reach it.", "dim")
+        )
 
 
 def show_tip(painter: Painter) -> None:
@@ -394,7 +450,9 @@ def show_presets(painter: Painter, version: str) -> None:
     """Print every preset with its exact values, recommended one first."""
     _banner(painter, version)
     painter.line(
-        painter.paint("  Sound styles - use one with:  audio8d song.mp3 --preset NAME", "bold")
+        painter.paint(
+            "  Sound styles - use one with:  audio8d song.mp3 --preset NAME", "bold"
+        )
     )
     painter.line()
     header = (
@@ -409,17 +467,23 @@ def show_presets(painter: Painter, version: str) -> None:
         if cfg.loudness_target is None:
             loud = "off"
         else:
-            loud = f"{cfg.loudness_target:g} " + ("exact" if cfg.exact_loudness else "LUFS")
+            loud = f"{cfg.loudness_target:g} " + (
+                "exact" if cfg.exact_loudness else "LUFS"
+            )
         numbers = (
             f"{cfg.rotation_seconds:>5g}s{cfg.intensity:>7.2f}{cfg.ambience:>7.2f}"
             f"{cfg.limiter_ceiling:>7.2f}  {quality:<9}{loud:<11}"
         )
         color = "pink" if name == RECOMMENDED_PRESET else "cyan"
-        painter.line(f"  {painter.paint(f'{label:<12}', 'bold', color)}{numbers}{preset.summary}")
+        painter.line(
+            f"  {painter.paint(f'{label:<12}', 'bold', color)}{numbers}{preset.summary}"
+        )
     painter.line()
     painter.line(
         painter.paint(
-            "  * recommended. Any knob you add (e.g. --intensity 0.9) overrides the style.", "dim"
+            "  * recommended. Any knob you add (e.g. --intensity 0.9) "
+            "overrides the style.",
+            "dim",
         )
     )
 
@@ -428,7 +492,8 @@ def show_welcome(painter: Painter, version: str) -> None:
     """First screen of the guided mode."""
     _banner(painter, version)
     painter.line(
-        "  " + painter.paint("Welcome! Let's make your song fly around your head.", "bold")
+        "  "
+        + painter.paint("Welcome! Let's make your song fly around your head.", "bold")
     )
     painter.line("  Just answer 2 quick questions. You can't break anything.")
     painter.line()
@@ -445,14 +510,15 @@ def show_style_menu(painter: Painter) -> list[str]:
     names = list(PRESETS)
     for number, name in enumerate(names, start=1):
         badge = (
-            painter.paint("  BEST ", "bold", "green") if name == RECOMMENDED_PRESET else "       "
+            painter.paint("  BEST ", "bold", "green")
+            if name == RECOMMENDED_PRESET
+            else "       "
         )
         label = painter.paint(
             f"{name:<10}", "bold", "pink" if name == RECOMMENDED_PRESET else "cyan"
         )
-        painter.line(
-            f"   {painter.paint(str(number), 'bold')}  {label}{badge}{PRESETS[name].summary}"
-        )
+        number_text = painter.paint(str(number), "bold")
+        painter.line(f"   {number_text}  {label}{badge}{PRESETS[name].summary}")
     return names
 
 

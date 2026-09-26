@@ -38,14 +38,18 @@ def resolve_output(path: Path, *, overwrite: bool) -> Path:
     try:
         output.parent.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
-        raise InputValidationError(f"Cannot create output directory: {output.parent}") from exc
+        raise InputValidationError(
+            f"Cannot create output directory: {output.parent}"
+        ) from exc
 
     if not output.parent.is_dir():
         raise InputValidationError(f"Output parent is not a directory: {output.parent}")
 
     if output.exists():
         if not output.is_file():
-            raise InputValidationError(f"Output path exists but is not a regular file: {output}")
+            raise InputValidationError(
+                f"Output path exists but is not a regular file: {output}"
+            )
         if not overwrite:
             raise InputValidationError(
                 f"Output already exists: {output}. Use --overwrite to replace it."

@@ -9,17 +9,19 @@ from ..core.settings import EffectConfig
 _ECHO_DELAYS_MS = "55|110"
 
 # The only sample rates the MP3 format can store
-MP3_SAMPLE_RATES = frozenset({8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000})
+MP3_SAMPLE_RATES = frozenset(
+    {8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000}
+)
 
 # ebur128 reports pure silence as -70 LUFS, so anything at or below it gets no gain
 _SILENCE_LUFS = -70.0
 
-# Extra room below the ceiling in exact-loudness mode, because MP3 decoding overshoots limited peaks
+# Extra headroom in exact-loudness mode, since MP3 decoding overshoots limited peaks
 _EXACT_MODE_MARGIN_DB = 1.0
 
 
 def mp3_sample_rate_for(source_rate: int | None) -> int:
-    """Keep the source sample rate when MP3 can store it, otherwise pick the closest family."""
+    """Keep the source rate if MP3 can store it, else pick the closest family."""
     if source_rate in MP3_SAMPLE_RATES:
         return source_rate
     # 88.2 and 176.4 kHz divide cleanly into 44.1 kHz; other hi-res rates land on 48 kHz
@@ -42,7 +44,7 @@ def loudness_gain_db(
     gain = target_lufs - measured_lufs
     if exact:
         return gain
-    # Never lift the loudest moment past the ceiling, so the limiter never has to squash anything
+    # Never lift the loudest moment past the ceiling, so the limiter never squashes it
     return min(gain, 20.0 * math.log10(ceiling) - measured_peak_db)
 
 
@@ -115,10 +117,12 @@ def extra_filters_for(config: EffectConfig) -> tuple[str, ...]:
 
 
 def build_measure_chain(config: EffectConfig, source_rate: int | None = None) -> str:
-    """The 8D effect followed by an EBU R128 meter, used to measure before the real encode."""
+    """The 8D effect plus an EBU R128 meter, used to measure before the real encode."""
     config.validate()
-    # framelog=verbose keeps the per-frame lines quiet so only the final summary is printed
-    return ",".join([*_effect_stages(config, source_rate), "ebur128=peak=true:framelog=verbose"])
+    # framelog=verbose hides the per-frame lines, so only the final summary is printed
+    return ",".join(
+        [*_effect_stages(config, source_rate), "ebur128=peak=true:framelog=verbose"]
+    )
 
 
 def build_filter_chain(
@@ -134,6 +138,7 @@ def build_filter_chain(
     if gain_db is not None:
         stages.append(f"volume={gain_db:.2f}dB")
         if config.exact_loudness:
+            # Lower the roof by the margin, but never below alimiter's 0.0625 minimum
             ceiling = max(0.0625, ceiling * 10 ** (-_EXACT_MODE_MARGIN_DB / 20))
 
     # The limiter goes last so it guards exactly what reaches the MP3 encoder
