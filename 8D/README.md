@@ -27,272 +27,116 @@
 
 </div>
 
+**Audio8D** is a small, free program for your computer. You give it a normal song, and it makes a new copy where the music seems to **travel slowly around your head**, from your left ear to your right ear and back again. This effect is known as **"8D audio"**. Your original song is never changed.
+
 > [!TIP]
-> 👶 **You don't need to know anything.** Just type **`audio8d`** and press Enter (or double-click `src\__main__.py`). The app asks you **2 easy questions** and picks the best settings for you. [See it in action](#-the-easiest-way-let-the-app-ask-you)
+> 👶 **You don't need any technical knowledge.** Start Audio8D (type **`audio8d`** and press Enter, or double-click `src\__main__.py`). It asks you **2 easy questions** and picks the best settings for you. 👉 [Jump to the step-by-step quick start](#-6-quick-start-your-first-8d-song)
 >
-> 🏆 **Know what you want?** `audio8d song.mp3 --preset studio` gives world-standard quality and loudness in one go. [Why these values?](#-11-best-quality--sound-styles)
+> 🏆 **Already know your way around?** `audio8d song.mp3 --preset studio` gives world-standard quality and loudness in one go. 👉 [Why these values?](#-14-best-quality-and-sound-styles)
 
 > [!IMPORTANT]
-> 🎧 **Always listen with headphones.** The trick only works when your left ear and your right ear hear different things. On a normal speaker, you will not feel it.
+> 🎧 **Always listen with headphones.** The effect only works when your left ear and your right ear hear different things. On a normal speaker you will not feel it.
 
 ---
 
-## 📚 What is inside this guide
+## 📚 What's inside this guide
 
-> 🚀 **New here and just want your song in 8D?** Go straight to **[Start here: turn YOUR song into 8D, step by step](#-start-here-turn-your-song-into-8d-step-by-step)**.
+This guide is written for **everyone**. The first parts need no technical knowledge at all. The later parts go deeper, and the last parts are for programmers.
 
-| 👶 Start here | 🎵 Make music | 🧰 Help & extras |
+| 🌱 Understand it | 🚀 Get started | 🎵 Make great 8D songs |
 |---|---|---|
-| 1. [What does this do?](#-1-what-does-this-do) | 8. [Make your first 8D song](#-8-make-your-first-8d-song) | 15. [When something goes wrong](#-15-when-something-goes-wrong) |
-| 2. [What can it do?](#-2-what-can-it-do) | 9. [Check your new song](#-9-check-your-new-song) | 16. [How your files stay safe](#️-16-how-your-files-stay-safe) |
-| 3. [What you need](#-3-what-you-need) | 10. [Change how it sounds](#️-10-change-how-it-sounds) | 17. [For programmers: use it from Python](#-17-for-programmers-use-it-from-python) |
-| 4. [Where is everything?](#️-4-where-is-everything) | 11. [🏆 Best quality & sound styles](#-11-best-quality--sound-styles) | 18. [For programmers: tests & code](#-18-for-programmers-tests--code) |
-| 5. [Set up: step by step](#-5-set-up-step-by-step) | 12. [Which songs can I use?](#-12-which-songs-can-i-use) | 19. [Questions people ask](#-19-questions-people-ask) |
-| 6. [Choose how to run it](#-6-choose-how-to-run-it) | 13. [Many songs at once](#-13-many-songs-at-once) | 20. [Word helper](#-20-word-helper) |
-| 7. [Check that it works](#-7-check-that-it-works) | 14. [Why is my new song quieter?](#-14-why-is-my-new-song-quieter) | 21. [Remove Audio8D](#️-21-remove-audio8d) · 22. [Credits](#-22-credits) |
+| 1. [What is Audio8D?](#-1-what-is-audio8d) | 6. [Quick start: your first 8D song](#-6-quick-start-your-first-8d-song) | 11. [Making 8D songs](#-11-making-8d-songs) |
+| 2. [Why does it exist?](#-2-why-does-it-exist) | 7. [Where is everything?](#-7-where-is-everything) | 12. [Check your new song](#-12-check-your-new-song) |
+| 3. [Why you'll like it](#-3-why-youll-like-it) | 8. [Full setup, step by step](#-8-full-setup-step-by-step) | 13. [Change how it sounds](#-13-change-how-it-sounds) |
+| 4. [Everything it can do](#-4-everything-it-can-do) | 9. [Four ways to start Audio8D](#-9-four-ways-to-start-audio8d) | 14. [🏆 Best quality and sound styles](#-14-best-quality-and-sound-styles) |
+| 5. [What you need](#-5-what-you-need) | 10. [Check that it works](#-10-check-that-it-works) | 15. [Which songs can I use?](#-15-which-songs-can-i-use) |
+| | | 16. [Many songs at once](#-16-many-songs-at-once) |
+| | | 17. [Why is my new song quieter?](#-17-why-is-my-new-song-quieter) |
+
+| 🆘 Help | 👩‍💻 For programmers | 👋 The end |
+|---|---|---|
+| 18. [When something goes wrong](#-18-when-something-goes-wrong) | 22. [Use it from Python](#-22-for-programmers-use-it-from-python) | 24. [Remove Audio8D](#-24-remove-audio8d) |
+| 19. [How your files stay safe](#-19-how-your-files-stay-safe) | 23. [Tests and code](#-23-for-programmers-tests-and-code) | 25. [Credits](#-25-credits) |
+| 20. [Questions people ask](#-20-questions-people-ask) | | |
+| 21. [Word helper (tricky words explained)](#-21-word-helper) | | |
+
+> 💡 **Met a word you don't know?** The [Word helper](#-21-word-helper) explains every technical word in this guide in one simple line.
 
 ---
 
-## 🚀 Start here: turn YOUR song into 8D, step by step
+## 🎧 1. What is Audio8D?
 
-Got a music file? 🎵 Follow these steps **from top to bottom**. Every step tells you **what you should see** when it worked ✅, and what to do if it didn't. You can't break anything, and your original song is **never changed**.
-
-```mermaid
-flowchart LR
-    A(["🎵 Your song"]):::a --> B["🧰 One-time<br/>setup check"]:::b
-    B --> C["▶️ Start<br/>Audio8D"]:::c
-    C --> D["🖱️ Drag the song in"]:::d
-    D --> E["⏎ Enter = BEST style"]:::e
-    E --> F(["🎧 Your 8D song!"]):::f
-
-    classDef a fill:#1e1e3f,stroke:#00d4ff,color:#fff
-    classDef b fill:#00b4d8,stroke:#0090b0,color:#fff
-    classDef c fill:#4f8bff,stroke:#2a5fd0,color:#fff
-    classDef d fill:#7b2ff7,stroke:#5a1fc0,color:#fff
-    classDef e fill:#ff4fd8,stroke:#c0209f,color:#fff
-    classDef f fill:#2ea44f,stroke:#1f7a38,color:#fff
-```
-
-### 🧰 Before your very first song (only once, ever)
-
-Tick these off one by one. You only do this **the first time**.
-
-| ✔ | What | How to check | ✅ Good if… | ❌ If not… |
-|:---:|---|---|---|---|
-| ☐ | **Python 3.10 or newer** | Open PowerShell, type `python --version` | You see `Python 3.10` or higher | Install it: [Step 1](#step-1--get-python-) |
-| ☐ | **FFmpeg helper files** | Open the folder `8D\src` | You see `ffmpeg.exe` **and** `ffprobe.exe` | Get them: [Step 2](#step-2--check-the-helper-programs-) |
-| ☐ | **How you'll start Audio8D** | Pick **one** way from the table below | – | Details: [part 6](#-6-choose-how-to-run-it) |
-| ☐ | **Headphones** | Put them on the right way round (L on the left ear) | – | Any normal pair or earbuds will do |
-
-**Which way should I pick?** If you're not sure, pick **🅳 Way D (double-click)**. It needs no setup at all.
-
-| Way | One-time setup | How you'll start it every time |
-|---|---|---|
-| 🅳 **Double-click** (easiest) | Nothing | Double-click `8D\src\__main__.py` |
-| 🅰️ **Installed** | In the `8D` folder, run `python -m pip install -e .` once | Type `audio8d` in any terminal |
-| 🅱️ **Virtual environment** | In `8D`: `python -m venv .venv`, open it, then `python -m pip install -e .` | Open the box (`.\.venv\Scripts\Activate.ps1`), then type `audio8d` |
-| 🅲 **No install** | Nothing | In a terminal inside `8D\src`, type `python __main__.py` |
-
-### 🎵 Your song, in 7 easy steps
-
-#### Step 1 · Find your song 🔎
-
-Any normal music file works: **MP3, FLAC, WAV, M4A/AAC, OGG, Opus, WMA**, even the sound of a **video** (MP4, MKV, WEBM). See [part 12](#-12-which-songs-can-i-use) for the full list.
-
-- 🥇 **Have more than one copy?** Use the best one: **FLAC or WAV** beats a **320 kbps MP3**, which beats a smaller MP3. Audio8D can't add back detail that a small file already lost. ([Why?](#-best-of-best-for-every-kind-of-file))
-- 🔒 **Copy-protected songs can't be converted.** That means songs you *stream* or download inside Spotify, Apple Music (`.m4p`), YouTube Music, etc. Songs from CDs, music stores like Bandcamp or Amazon MP3, and your own recordings are fine.
-- 🎧 **Never feed it an 8D song** (a file ending in `(8D).mp3`). Always start from the **original**.
-
-✅ **You're ready when:** you know where the song is, e.g. in your `Music` folder.
-
-#### Step 2 · Start Audio8D ▶️
-
-Do the one that matches **your way**:
-
-| Your way | Do this |
-|---|---|
-| 🅳 Double-click | Open `C:\Gehan\Projects\Python_Projects\8D\src` in File Explorer and **double-click `__main__.py`**. *(If Windows asks which app to use, pick **Python**.)* |
-| 🅰️ Installed | Open **PowerShell** (press <kbd>⊞ Windows</kbd>, type `powershell`, <kbd>Enter</kbd>), type **`audio8d`**, press <kbd>Enter</kbd> |
-| 🅱️ Virtual environment | Open PowerShell **in the `8D` folder**, type `.\.venv\Scripts\Activate.ps1`, then **`audio8d`**, <kbd>Enter</kbd> |
-| 🅲 No install | Open PowerShell **in the `8D\src` folder**, type **`python __main__.py`**, <kbd>Enter</kbd> |
-
-✅ **It worked if** you see the purple title box **"Audio8D 1.0.0 · developed by Gehan Fernando"** and the words **"Welcome! Let's make your song fly around your head."**
-
-❌ **Didn't work?** `python`/`audio8d` "is not recognized", or the window closed at once? See [Stuck?](#-stuck-quick-fixes) below.
-
-#### Step 3 · Give it your song (question 1 of 2) 🎵
-
-It asks **"Step 1 of 2 - Which song?"**
-
-1. Open **another** File Explorer window and find your song.
-2. **Drag the song** with the mouse and **drop it into the black window**. Its full path appears after `Song:`.
-3. Press <kbd>Enter</kbd>.
-
-💡 **Any name works here**, even names with spaces, `'`, `$`, `&` or brackets, because you're answering a question, not typing a command.
-💡 **Typed it wrong?** It says *"I can't find that file"* and simply asks again. Press <kbd>Enter</kbd> on an empty line to stop.
-
-✅ **It worked if** it moves on to **"Step 2 of 2 - Which style?"**
-
-#### Step 4 · Pick the style (question 2 of 2) 🎨
-
-You'll see a numbered list. The best one says **BEST**.
-
-- 🏆 **Just press <kbd>Enter</kbd>.** That picks **`studio`**, the best of best (320 kbps, loudness like Spotify, dynamics untouched).
-- Or type a number from **1 to 8** and press <kbd>Enter</kbd>, e.g. `2` for `streaming` (always exactly −14 LUFS) or `4` for `smooth`. All styles: [part 11](#-all-ready-made-styles).
-
-✅ **It worked if** a list of settings appears, each marked **(best)**, and it says **"Working…"**
-
-#### Step 5 · Wait a few seconds ⏳
-
-Audio8D first **measures** your song, then **makes** the 8D version. On a normal PC this takes about **20 seconds for a 5-minute song** with `studio`. While it works, it shows:
-
-| You'll see | It means |
-|---|---|
-| **Source** | What your file is, e.g. *"MP3, 320 kbps, 48 kHz, stereo (already compressed)"* |
-| **(best)** next to each setting | Every value is already the best one |
-| **Good to know** 💙 | Honest facts about your file, e.g. *"a FLAC or WAV copy would sound best"* |
-| **Conversion completed** 💚 | ✅ **Done!** With the time taken and the file size |
-| **Loudness:** 💚 | How loud it was, how much it was turned up or down, and where it ended up |
-
-Then it says **"Press Enter to close…"**, so press <kbd>Enter</kbd>.
-
-❌ **See a line starting with `ERROR`?** Read the yellow **`What to do:`** line right under it, which tells you the fix. All messages: [part 15](#-15-when-something-goes-wrong).
-
-#### Step 6 · Find your new 8D song 📁
-
-It's saved **right next to your original song**, with **`(8D)`** added to the name:
-
-```text
-C:\Users\Gehan\Music\My Song.mp3        ← your original (never changed)
-C:\Users\Gehan\Music\My Song (8D).mp3   ← your new 8D song ✨
-```
-
-Works for every file type: `Track 01.flac` becomes `Track 01 (8D).mp3`. The new song is **always an MP3**, so it plays on everything.
-
-#### Step 7 · Listen! 🎧
-
-1. Put on your **headphones**.
-2. **Double-click** the new `(8D).mp3` file to play it in your music app.
-3. **Close your eyes.** Within about **8 seconds** the music should float **left ➡️ right ➡️ left** around your head. 🌀
-
-✅ **Perfect if:** smooth movement, clear voice, no crackles. Want to check it properly? See [part 9](#-9-check-your-new-song).
-
-🎉 **That's it, you made your first 8D song!**
-
-### ⌨️ Prefer one command instead of questions?
-
-Once you know the steps, this does **Steps 2 to 5 in one line**:
-
-```powershell
-audio8d "C:\Users\Gehan\Music\My Song.mp3" --preset studio
-```
-
-*(Way C: open PowerShell in `8D\src` and type `python __main__.py` instead of `audio8d`.)*
-
-| Want to… | Add this |
-|---|---|
-| Choose the new file's name or folder | A second name: `audio8d "My Song.mp3" "D:\8D Songs\My Song.mp3" --preset studio` (the folder is created for you) |
-| Replace an 8D file you made before | `--overwrite` |
-| Exactly −14 LUFS, like every other song in a playlist | `--preset streaming` instead of `--preset studio` |
-| See every style first | `audio8d --list-presets` |
-
-💡 **Easy path trick:** in File Explorer, **hold <kbd>Shift</kbd> and right-click the song → "Copy as path"**, then paste it with a right-click. The quotes are added for you. **Warning:** if the name has a `$` or `` ` `` in it, change the double quotes to single quotes (see below).
-
-#### 🔤 Song names with special characters (all tested)
-
-Some characters mean something special to PowerShell, so **how you put quotes around the name matters**:
-
-| The song's name has… | Write it like this | ✅ Example that works |
-|---|---|---|
-| Spaces | Double quotes `" "` | `audio8d "My Song.mp3"` |
-| An apostrophe `'` | Double quotes `" "` | `audio8d "Rock 'n' Roll.mp3"` |
-| `&` `[ ]` `( )` | Double quotes `" "` | `audio8d "Tom & Jerry [Live] (2024).mp3"` |
-| A dollar sign `$` or a backtick `` ` `` | **Single** quotes `' '` | `audio8d 'Cash $ong.mp3'` |
-| Both `'` **and** `$` | Single quotes, and type the apostrophe **twice** | `audio8d 'Rock ''n'' $ong.mp3'` |
-| Anything strange at all | **Skip the command**: type just `audio8d` and **drag the song in** | Works with every name ✅ |
-
-❌ **Forgot the quotes?** You'll see *"unrecognized arguments"* and a **What to do** line telling you to add them.
-❌ **Used double quotes around a `$` name?** PowerShell removes part of the name, so you'll see *"Input file does not exist"*. Use single quotes, or drag the song in.
-
-*(macOS and Linux terminals follow the same rules.)*
-
-### 🔁 After your first song
-
-**Not quite right?** Make it again from the **original** with one change (add `--overwrite` to replace the old 8D file):
-
-| It sounds… | Try this |
-|---|---|
-| 😵 Too strong or dizzy | `audio8d "My Song.mp3" --preset smooth --overwrite` |
-| 🐌 Spinning too fast for a slow song | `audio8d "My Song.mp3" --preset studio --rotation-seconds 12 --overwrite` |
-| 😐 Hardly moving | `audio8d "My Song.mp3" --preset studio --intensity 0.95 --overwrite` *(and check you're on headphones)* |
-| 🌫️ Too echoey | `audio8d "My Song.mp3" --preset studio --ambience 0.15 --overwrite` |
-| 🔉 Quieter than my other songs | `audio8d "My Song.mp3" --preset streaming --overwrite` |
-| 🥁 Not in time with the beat | Match the spin to the song's tempo: [tempo table](#-bonus-make-the-spin-dance-with-the-beat) |
-
-**Good to remember:**
-
-- 🎵 **Your original song is never changed.** Keep it, since an 8D song can't be turned back.
-- 🚫 **Never convert an `(8D)` file again.** Always start from the original.
-- 📚 **Got lots of songs?** Do a whole folder at once: [part 13](#-13-many-songs-at-once).
-- 📱 **On your phone:** copy the `(8D).mp3` file over; every music app can play it.
-- 🙈 **Git:** songs inside the `8D` folder are ignored (`*.mp3` in `.gitignore`), so they are never uploaded by accident.
-- ⚖️ **Sharing:** making an 8D version doesn't make a song yours. Ask the owner before uploading it anywhere.
-
-### 🆘 Stuck? Quick fixes
-
-| What happened | Quick fix | More help |
-|---|---|---|
-| `python` is not recognized | Try `py` instead; if that fails, install Python and tick **"Add python.exe to PATH"** | [Step 1](#step-1--get-python-) |
-| `audio8d` is not recognized | Use Way C (`python __main__.py` in `8D\src`), or install again in the `8D` folder | [part 15](#-15-when-something-goes-wrong) |
-| The double-clicked window closes at once | Open PowerShell in `8D\src` and run `python __main__.py` to read the message | [part 15](#-15-when-something-goes-wrong) |
-| "Missing required executable(s): ffmpeg" | Put `ffmpeg.exe` and `ffprobe.exe` in `8D\src` | [Step 2](#step-2--check-the-helper-programs-) |
-| "Input file does not exist" | Check the name, or type `audio8d` alone and **drag the song in** | [Song names](#-song-names-with-special-characters-all-tested) |
-| "Command failed … Invalid data found" | That file isn't music, or it's copy-protected | [Step 1](#step-1--find-your-song-) |
-| "Output already exists" | Add `--overwrite`, or give the new file another name | [part 8](#the-new-file-already-exists) |
-| I can't hear any 8D movement | Use **headphones** and turn **off** "Mono audio" (Windows *Settings → Accessibility → Audio*) | [part 15](#-15-when-something-goes-wrong) |
-
-### ✅ My checklist (print me!)
-
-- [ ] Python works (`python --version`)
-- [ ] `ffmpeg.exe` and `ffprobe.exe` are in `8D\src`
-- [ ] I picked my way to start (A, B, C or D)
-- [ ] I found the **best copy** of my song (not an `(8D)` file, not copy-protected)
-- [ ] I started Audio8D and saw the **Welcome!** message
-- [ ] I dragged my song in and pressed <kbd>Enter</kbd>
-- [ ] I pressed <kbd>Enter</kbd> again for the **BEST** style (`studio`)
-- [ ] I saw **"Conversion completed"**
-- [ ] I found `My Song (8D).mp3` next to my original
-- [ ] I listened with **headphones** 🎧, and it flies around my head! 🌀
-
----
-
-## 👶 1. What does this do?
+### 🗣️ Imagine this
 
 Imagine your favourite singer is standing **next to your left ear**. 🗣️👂
 
 Now imagine they **slowly walk around your head** to your right ear… and back again… again and again. 🚶‍♂️🔄
 
-That is **8D audio**. And **Audio8D makes it for you.**
+That feeling is called **8D audio**. **Audio8D makes it for you**, from any song you already have.
 
-You give it a normal song ➡️ it gives you back a new song where the music **flies around your head** when you wear headphones.
+```mermaid
+flowchart LR
+    A(["🎵 Your normal song"]):::a --> B["🎧 Audio8D"]:::b --> C(["🌀 A new song that<br/>flies around your head"]):::c
+
+    classDef a fill:#1e1e3f,stroke:#00d4ff,color:#fff
+    classDef b fill:#7b2ff7,stroke:#5a1fc0,color:#fff
+    classDef c fill:#2ea44f,stroke:#1f7a38,color:#fff
+```
 
 ### 🤔 How does the trick work?
 
-Your brain finds where a sound is by asking one simple question:
+Your brain works out where a sound comes from by asking one simple question:
 
 > *"Which ear hears it louder?"*
 
 - Left ear louder ➡️ your brain says *"the sound is on the left"* ⬅️
 - Right ear louder ➡️ your brain says *"the sound is on the right"* ➡️
 
-Audio8D slowly turns the left side **up** while turning the right side **down**, then swaps, over and over. It also adds a tiny "room" sound, so the music feels like it is **outside** your head instead of inside it. Your brain does the rest. ✨
+Audio8D slowly turns the left side **up** while it turns the right side **down**, then swaps them, over and over. It also adds a tiny bit of "room" sound (soft echoes), so the music feels like it is **outside** your head instead of inside it. Your brain does the rest. ✨
 
 > [!NOTE]
 > "8D" is just a fun name. There are **not** 8 of anything. It is a clever trick that uses your **2** ears.
 
 ---
 
-## ✨ 2. What can it do?
+## 🤔 2. Why does it exist?
+
+### 😕 The problem
+
+Making an 8D version of a song by yourself is harder than it sounds:
+
+- 🎛️ You need to know **which sound effects** to use, in **which order**, and with **which numbers**.
+- 🔉 An 8D song usually comes out **much quieter** than the original (often 10 to 20 dB quieter), so it sounds weak next to your other music.
+- 📉 Every time a song is saved as an MP3 again, a little quality is lost. Bad settings make this worse.
+- 😬 It's easy to overwrite or damage a file by accident.
+
+### 💡 The solution
+
+Audio8D does all of this for you, safely:
+
+- 🧑‍🍳 It already knows the **"8D recipe"** (the effects, their order and good numbers).
+- 🏆 One word, **`studio`**, picks the **best quality** settings, based on standards that music professionals and streaming services use.
+- 🔊 It can make your 8D song **as loud as songs on Spotify and YouTube**, without squashing the music.
+- 🔒 It **never touches your original song**, and never replaces a file unless you say so.
+- 👶 If you don't want to type anything, it simply **asks you 2 questions**.
+
+---
+
+## ⭐ 3. Why you'll like it
+
+| | Benefit | What it means for you |
+|:---:|---|---|
+| 👶 | **Easy** | Answer 2 questions, or double-click. Pressing Enter always picks the best choice. |
+| 🏆 | **Best quality** | One word (`--preset studio`) gives professional-level settings. |
+| 🔒 | **Safe** | Your original songs are never changed or deleted. |
+| ⚡ | **Fast** | A 3½-minute song takes about **4 seconds** with the normal settings. |
+| 🗣️ | **Talks in plain words** | Every setting is explained on screen, and every error comes with a **"What to do:"** line. |
+| 📴 | **Works offline** | Once it's set up, no internet is needed. |
+| 🆓 | **Nothing extra to download** | The helper programs it needs are already included in the `src` folder. |
+
+---
+
+## ✨ 4. Everything it can do
 
 <table>
 <tr>
@@ -303,23 +147,25 @@ Audio8D slowly turns the left side **up** while turning the right side **down**,
 - 🏛️ Adds a little **room sound** for depth
 - 🧱 Has a **safety guard** so the sound never crackles or breaks
 - 🏆 **`--preset studio`**: world-standard quality and **Spotify/YouTube loudness** in one word
-- 🎚️ **8 ready-made styles** and **7 knobs** you can turn to change the sound
-- 🥇 **Best of best** quality: 320 kbps, LAME's most careful mode, and loudness set **without squashing** the music
-- 🔍 **Knows your file**: tells you if it is lossless (FLAC, WAV) or already compressed (MP3, AAC) and what that means
-- 🖥️ Shows **every setting in plain words** in the terminal while it works, marking each one **(best)** or saying what the best value is
-- 👶 A **step-by-step helper**: just type `audio8d` and answer 2 questions
-- 🚦 **Heads-up warnings** when a setting might sound bad, with the fix
-- 🆘 A plain **"What to do:"** line under every error
-- 🎧 Works with **one-speaker (mono)** and **cinema (5.1)** recordings too
+- 🎚️ **8 ready-made styles** and **7 knobs** (settings) you can turn to change the sound
+- 🥇 **Best of best** quality: 320 kbps (the highest MP3 quality), the MP3 maker's most careful mode, and loudness set **without squashing** the music
+- 🔍 **Knows your file**: tells you if it is lossless (a perfect copy, like FLAC or WAV) or already compressed (like MP3 or AAC), and what that means
+- 🎧 Works with **one-speaker (mono)** and **cinema (5.1 surround)** recordings too
 
 </td>
 <td width="50%" valign="top">
+
+### 🤝 Friendly helpers
+- 👶 A **step-by-step helper**: just type `audio8d` and answer 2 questions
+- 🖥️ Shows **every setting in plain words** while it works, marking each one **(best)** or saying what the best value would be
+- 🚦 **Heads-up warnings** when a setting might sound bad, with the fix
+- 🆘 A plain **"What to do:"** line under every error
 
 ### 🛡️ Safety
 - 🔒 **Never** deletes or replaces your songs unless you say so
 - ✅ You only ever see **finished** songs, never broken half-songs
 - 🧹 Cleans up after itself, even if you stop it early
-- 🚫 Weird file names cannot trick your computer
+- 🚫 Strange file names cannot trick your computer
 - 💾 Works on **USB sticks** and memory cards too
 
 </td>
@@ -328,11 +174,11 @@ Audio8D slowly turns the left side **up** while turning the right side **down**,
 <td width="50%" valign="top">
 
 ### ⚡ Speed & files
-- ⚡ **Fast**: a 3½-minute song takes about **4 seconds**
+- ⚡ **Fast**: a 3½-minute song takes about **4 seconds** with the normal settings
 - 🎞️ Reads almost anything: **MP3, FLAC, WAV, M4A, OGG, Opus**, even **MP4 videos**
 - 🏷️ Keeps the **song name, singer and album**
 - 🔎 Checks its tools **before** it starts, and tells you clearly if something is missing
-- 📦 FFmpeg (its helper program) is **already inside** the `src` folder
+- 📦 FFmpeg (the helper program that does the sound work) is **already inside** the `src` folder
 - ▶️ Runs **with or without installing**, even by **double-click**
 
 </td>
@@ -351,30 +197,234 @@ Audio8D slowly turns the left side **up** while turning the right side **down**,
 
 ---
 
-## 🧺 3. What you need
+## 🧺 5. What you need
 
 You need only **3 things**:
 
-| | Thing | Do I have it? |
-|:---:|---|---|
-| 🐍 | **Python** 3.10 or newer, the language this tool is written in | [Step 1](#step-1--get-python-) shows you how to check |
-| 🎬 | **FFmpeg** and **FFprobe**, the helper programs that open and save music | ✅ **Already inside** the `src` folder! |
-| 🎧 | **Headphones** | Any normal pair or earbuds |
+| | Thing | What it is | Do I have it? |
+|:---:|---|---|---|
+| 🐍 | **Python** 3.10 or newer | Free software that lets your computer run Audio8D (Audio8D is written in the Python language) | [Step 1](#step-1-get-python) shows you how to check |
+| 🎬 | **FFmpeg** and **FFprobe** | Free helper programs that open, read, change and save music files | ✅ **Already inside** the `src` folder! |
+| 🎧 | **Headphones** | Any normal pair or earbuds | You probably do 😊 |
 
 That's all. No other downloads are needed.
 
 ---
 
-## 🗺️ 4. Where is everything?
+## 🚀 6. Quick start: your first 8D song
 
-The whole project lives in **one folder** called **`8D`**:
+Got a music file? 🎵 Follow these steps **from top to bottom**. Every step tells you **what you should see** when it worked ✅, and what to do if it didn't ❌. You can't break anything, and your original song is **never changed**.
+
+```mermaid
+flowchart LR
+    A(["🎵 Your song"]):::a --> B["🧰 One-time<br/>setup check"]:::b
+    B --> C["▶️ Start<br/>Audio8D"]:::c
+    C --> D["🖱️ Drag the song in"]:::d
+    D --> E["⏎ Enter = BEST style"]:::e
+    E --> F(["🎧 Your 8D song!"]):::f
+
+    classDef a fill:#1e1e3f,stroke:#00d4ff,color:#fff
+    classDef b fill:#00b4d8,stroke:#0090b0,color:#fff
+    classDef c fill:#4f8bff,stroke:#2a5fd0,color:#fff
+    classDef d fill:#7b2ff7,stroke:#5a1fc0,color:#fff
+    classDef e fill:#ff4fd8,stroke:#c0209f,color:#fff
+    classDef f fill:#2ea44f,stroke:#1f7a38,color:#fff
+```
+
+> [!NOTE]
+> 📁 **About the folder paths in this guide:** the examples use the author's folders, like `C:\Gehan\Projects\Python_Projects\8D` (the project) and `C:\Users\Gehan\Music` (songs). If your copy of the project or your music lives somewhere else, just use **your own** folder in their place.
+
+### 🧰 Before your very first song (only once, ever)
+
+Tick these off one by one. You only do this **the first time**.
+
+| ✔ | What | How to check | ✅ Good if… | ❌ If not… |
+|:---:|---|---|---|---|
+| ☐ | **Python 3.10 or newer** | Open PowerShell, type `python --version` | You see `Python 3.10` or higher | Install it: [Step 1](#step-1-get-python) |
+| ☐ | **FFmpeg helper files** | Open the folder `8D\src` | You see `ffmpeg.exe` **and** `ffprobe.exe` | Get them: [Step 2](#step-2-check-the-helper-programs) |
+| ☐ | **How you'll start Audio8D** | Pick **one** way from the table below | – | Details: [part 9](#-9-four-ways-to-start-audio8d) |
+| ☐ | **Headphones** | Put them on the right way round (L on the left ear) | – | Any normal pair or earbuds will do |
+
+> 💬 **What is PowerShell?** It's a window where you type instructions (called **commands**) for your computer, then press <kbd>Enter</kbd>. It's also called the **terminal**. To open it: press the <kbd>⊞ Windows</kbd> key, type `powershell`, and press <kbd>Enter</kbd>.
+
+**Which way should I pick?** If you're not sure, pick **🅳 Way D (double-click)**. It needs no setup at all.
+
+| Way | One-time setup | How you'll start it every time |
+|---|---|---|
+| 🅳 **Double-click** (easiest) | Nothing | Double-click `8D\src\__main__.py` |
+| 🅰️ **Installed** | In the `8D` folder, run `python -m pip install -e .` once | Type `audio8d` in any terminal |
+| 🅱️ **Virtual environment** | In `8D`: `python -m venv .venv`, open it, then `python -m pip install -e .` | Open the box (`.\.venv\Scripts\Activate.ps1`), then type `audio8d` |
+| 🅲 **No install** | Nothing | In a terminal inside `8D\src`, type `python __main__.py` |
+
+*(Want the full explanation of each way? See [part 9](#-9-four-ways-to-start-audio8d).)*
+
+### 🎵 Your song, in 7 easy steps
+
+#### Step 1 · Find your song 🔎
+
+Any normal music file works: **MP3, FLAC, WAV, M4A/AAC, OGG, Opus, WMA**, even the sound of a **video** (MP4, MKV, WEBM). See [part 15](#-15-which-songs-can-i-use) for the full list.
+
+- 🥇 **Have more than one copy?** Use the best one: **FLAC or WAV** beats a **320 kbps MP3**, which beats a smaller MP3. Audio8D can't add back detail that a small file already lost. ([Why?](#best-of-best-for-every-kind-of-file))
+- 🔒 **Copy-protected songs can't be converted.** That means songs you *stream* or download inside Spotify, Apple Music (`.m4p`), YouTube Music, etc. Songs from CDs, music stores like Bandcamp or Amazon MP3, and your own recordings are fine.
+- 🎧 **Never feed it an 8D song** (a file ending in `(8D).mp3`). Always start from the **original**.
+
+✅ **You're ready when:** you know where the song is, e.g. in your `Music` folder.
+
+#### Step 2 · Start Audio8D ▶️
+
+Do the one that matches **your way**:
+
+| Your way | Do this |
+|---|---|
+| 🅳 Double-click | Open `C:\Gehan\Projects\Python_Projects\8D\src` in File Explorer and **double-click `__main__.py`**. *(If Windows asks which app to use, pick **Python**.)* |
+| 🅰️ Installed | Open **PowerShell** (press <kbd>⊞ Windows</kbd>, type `powershell`, <kbd>Enter</kbd>), type **`audio8d`**, press <kbd>Enter</kbd> |
+| 🅱️ Virtual environment | Open PowerShell **in the `8D` folder**, type `.\.venv\Scripts\Activate.ps1`, then **`audio8d`**, <kbd>Enter</kbd> |
+| 🅲 No install | Open PowerShell **in the `8D\src` folder**, type **`python __main__.py`**, <kbd>Enter</kbd> |
+
+✅ **It worked if** you see the purple title box **"Audio8D 1.0.0 · developed by Gehan Fernando"** and the words **"Welcome! Let's make your song fly around your head."**
+
+❌ **Didn't work?** `python`/`audio8d` "is not recognized", or the window closed at once? See [Stuck? Quick fixes](#-stuck-quick-fixes) below.
+
+#### Step 3 · Give it your song (question 1 of 2) 🎵
+
+It asks **"Step 1 of 2 - Which song?"**
+
+1. Open **another** File Explorer window and find your song.
+2. **Drag the song** with the mouse and **drop it into the black window**. Its full path (the file's "address" on your computer) appears after `Song:`.
+3. Press <kbd>Enter</kbd>.
+
+💡 **Any name works here**, even names with spaces, `'`, `$`, `&` or brackets, because you're answering a question, not typing a command.
+💡 **Typed it wrong?** It says *"I can't find that file"* and simply asks again. Press <kbd>Enter</kbd> on an empty line to stop.
+
+✅ **It worked if** it moves on to **"Step 2 of 2 - Which style?"**
+
+#### Step 4 · Pick the style (question 2 of 2) 🎨
+
+You'll see a numbered list of styles (ready-made sets of settings). The best one says **BEST**.
+
+- 🏆 **Just press <kbd>Enter</kbd>.** That picks **`studio`**, the best of best (320 kbps, loudness like Spotify, dynamics untouched).
+- Or type a number from **1 to 8** and press <kbd>Enter</kbd>, e.g. `2` for `streaming` (always exactly −14 LUFS) or `4` for `smooth`. All styles: [part 14](#all-ready-made-styles).
+
+✅ **It worked if** a list of settings appears, each marked **(best)**, and it says **"Working…"**
+
+#### Step 5 · Wait a few seconds ⏳
+
+Audio8D first **measures** your song, then **makes** the 8D version. On a normal PC this takes about **20 seconds for a 5-minute song** with `studio` (the normal settings are quicker, because they skip the measuring and the extra-careful MP3 mode). While it works, it shows:
+
+| You'll see | It means |
+|---|---|
+| **Source** | What your file is, e.g. *"MP3, 320 kbps, 48 kHz, stereo (already compressed)"* |
+| **(best)** next to each setting | Every value is already the best one |
+| **Good to know** 💙 | Honest facts about your file, e.g. *"a FLAC or WAV copy would sound best"* |
+| **Conversion completed** 💚 | ✅ **Done!** With the time taken and the file size |
+| **Loudness:** 💚 | How loud it was, how much it was turned up or down, and where it ended up |
+
+Then it says **"Press Enter to close…"**, so press <kbd>Enter</kbd>.
+
+❌ **See a line starting with `ERROR`?** Read the yellow **`What to do:`** line right under it, which tells you the fix. All messages: [part 18](#-18-when-something-goes-wrong).
+
+#### Step 6 · Find your new 8D song 📁
+
+It's saved **right next to your original song**, with **`(8D)`** added to the name:
+
+```text
+C:\Users\Gehan\Music\My Song.mp3        ← your original (never changed)
+C:\Users\Gehan\Music\My Song (8D).mp3   ← your new 8D song ✨
+```
+
+This works for every file type: `Track 01.flac` becomes `Track 01 (8D).mp3`. The new song is **always an MP3**, so it plays on everything.
+
+#### Step 7 · Listen! 🎧
+
+1. Put on your **headphones**.
+2. **Double-click** the new `(8D).mp3` file to play it in your music app.
+3. **Close your eyes.** Within about **8 seconds** the music should float **left ➡️ right ➡️ left** around your head. 🌀
+
+✅ **Perfect if:** smooth movement, clear voice, no crackles. Want to check it properly? See [part 12](#-12-check-your-new-song).
+
+🎉 **That's it, you made your first 8D song!**
+
+### ⌨️ Prefer one command instead of questions?
+
+Once you know the steps, this single line does **Steps 2 to 5 in one go**:
+
+```powershell
+audio8d "C:\Users\Gehan\Music\My Song.mp3" --preset studio
+```
+
+*(Way C: open PowerShell in `8D\src` and type `python __main__.py` instead of `audio8d`.)*
+
+**What the parts mean:** `audio8d` starts the program, the text in quotes is your song, and `--preset studio` picks the best style.
+
+| Want to… | Add this |
+|---|---|
+| Choose the new file's name or folder | A second name: `audio8d "My Song.mp3" "D:\8D Songs\My Song.mp3" --preset studio` (the folder is created for you) |
+| Replace an 8D file you made before | `--overwrite` |
+| Exactly −14 LUFS, like every other song in a playlist | `--preset streaming` instead of `--preset studio` |
+| See every style first | `audio8d --list-presets` |
+
+💡 **Easy path trick:** in File Explorer, **hold <kbd>Shift</kbd> and right-click the song → "Copy as path"**, then paste it into the terminal with a right-click. The quotes are added for you. **Warning:** if the name has a `$` or `` ` `` in it, change the double quotes to single quotes (see [special characters](#song-names-with-special-characters)).
+
+### 🔁 After your first song
+
+**Not quite right?** Make it again from the **original** with one change (add `--overwrite` to replace the old 8D file):
+
+| It sounds… | Try this |
+|---|---|
+| 😵 Too strong or dizzy | `audio8d "My Song.mp3" --preset smooth --overwrite` |
+| 🐌 Spinning too fast for a slow song | `audio8d "My Song.mp3" --preset studio --rotation-seconds 12 --overwrite` |
+| 😐 Hardly moving | `audio8d "My Song.mp3" --preset studio --intensity 0.95 --overwrite` *(and check you're on headphones)* |
+| 🌫️ Too echoey | `audio8d "My Song.mp3" --preset studio --ambience 0.15 --overwrite` |
+| 🔉 Quieter than my other songs | `audio8d "My Song.mp3" --preset streaming --overwrite` |
+| 🥁 Not in time with the beat | Match the spin to the song's tempo: [tempo table](#bonus-make-the-spin-match-the-beat) |
+
+**Good to remember:**
+
+- 🎵 **Your original song is never changed.** Keep it, because an 8D song can't be turned back.
+- 🚫 **Never convert an `(8D)` file again.** Always start from the original.
+- 📚 **Got lots of songs?** Do a whole folder at once: [part 16](#-16-many-songs-at-once).
+- 📱 **On your phone:** copy the `(8D).mp3` file over; every music app can play it.
+- 🙈 **Git:** songs inside the `8D` folder are ignored (`*.mp3` in `.gitignore`), so they are never uploaded by accident.
+- ⚖️ **Sharing:** making an 8D version doesn't make a song yours. Ask the owner before uploading it anywhere.
+
+### 🆘 Stuck? Quick fixes
+
+| What happened | Quick fix | More help |
+|---|---|---|
+| `python` is not recognized | Try `py` instead; if that fails, install Python and tick **"Add python.exe to PATH"** | [Step 1](#step-1-get-python) |
+| `audio8d` is not recognized | Use Way C (`python __main__.py` in `8D\src`), or install again in the `8D` folder | [part 18](#-18-when-something-goes-wrong) |
+| The double-clicked window closes at once | Open PowerShell in `8D\src` and run `python __main__.py` to read the message | [part 18](#-18-when-something-goes-wrong) |
+| "Missing required executable(s): ffmpeg" | Put `ffmpeg.exe` and `ffprobe.exe` in `8D\src` | [Step 2](#step-2-check-the-helper-programs) |
+| "Input file does not exist" | Check the name, or type `audio8d` alone and **drag the song in** | [Song names](#song-names-with-special-characters) |
+| "Command failed … Invalid data found" | That file isn't music, or it's copy-protected | [Step 1](#step-1--find-your-song-) |
+| "Output already exists" | Add `--overwrite`, or give the new file another name | [part 11](#if-the-new-file-already-exists) |
+| I can't hear any 8D movement | Use **headphones** and turn **off** "Mono audio" (Windows *Settings → Accessibility → Audio*) | [part 18](#-18-when-something-goes-wrong) |
+
+### ✅ My checklist (print me!)
+
+- [ ] Python works (`python --version`)
+- [ ] `ffmpeg.exe` and `ffprobe.exe` are in `8D\src`
+- [ ] I picked my way to start (A, B, C or D)
+- [ ] I found the **best copy** of my song (not an `(8D)` file, not copy-protected)
+- [ ] I started Audio8D and saw the **Welcome!** message
+- [ ] I dragged my song in and pressed <kbd>Enter</kbd>
+- [ ] I pressed <kbd>Enter</kbd> again for the **BEST** style (`studio`)
+- [ ] I saw **"Conversion completed"**
+- [ ] I found `My Song (8D).mp3` next to my original
+- [ ] I listened with **headphones** 🎧, and it flies around my head! 🌀
+
+---
+
+## 📍 7. Where is everything?
+
+The whole project lives in **one folder** called **`8D`**. You don't need to open or understand the code files; this map just helps you find your way around.
 
 ```text
 📁 C:\Gehan\Projects\Python_Projects\8D      ← the main folder (the "root")
 │
 ├── 📄 README.md             ← this guide you are reading
 ├── ⚙️ pyproject.toml        ← the "recipe card" that tells Python how to install Audio8D
-├── 🙈 .gitignore            ← tells Git which files to ignore
+├── 🙈 .gitignore            ← tells Git (a tool for saving versions of code) which files to ignore
 ├── 📁 docs\images\          ← the screenshots used in this guide
 │
 ├── 📁 src\                  ← 💙 ALL THE PROGRAM CODE IS HERE
@@ -402,24 +452,26 @@ That's correct: **there is no folder with that name, and that's okay.** 😊
 
 **`audio8d` is a nickname.** It is used in two ways:
 
-1. 🗣️ **The command you type** to make an 8D song, like `audio8d song.mp3 song_8d.mp3`. This command **appears after you install** (Way A or B in [part 6](#-6-choose-how-to-run-it)). Don't want to install? No problem, use **Way C** or **Way D**, which start the program straight from the `src` folder.
-2. 🏷️ **The name Python uses for the `src` folder.** The recipe card `pyproject.toml` says *"when someone asks for `audio8d`, give them the `src` folder."* We can't call it `8D`, because Python names are not allowed to start with a number.
+1. 🗣️ **The command you type** to make an 8D song, like `audio8d song.mp3 song_8d.mp3`. This command **appears after you install** (Way A or B in [part 9](#-9-four-ways-to-start-audio8d)). Don't want to install? No problem, use **Way C** or **Way D**, which start the program straight from the `src` folder.
+2. 🏷️ **The name Python uses for the `src` folder.** The recipe card `pyproject.toml` says *"when someone asks for `audio8d`, give them the `src` folder."* It can't be called `8D`, because Python names are not allowed to start with a number.
 
 > [!TIP]
 > **Short version:** the code lives in **`src`**, and its nickname is **`audio8d`**. 🏷️
 
 > [!NOTE]
-> After you install, a new folder called **`audio8d.egg-info`** appears inside `8D`. That's normal: it is Python's "receipt" for the install. **Leave it alone while Audio8D is installed.** Git ignores it, and you can delete it after you uninstall ([part 21](#️-21-remove-audio8d)).
+> After you install, a new folder called **`audio8d.egg-info`** appears inside `8D`. That's normal: it is Python's "receipt" for the install. **Leave it alone while Audio8D is installed.** Git ignores it, and you can delete it after you uninstall ([part 24](#-24-remove-audio8d)).
 
 ---
 
-## 🪜 5. Set up: step by step
+## 🪜 8. Full setup, step by step
 
 Follow these steps **in order**. Take your time, there is no rush. 🐢
 
-### Step 1 · Get Python 🐍
+### Step 1: Get Python
 
-1. Press the <kbd>⊞ Windows</kbd> key, type **`powershell`**, and press <kbd>Enter</kbd>. A blue or black window opens. This is called the **terminal**.
+Python is the free software that runs Audio8D. Let's check whether you already have it.
+
+1. Press the <kbd>⊞ Windows</kbd> key, type **`powershell`**, and press <kbd>Enter</kbd>. A blue or black window opens. This is the **terminal**.
 2. Type this and press <kbd>Enter</kbd>:
    ```powershell
    python --version
@@ -429,11 +481,13 @@ Follow these steps **in order**. Take your time, there is no rush. 🐢
    - ❌ You see an error, or a number smaller than `3.10`? Then:
      1. Go to **[python.org/downloads](https://www.python.org/downloads/)** and click the big yellow **Download Python** button.
      2. Open the file you downloaded.
-     3. ⚠️ **Very important:** at the bottom of the first screen, **tick the box "Add python.exe to PATH"**.
+     3. ⚠️ **Very important:** at the bottom of the first screen, **tick the box "Add python.exe to PATH"**. (This lets the terminal find Python by name.)
      4. Click **Install Now** and wait until it finishes.
      5. **Close** the terminal, open a **new** one, and try `python --version` again.
 
-### Step 2 · Check the helper programs 🎬
+### Step 2: Check the helper programs
+
+Audio8D uses two free helper programs, **FFmpeg** (changes and saves sound) and **FFprobe** (reads information about a song). They are normally already included.
 
 Open File Explorer and go to:
 
@@ -470,9 +524,9 @@ Audio8D **looks in `src` first**. If the files aren't there, it looks for FFmpeg
 
 </details>
 
-### Step 3 · Open the terminal in the `8D` folder 📂
+### Step 3: Open a terminal in the 8D folder
 
-The terminal must be "standing" inside the `8D` folder. Pick the way you like:
+The terminal must be "standing" inside the `8D` folder, so it can find the project's files. Pick the way you like:
 
 **🖱️ Way 1: with the mouse (easiest)**
 1. Open **File Explorer** and go into `C:\Gehan\Projects\Python_Projects\8D`.
@@ -484,7 +538,7 @@ The terminal must be "standing" inside the `8D` folder. Pick the way you like:
 2. Click on the **address bar** at the top, where the folder path is written.
 3. Delete what is written, type **`powershell`**, and press <kbd>Enter</kbd>.
 
-**🧑‍💻 Way 3: by typing**
+**🧑‍💻 Way 3: by typing** (`cd` means "change directory", i.e. go into a folder)
 ```powershell
 cd C:\Gehan\Projects\Python_Projects\8D
 ```
@@ -493,7 +547,7 @@ cd C:\Gehan\Projects\Python_Projects\8D
 
 ---
 
-## 🧭 6. Choose how to run it
+## 🧭 9. Four ways to start Audio8D
 
 There are **4 ways** to run Audio8D. They all make **exactly the same** 8D songs. **Pick the ONE you like.** 😊
 
@@ -504,7 +558,7 @@ flowchart TD
     Q -- "Install it in a tidy box" --> B["🅱️ Way B<br/>Virtual environment"]:::b
     Q -- "Don't install anything" --> C["🅲 Way C<br/>Run straight from src"]:::c
     Q -- "I don't want to type" --> D["🅳 Way D<br/>Double-click"]:::d
-    A --> OK(["✅ Go to part 7"]):::ok
+    A --> OK(["✅ Go to part 10"]):::ok
     B --> OK
     C --> OK
     D --> OK
@@ -529,9 +583,11 @@ flowchart TD
 
 ---
 
-### 🅰️ Way A: Install straight into Python (no environment)
+### Way A: Install straight into Python
 
-Make sure your terminal is in the `8D` folder ([Step 3](#step-3--open-the-terminal-in-the-8d-folder-)). Then type:
+**What this does:** it teaches your computer the word `audio8d`, so you can use it from any folder. It uses **pip**, Python's built-in tool for installing things.
+
+Make sure your terminal is in the `8D` folder ([Step 3](#step-3-open-a-terminal-in-the-8d-folder)). Then type:
 
 ```powershell
 python -m pip install -e .
@@ -567,15 +623,15 @@ Anywhere this guide says `audio8d …`, you can write `python -m audio8d …` in
 
 </details>
 
-**🎉 Done! Go to [part 7](#-7-check-that-it-works).**
+**🎉 Done! Go to [part 10](#-10-check-that-it-works).**
 
 ---
 
-### 🅱️ Way B: Install inside a virtual environment
+### Way B: Install inside a virtual environment
 
 A **virtual environment** is a private little box just for this project, so it never mixes with your other Python things. 📦
 
-Make sure your terminal is in the `8D` folder ([Step 3](#step-3--open-the-terminal-in-the-8d-folder-)).
+Make sure your terminal is in the `8D` folder ([Step 3](#step-3-open-a-terminal-in-the-8d-folder)).
 
 **1️⃣ Make the box** (only once):
 ```powershell
@@ -623,15 +679,15 @@ python -m pip install -e .
 > [!IMPORTANT]
 > **With Way B, each time you open a NEW terminal**, go to the `8D` folder and open the box again (step 2️⃣) **before** using `audio8d`. If you forget, you'll get *"audio8d is not recognized"*.
 
-**🎉 Done! Go to [part 7](#-7-check-that-it-works).**
+**🎉 Done! Go to [part 10](#-10-check-that-it-works).**
 
 ---
 
-### 🅲 Way C: No install, run straight from the `src` folder
+### Way C: No install, run from the src folder
 
 **Nothing to install!** You just walk into the `src` folder and press "start". 🏃
 
-**1️⃣ Open the terminal in the `src` folder.** Same as [Step 3](#step-3--open-the-terminal-in-the-8d-folder-), but go one folder deeper, into **`8D\src`**. Or type:
+**1️⃣ Open the terminal in the `src` folder.** Same as [Step 3](#step-3-open-a-terminal-in-the-8d-folder), but go one folder deeper, into **`8D\src`**. Or type:
 ```powershell
 cd C:\Gehan\Projects\Python_Projects\8D\src
 ```
@@ -649,7 +705,7 @@ Want to pick the new name yourself? Add it as a second name:
 python __main__.py "C:\Users\Gehan\Music\song.mp3" "C:\Users\Gehan\Music\song_8d.mp3"
 ```
 
-All the knobs from [part 10](#️-10-change-how-it-sounds) work the same way:
+All the knobs from [part 13](#-13-change-how-it-sounds) work the same way:
 ```powershell
 python __main__.py "C:\Users\Gehan\Music\song.mp3" --intensity 0.95 --rotation-seconds 10
 ```
@@ -683,11 +739,13 @@ python __main__.py "C:\Users\Gehan\Music\song.mp3" --intensity 0.95 --rotation-s
 > [!WARNING]
 > ▶️ **Only `__main__.py` and `cli.py` are start buttons.** The other files (like `pipeline.py` or `settings.py`) are parts *inside* the machine. Starting one of them shows `attempted relative import with no known parent package`. That's not broken, it's just the wrong button. 🙂
 
-**🎉 Done! Go to [part 7](#-7-check-that-it-works).**
+**🎉 Done! Go to [part 10](#-10-check-that-it-works).**
 
 ---
 
-### 🅳 Way D: Double-click (no typing at all!)
+### Way D: Double-click
+
+**No typing at all!**
 
 1. 📂 Open **File Explorer** and go into **`C:\Gehan\Projects\Python_Projects\8D\src`**.
 2. 🖱️ **Double-click `__main__.py`**. *(If Windows asks which app to use, choose **Python**.)*
@@ -698,18 +756,18 @@ python __main__.py "C:\Users\Gehan\Music\song.mp3" --intensity 0.95 --rotation-s
 6. ⏳ Wait a few seconds for **`Conversion completed`** and **"Put on your headphones and press play!"**
 7. ⏎ Press <kbd>Enter</kbd> again to close the window.
 
-📸 See a **real screenshot** of these 2 questions in [part 8](#-the-easiest-way-let-the-app-ask-you).
+📸 See a **real screenshot** of these 2 questions in [part 11](#the-easiest-way-let-the-app-ask-you).
 
 🎉 Your new song **`<song name> (8D).mp3`** is waiting **next to the original song**!
 
 💡 **Even faster:** drag your song and **drop it right on top of `__main__.py`** in File Explorer. Audio8D makes `<song name> (8D).mp3` next to the song, and the window closes by itself when it's done. *(This works when Python was installed from python.org. If nothing happens, use the double-click steps above.)*
 
-💡 **Using VS Code?** Open `src\__main__.py` and press the ▶️ **Run** button. The terminal at the bottom asks for the song, just like the black window.
+💡 **Using VS Code (a code editor)?** Open `src\__main__.py` and press the ▶️ **Run** button. The terminal at the bottom asks for the song, just like the black window.
 
 > [!NOTE]
 > In Way D, pressing <kbd>Enter</kbd> at Step 2 picks the **best style, `studio`** (world-standard quality and Spotify loudness). To fine-tune single knobs, use Way A, B or C.
 
-**🎉 Done! Go to [part 7](#-7-check-that-it-works).**
+**🎉 Done! Go to [part 10](#-10-check-that-it-works).**
 
 ---
 
@@ -718,9 +776,9 @@ python __main__.py "C:\Users\Gehan\Music\song.mp3" --intensity 0.95 --rotation-s
 
 ---
 
-## ✅ 7. Check that it works
+## ✅ 10. Check that it works
 
-Type these **3 checks**, one at a time:
+These **3 quick checks** confirm that everything is set up. Type them one at a time, pressing <kbd>Enter</kbd> after each.
 
 **Check 1: does the computer know the word `audio8d`?**
 ```powershell
@@ -753,18 +811,20 @@ python -c "from src.ffmpeg import FFmpegToolchain as T; print(T.discover())"
 python -c "import src; print(src.__author__)"
 ```
 
-✅ You'll see the help page, the two FFmpeg paths, and `Gehan Fernando`. *(The last two commands must be run from the `8D` folder, which is why there's a `cd ..`.)*
+✅ You'll see the help page, the two FFmpeg paths, and `Gehan Fernando`. *(The last two commands must be run from the `8D` folder, which is why there's a `cd ..` — it means "go up one folder".)*
 
 **🅳 Using Way D (double-click)?** Just try it with a song! If the window says *Welcome!* and asks `Song:`, everything is working. ✅
 
 ---
 
-## 🎵 8. Make your first 8D song
+## 🎵 11. Making 8D songs
+
+This part shows every way to make a song, from the easiest to the most flexible.
 
 > [!TIP]
 > Using **Way C**? Type `python __main__.py` wherever this part says `audio8d`. Using **Way D**? Just double-click `__main__.py` and drag your song in. 🖱️
 
-### 👶 The easiest way: let the app ask you
+### The easiest way: let the app ask you
 
 Don't know any settings? **You don't need to!** Type just the word **`audio8d`** and press <kbd>Enter</kbd> (Way C: `python __main__.py`, Way D: double-click). The app then:
 
@@ -784,7 +844,7 @@ Your new song **`<song name> (8D).mp3`** is saved **next to the original**. That
 ### The simple way with a command (4 steps)
 
 1. 📋 **Copy a song** (for example `song.mp3`) into the `8D` folder.
-2. 📂 **Open the terminal** in the `8D` folder ([Step 3](#step-3--open-the-terminal-in-the-8d-folder-)). With Way B, open the box too.
+2. 📂 **Open the terminal** in the `8D` folder ([Step 3](#step-3-open-a-terminal-in-the-8d-folder)). With Way B, open the box too.
 3. ⌨️ **Type this** and press <kbd>Enter</kbd>:
    ```powershell
    audio8d song.mp3 --preset studio
@@ -792,13 +852,15 @@ Your new song **`<song name> (8D).mp3`** is saved **next to the original**. That
    - `song.mp3` is your song (what goes **in**) 🎵
    - `--preset studio` picks the **best of best** style 🏆
    - The new 8D song is saved as **`song (8D).mp3`** next to it. Want another name? Put it second, e.g. `audio8d song.mp3 song_8d.mp3 --preset studio` (it must end with **`.mp3`**)
-4. ⏳ **Wait a few seconds.** Audio8D shows you **every setting in plain words**, then says when it's done. This **real screenshot** shows what happens if you **leave out** `--preset studio`: you get the `classic` sound, and the app points you to the best values:
+4. ⏳ **Wait a few seconds.** Audio8D shows you **every setting in plain words**, then says when it's done.
+
+This **real screenshot** shows what happens if you **leave out** `--preset studio`: you get the `classic` sound, and the app points you to the best values:
 
 <p align="center">
   <img src="docs/images/terminal-first-run.png" alt="Real screenshot: Audio8D converting My Song.mp3 with the classic settings, then suggesting --preset studio" width="100%"/>
 </p>
 
-What each line means:
+What each line on the screen means:
 
 | Line | What it tells you |
 |---|---|
@@ -807,12 +869,12 @@ What each line means:
 | **Style** | Which ready-made style is used (`classic` when you pick nothing) |
 | **Spin · Movement · Room** | How fast, how far and how "roomy" the 8D effect is |
 | **Peak roof** | The loudest the sound may get (stops crackles) |
-| **Quality** | MP3 quality, **320 kbps** is the best MP3 can do |
+| **Quality** | MP3 quality; **320 kbps** is the best MP3 can do |
 | **Loudness** | `off` = natural level; `-14 LUFS` = the same loudness as Spotify and YouTube |
 | **(best)** 💚 | This value is already the best one. Nothing to change! |
 | **best: 0.80** (grey) | You are using a different value, and this is what the best one would be |
 | **Good to know** 💙 | Honest facts about *your* file, e.g. "already compressed, so a FLAC copy would sound best" |
-| **Heads-up** 💛 | Something that may not sound its best, with the exact fix (see [the warnings list](#-the-app-warns-you-heads-up)) |
+| **Heads-up** 💛 | Something that may not sound its best, with the exact fix (see [the warnings list](#the-app-warns-you-before-it-starts)) |
 | **Conversion completed** 💚 | Done! With the time it took and the file size |
 | **Loudness:** 💚 | With a loudness goal: what was measured, how much it was turned up or down, and where it landed |
 | **Tip** 💛 | A friendly hint. Here: add `--preset studio` for the best quality |
@@ -831,7 +893,7 @@ audio8d song.mp3
 
 ### Using a song from another folder
 
-You don't have to copy songs around. Just write the **full path**, and put it inside **"quotes"** (quotes are needed when a name has spaces):
+You don't have to copy songs around. Just write the **full path** (the file's complete address), and put it inside **"quotes"** (quotes are needed when a name has spaces):
 
 ```powershell
 audio8d "C:\Users\Gehan\Music\My Song.mp3" "C:\Users\Gehan\Music\8D\My Song (8D).mp3"
@@ -841,7 +903,25 @@ audio8d "C:\Users\Gehan\Music\My Song.mp3" "C:\Users\Gehan\Music\8D\My Song (8D)
 
 💡 If the output folder (like `8D` above) doesn't exist yet, Audio8D **makes it for you**.
 
-### The new file already exists?
+### Song names with special characters
+
+**All of these were tested.** Some characters mean something special to PowerShell, so **how you put quotes around the name matters**:
+
+| The song's name has… | Write it like this | ✅ Example that works |
+|---|---|---|
+| Spaces | Double quotes `" "` | `audio8d "My Song.mp3"` |
+| An apostrophe `'` | Double quotes `" "` | `audio8d "Rock 'n' Roll.mp3"` |
+| `&` `[ ]` `( )` | Double quotes `" "` | `audio8d "Tom & Jerry [Live] (2024).mp3"` |
+| A dollar sign `$` or a backtick `` ` `` | **Single** quotes `' '` | `audio8d 'Cash $ong.mp3'` |
+| Both `'` **and** `$` | Single quotes, and type the apostrophe **twice** | `audio8d 'Rock ''n'' $ong.mp3'` |
+| Anything strange at all | **Skip the command**: type just `audio8d` and **drag the song in** | Works with every name ✅ |
+
+❌ **Forgot the quotes?** You'll see *"unrecognized arguments"* and a **What to do** line telling you to add them.
+❌ **Used double quotes around a `$` name?** PowerShell removes part of the name, so you'll see *"Input file does not exist"*. Use single quotes, or drag the song in.
+
+*(macOS and Linux terminals follow the same rules.)*
+
+### If the new file already exists
 
 Audio8D **will not replace it**, to protect you. You'll see:
 
@@ -861,9 +941,7 @@ audio8d song.mp3 song_8d.mp3 --overwrite
 > [!NOTE]
 > Audio8D **never** changes your original song. And it will **never** let the "in" and "out" names be the same file, not even with `--overwrite`.
 
----
-
-### 🚦 The app warns you (heads-up)
+### The app warns you before it starts
 
 If you choose a value that might not sound its best, the app **tells you before it starts**, in plain words, and gives you the fix. It still makes your song, because you're the boss. 😊 Real screenshot, with three risky values on purpose:
 
@@ -892,9 +970,9 @@ Every warning the app can show:
 
 ---
 
-## 🧪 9. Check your new song
+## 🔍 12. Check your new song
 
-Here are **5 ways** to check your new 8D song, from easiest to most "techy". Run these commands **from the `8D` folder**, and change `song_8d.mp3` to your file's name.
+Here are **5 ways** to check your new 8D song, from easiest to most technical. **Test 1 is all most people need.** Tests 2 to 5 use the included FFmpeg tools to look "inside" the file. Run these commands **from the `8D` folder**, and change `song_8d.mp3` to your file's name.
 
 ### 🎧 Test 1: Listen! (the most important one)
 
@@ -909,9 +987,11 @@ Here are **5 ways** to check your new 8D song, from easiest to most "techy". Run
 | 😵 Too much, dizzy | Too strong or too fast | Lower `--intensity`, or raise `--rotation-seconds` |
 | 🌫️ Echoey or muddy | Too much room sound | Lower `--ambience` |
 | 😐 Hardly moving | Maybe not on headphones | Use headphones, then raise `--intensity` |
-| 🔉 Quieter than the original | **Normal** | See [part 14](#-14-why-is-my-new-song-quieter) |
+| 🔉 Quieter than the original | **Normal** | See [part 17](#-17-why-is-my-new-song-quieter) |
 
 ### 🔍 Test 2: Read the song's "ID card"
+
+This shows the basic facts stored in the file:
 
 ```powershell
 .\src\ffprobe.exe -v error -show_entries stream=codec_name,channels,sample_rate:format=duration,bit_rate -of default=nw=1 "song_8d.mp3"
@@ -926,6 +1006,8 @@ channels=2            ← two sides, left + right ✅
 duration=24.110000    ← same length as the original ✅
 bit_rate=184194       ← about 184 kbps, good quality ✅
 ```
+
+*(This example was made with the normal settings. A `studio` song uses 320 kbps.)*
 
 ### 📊 Test 3: Watch the sound move between ears
 
@@ -983,9 +1065,9 @@ RIGHT 💗  ▁▁▂▃▄▅▆▆▆▆▅▄▃▂▁▁▂▃▄▅▆▆�
 
 ---
 
-## 🎛️ 10. Change how it sounds
+## 🔧 13. Change how it sounds
 
-Audio8D has **knobs**, just like a music mixer. 🎚️ You add them **after** the two file names.
+Audio8D has **knobs** (settings), just like a music mixer. 🎚️ You add them **after** the file names, each starting with two dashes `--`:
 
 ```text
 audio8d  IN.mp3  OUT.mp3  --knob-name value  --another-knob value
@@ -994,7 +1076,7 @@ audio8d  IN.mp3  OUT.mp3  --knob-name value  --another-knob value
 💡 `OUT.mp3` is **optional**. Leave it out and you get `IN (8D).mp3` next to the original.
 
 > [!TIP]
-> 🤷 **Don't know which values to use?** You don't have to! Use **`--preset studio`** for the best quality, or pick another style from [part 11](#-11-best-quality--sound-styles). The knobs below are for people who like to fine-tune.
+> 🤷 **Don't know which values to use?** You don't have to! Use **`--preset studio`** for the best quality, or pick another style from [part 14](#-14-best-quality-and-sound-styles). The knobs below are for people who like to fine-tune.
 
 ### 🌀 Knob 1: `--rotation-seconds`, how FAST it spins
 
@@ -1072,11 +1154,11 @@ The **loudest** the sound is allowed to get. Like a ceiling that stops a ball fr
 | `8` | ⚠️ Not great | ~0.6 MB | |
 | `9` | ⚠️ Lowest | ~0.5 MB | Saving space |
 
-*(Sizes are about right; real sizes depend on the song.)*
+*(Sizes are approximate; real sizes depend on the song.)*
 
 ### 🔊 Knob 6: `--loudness`, how LOUD the finished song is
 
-Music apps play every song at the same loudness, measured in **LUFS**. This knob makes your 8D song match them, so it isn't quieter than your other music.
+Music apps play every song at about the same loudness, measured in **LUFS** (a unit for how loud music *feels* to people). This knob makes your 8D song match them, so it isn't quieter than your other music.
 
 | Value | Matches |
 |:---:|---|
@@ -1087,7 +1169,7 @@ Music apps play every song at the same loudness, measured in **LUFS**. This knob
 
 **Allowed:** `-30` to `-5`, or `off` · **Normal:** `off` · **In the `studio` style:** `-14`
 
-**How it works (the careful way):** Audio8D first *listens* to the finished 8D song and measures it. Then it turns the whole song up or down by **one exact amount**, like turning a volume knob once and never touching it again. The quiet parts and loud parts keep exactly the same balance, so **nothing gets squashed**. If turning it all the way to −14 would push the loudest moment past the peak roof, it stops just before that point. Then the app tells you, for example *"about −17.4 LUFS, kept below −14 so the loudest moments are not squashed."*
+**How it works (the careful way):** Audio8D first *listens* to the finished 8D song and measures it. Then it turns the whole song up or down by **one exact amount**, like turning a volume knob once and never touching it again. The quiet parts and loud parts keep exactly the same balance, so **nothing gets squashed**. If turning it all the way to −14 would push the loudest moment past the peak roof, it stops just before that point. The app then tells you, for example *"about −17.4 LUFS, kept below −14 so the loudest moments are not squashed."*
 
 ```powershell
 audio8d song.mp3 --loudness -14
@@ -1095,7 +1177,7 @@ audio8d song.mp3 --loudness -14
 
 ### 🏆 Knob 7: `--bitrate`, the highest MP3 quality
 
-Locks the MP3 to a **constant bitrate** instead of the variable `--quality` scale. **`320`** is the **most the MP3 format allows**, so it is the best of best. It also switches on LAME's slowest, most careful encoding mode.
+**Bitrate** is how much sound detail is stored each second (in **kbps**, kilobits per second). This knob locks the MP3 to a **constant bitrate** instead of the variable `--quality` scale. **`320`** is the **most the MP3 format allows**, so it is the best of best. It also switches on LAME's (the MP3 maker's) slowest, most careful encoding mode.
 
 | Value | Use it for |
 |:---:|---|
@@ -1112,27 +1194,32 @@ audio8d song.mp3 --bitrate 320
 
 ### 🎯 Switch: `--exact-loudness`
 
-Makes `--loudness` hit its target **exactly, every time**, even when the loudest moments are too big. To do that it **shaves the loudest peaks a little** with a gentle limiter. That's usually hard to hear, but it does change the dynamics slightly, so it is **off** in `studio` and **on** in the `streaming` style.
+A **switch** is a setting you just turn on by writing its name (no value needed).
+
+This one makes `--loudness` hit its target **exactly, every time**, even when the loudest moments are too big. To do that it **shaves the loudest peaks a little** with a gentle limiter. That's usually hard to hear, but it does change the dynamics (the difference between quiet and loud parts) slightly, so it is **off** in `studio` and **on** in the `streaming` style.
 
 ### 🎨 Style: `--preset NAME`
 
-Loads a whole **ready-made style** at once: `studio`, `streaming`, `classic`, `smooth`, `strong`, `spacious`, `voice` or `whirlwind`. See them all in [part 11](#-11-best-quality--sound-styles). Any knob you add **after** it wins, e.g. `--preset studio --intensity 0.9`.
+Loads a whole **ready-made style** at once: `studio`, `streaming`, `classic`, `smooth`, `strong`, `spacious`, `voice` or `whirlwind`. See them all in [part 14](#all-ready-made-styles). Any knob you add **after** it wins, e.g. `--preset studio --intensity 0.9`.
 
 ### 📋 Switch: `--list-presets`
 
-Shows **every style and its exact values** right in the terminal (see the screenshot in [part 11](#-11-best-quality--sound-styles)).
+Shows **every style and its exact values** right in the terminal (see the screenshot in [part 14](#all-ready-made-styles)).
 
 ### 🏷️ Switch: `--version`
 
 Shows the version and who made it: `audio8d 1.0.0 - developed by Gehan Fernando`
 
 ### ♻️ Switch: `--overwrite`
+
 Lets Audio8D **replace** an output file that already exists.
 
 ### 🔬 Switch: `--verbose`
+
 Shows **extra details** while it works, useful for finding problems.
 
 ### ❔ Switch: `--help` (or `-h`)
+
 Shows the built-in help page. It starts with a **QUICK START** you can copy, then the **BEST VALUES**, and every option says its **normal** and **BEST** value. So even without this guide, the app tells you what to use.
 
 <details>
@@ -1226,7 +1313,7 @@ Developed by Gehan Fernando. Full guide: README.md
 
 ---
 
-## 🏆 11. Best quality & sound styles
+## 🏆 14. Best quality and sound styles
 
 ### 🥇 The one command for the best quality
 
@@ -1255,10 +1342,10 @@ Each `studio` value follows a standard used by music professionals and streaming
 | 🧱 **Peak roof** | `0.84` (−1.5 dBFS) | MP3 pushes peaks up slightly, so −1.5 dB keeps the *finished* file safe | Mastering practice for lossy formats: at least −1 dBTP, −1.5 for MP3 |
 | 💪 **Movement** | `0.80` | Clear 8D motion, but neither ear ever goes empty, so it stays comfortable over a whole album | Smooth sine panning, no hard jumps |
 | 🏛️ **Room** | `0.25` | Adds depth but keeps voices crisp | Two short early reflections (55 ms and 110 ms) |
-| 🌀 **Spin** | `8` s | Exactly 4 bars of a 120 BPM song, the most common tempo | See [tempo sync](#-bonus-make-the-spin-dance-with-the-beat) to match *your* song perfectly |
+| 🌀 **Spin** | `8` s | Exactly 4 bars of a 120 BPM song, the most common tempo | See [tempo sync](#bonus-make-the-spin-match-the-beat) to match *your* song perfectly |
 | 📶 **Sample rate** | kept | 44.1 kHz and 48 kHz stay exactly as they are; hi-res songs are resampled once, carefully | Automatic, no knob needed |
 
-### 🏅 Best of best for every kind of file
+### Best of best for every kind of file
 
 > [!IMPORTANT]
 > 🙋 **The honest truth first:** the new 8D song is always an **MP3**, and MP3 always leaves out a tiny bit of sound that ears can't hear. **No setting can avoid that**, because the 8D effect has to unpack your song, change it, and pack it again. What Audio8D *can* do is keep that loss **as small as MP3 physically allows**. `--preset studio` does exactly that for **every** kind of file.
@@ -1298,7 +1385,7 @@ What changes from file to file is **what Audio8D does for you automatically**, a
 
 ### 📏 Measured, not guessed
 
-Real results, measured with FFmpeg's EBU R128 meter on the finished files:
+Real results, measured with FFmpeg's EBU R128 loudness meter on the finished files:
 
 | Style and song | Loudness | Loudest peak | Dynamics (loudness range) | Bitrate | Sample rate |
 |---|:---:|:---:|:---:|:---:|:---:|
@@ -1307,14 +1394,14 @@ Real results, measured with FFmpeg's EBU R128 meter on the finished files:
 | **`streaming`**, the same song | **−14.4 LUFS** ✅ | **−1.6 dBFS** ✅ | 8.0 LU (slightly squeezed) | 320 kbps ✅ | 48 kHz ✅ |
 | **`studio`**, 96 kHz FLAC test track | **−14.0 LUFS** ✅ | **−3.3 dBFS** ✅ | **0.5 LU, the same as before** ✅ | 320 kbps ✅ | 48 kHz ✅ |
 
-💡 Why did the Annie Lennox song stop at −17.4? The 8D movement makes its loudest moments stand out more than its average level. Reaching −14 would mean squashing those moments, and `studio` refuses to do that. The 96 kHz test track had room to spare, so it reached −14.0 exactly.
+💡 **Why did the Annie Lennox song stop at −17.4?** The 8D movement makes its loudest moments stand out more than its average level. Reaching −14 would mean squashing those moments, and `studio` refuses to do that. The 96 kHz test track had room to spare, so it reached −14.0 exactly.
 
 ### 🎯 Small changes to `studio` (copy and paste)
 
 | I want… | Type this |
 |---|---|
 | 🍏 Apple Music loudness | `audio8d song.mp3 --preset studio --loudness -16` |
-| 🥁 The spin to match a 128 BPM song | `audio8d song.mp3 --preset studio --rotation-seconds 7.5` *(see the [tempo table](#-bonus-make-the-spin-dance-with-the-beat))* |
+| 🥁 The spin to match a 128 BPM song | `audio8d song.mp3 --preset studio --rotation-seconds 7.5` *(see the [tempo table](#bonus-make-the-spin-match-the-beat))* |
 | 💪 A stronger 8D effect | `audio8d song.mp3 --preset studio --intensity 0.95` |
 | 🌫️ Less echo | `audio8d song.mp3 --preset studio --ambience 0.15` |
 | 🔈 The natural level, not louder | `audio8d song.mp3 --preset studio --loudness off` |
@@ -1326,7 +1413,7 @@ Real results, measured with FFmpeg's EBU R128 meter on the finished files:
 audio8d song.mp3 --rotation-seconds 8 --intensity 0.80 --ambience 0.25 --limiter-ceiling 0.84 --bitrate 320 --loudness -14
 ```
 
-### 🎨 All ready-made styles
+### All ready-made styles
 
 Type **`audio8d --list-presets`** to see every style in the terminal. Real screenshot:
 
@@ -1345,6 +1432,8 @@ Type **`audio8d --list-presets`** to see every style in the terminal. Real scree
 | ![voice](https://img.shields.io/badge/-🎙️%20voice-2EA44F?style=flat-square) | 16 | 0.60 | 0 | 0.95 | V2 | off | Talking, stories, meditation |
 | ![whirlwind](https://img.shields.io/badge/-🌪️%20whirlwind-FF6F00?style=flat-square) | 3 | 1.00 | 0.30 | 0.95 | V2 | off | Short clips, ringtones |
 
+*("V2" means the normal `--quality 2` setting.)*
+
 ```powershell
 audio8d song.mp3 --preset studio      # 🏆 best of best (recommended)
 audio8d song.mp3 --preset streaming   # 📻 always exactly -14 LUFS
@@ -1358,7 +1447,7 @@ audio8d clip.mp3 --preset whirlwind   # 🌪️ super fast spin
 
 💡 **Mix and match:** a style plus a knob, e.g. `--preset smooth --loudness -14` gives the smooth sound at Spotify loudness.
 
-### 🥁 Bonus: make the spin dance with the beat
+### Bonus: make the spin match the beat
 
 Every song has a speed called **BPM** (beats per minute). You can find it by searching online for *"song name BPM"*. If the spin matches the beat, it feels **extra magical**. ✨
 
@@ -1382,14 +1471,14 @@ Or just **look it up in this table**:
 
 ---
 
-## 📂 12. Which songs can I use?
+## 📂 15. Which songs can I use?
 
 ### ✅ Files that go IN (all tested)
 
 | File type | Example | What happens |
 |---|---|---|
 | 🎵 MP3 | `song.mp3` | ✅ Works. Song name and singer are kept. |
-| 💿 FLAC (even super-high quality) | `album.flac` | ✅ Works. Very high detail is lowered to 48,000 per second, the most MP3 allows. |
+| 💿 FLAC (even super-high quality) | `album.flac` | ✅ Works. Very high detail is lowered to 44,100 or 48,000 per second, the most MP3 allows. |
 | 🌊 WAV (1, 2 or 6 speakers) | `mix.wav` | ✅ Works. Always becomes 2 sides (left + right). |
 | 🍏 M4A / AAC (Apple) | `track.m4a` | ✅ Works |
 | 🟠 OGG / Opus | `clip.ogg` | ✅ Works |
@@ -1407,15 +1496,15 @@ Always an **MP3** file with **2 sides (stereo)**. The name must end in `.mp3` (b
 | ⏱️ **Length** | Stays **exactly** the same |
 | 🏷️ **Song name, singer, album, year** | ✅ **Kept** |
 | 🔢 **Sides (channels)** | Always becomes **2** (left + right) |
-| 📶 **Sound detail (sample rate)** | Kept, unless it's higher than MP3 allows; then it becomes 48,000 |
+| 📶 **Sound detail (sample rate)** | Kept, unless it's higher than MP3 allows; then it becomes 44,100 or 48,000 (whichever divides it cleanly) |
 | 🖼️ **Album picture (cover art)** | ⚠️ **Not kept.** Add it back in your music app if you want it. |
 | 🎚️ **Files with many sound tracks** | Only the **first** sound track is used |
 
 ---
 
-## 🔁 13. Many songs at once
+## 🔁 16. Many songs at once
 
-The `audio8d` command does **one song at a time**. To do a **whole folder**, copy one of these.
+The `audio8d` command does **one song at a time**. To do a **whole folder** in one go, copy one of these small scripts (a script is a short list of commands that runs by itself).
 
 <details open>
 <summary><b>🪟 Windows (PowerShell)</b></summary>
@@ -1488,10 +1577,10 @@ for song in sorted(source.iterdir()):
 
 ---
 
-## 🔉 14. Why is my new song quieter?
+## 🔉 17. Why is my new song quieter?
 
 > [!WARNING]
-> Your 8D song will sound **quieter** than the original, usually **10 to 20 "dB" quieter**. **This is normal, not a mistake.** 🙂
+> Unless you use a loudness setting (like `--preset studio`), your 8D song will sound **quieter** than the original, usually **10 to 20 "dB" quieter**. **This is normal, not a mistake.** 🙂
 
 ### 🤔 Why?
 
@@ -1521,7 +1610,7 @@ This makes a new file, **`song_8d_loud.mp3`**, at the same loudness Spotify and 
 
 ---
 
-## 🆘 15. When something goes wrong
+## 🆘 18. When something goes wrong
 
 Don't worry! 🤗 Audio8D always tells you **what** went wrong in one line starting with **`ERROR`**, and right under it a yellow **`What to do:`** line tells you **how to fix it**. For typing mistakes, it also shows a working **Example:**. Real screenshot:
 
@@ -1531,13 +1620,13 @@ Don't worry! 🤗 Audio8D always tells you **what** went wrong in one line start
 
 💡 A misspelled song name is caught **straight away**, before anything else happens, so you never wait for nothing.
 
-The table below lists every message, in case you want to read more.
+The table below lists every message, in case you want to read more. *(For the most common problems, see also [Stuck? Quick fixes](#-stuck-quick-fixes).)*
 
 ### 🔎 Find your message
 
 | The message says… | What it means | How to fix it |
 |---|---|---|
-| `Missing required executable(s): ffmpeg, ffprobe` | The helper programs are missing | Put `ffmpeg.exe` + `ffprobe.exe` in the `src` folder ([Step 2](#step-2--check-the-helper-programs-)) |
+| `Missing required executable(s): ffmpeg, ffprobe` | The helper programs are missing | Put `ffmpeg.exe` + `ffprobe.exe` in the `src` folder ([Step 2](#step-2-check-the-helper-programs)) |
 | `This FFmpeg build is missing required audio filter(s)` | Your FFmpeg is a "mini" version | Download the **essentials** version from gyan.dev |
 | `This FFmpeg build does not include the libmp3lame encoder` | Your FFmpeg can't make MP3s | Download the **essentials** version from gyan.dev |
 | `Input file does not exist or cannot be accessed` | The song name is wrong, or it isn't there | Check the spelling. Use **"quotes"** if the name has spaces. |
@@ -1550,7 +1639,7 @@ The table below lists every message, in case you want to read more.
 | `Output path exists but is not a regular file` | There's a **folder** with that name | Choose a different name |
 | `Cannot create output directory` | Not allowed to make that folder | Save somewhere you're allowed, like your Music folder |
 | `Input and output paths must be different` | "In" and "out" are the same file | Give the new song a different name |
-| `rotation_seconds must be between 2.0 and 100.0 seconds` | A knob is set too high or too low | Check the allowed values in [part 10](#️-10-change-how-it-sounds) |
+| `rotation_seconds must be between 2.0 and 100.0 seconds` | A knob is set too high or too low | Check the allowed values in [part 13](#-13-change-how-it-sounds) |
 | `intensity must be between 0.0 and 1.0` | Same as above | Same as above |
 | `ambience must be between 0.0 and 1.0` | Same as above | Same as above |
 | `limiter_ceiling must be between 0.0625 and 1.0` | Same as above | Same as above |
@@ -1559,7 +1648,7 @@ The table below lists every message, in case you want to read more.
 | `error: argument --preset: invalid choice` | That style name doesn't exist | Type `audio8d --list-presets` to see the names |
 | `error: argument --quality: invalid choice` | Quality must be a whole number 0 to 9 | Use `--quality 2` (or 0 to 9) |
 | `error: the following arguments are required: input` | You didn't give a song name | Add the song after the command: `audio8d song.mp3` |
-| `Audio8D needs Python 3.10 or newer` | Your Python is too old | Install a new Python ([Step 1](#step-1--get-python-)) |
+| `Audio8D needs Python 3.10 or newer` | Your Python is too old | Install a new Python ([Step 1](#step-1-get-python)) |
 | `No song given, nothing to do.` | You pressed <kbd>Enter</kbd> without dragging a song in (Way D) | Double-click again and drag a song in first |
 | `FFmpeg conversion failed with exit code …` | FFmpeg had a problem while working | Read the words after the `:`, and try adding `--verbose` |
 | `Output appeared while conversion was running` | Another program made a file with the same name at the same moment | Try again with a new name |
@@ -1573,13 +1662,13 @@ The table below lists every message, in case you want to read more.
 
 The computer doesn't know the word `audio8d` yet. Try these, in order:
 
-1. **Did you install it?** Go to [part 6](#-6-choose-how-to-run-it).
+1. **Did you install it?** Go to [part 9](#-9-four-ways-to-start-audio8d).
 2. **Using Way B?** Open the box first: `.\.venv\Scripts\Activate.ps1`
 3. **Still not working?** Use the long way:
    ```powershell
    python -m audio8d song.mp3 song_8d.mp3
    ```
-4. **Moved the `8D` folder?** Install again ([part 6](#-6-choose-how-to-run-it)).
+4. **Moved the `8D` folder?** Install again ([part 9](#-9-four-ways-to-start-audio8d)).
 5. **Don't want to install at all?** Use **Way C**: go into `8D\src` and type `python __main__.py song.mp3`.
 
 </details>
@@ -1589,7 +1678,7 @@ The computer doesn't know the word `audio8d` yet. Try these, in order:
 
 First, try **`py`** instead of `python` (for example `py __main__.py song.mp3`). `py` often works even when `python` doesn't.
 
-Still nothing? Python isn't installed, or "Add python.exe to PATH" wasn't ticked. Go back to [Step 1](#step-1--get-python-) and install Python again. **Tick that box!** ✅
+Still nothing? Python isn't installed, or "Add python.exe to PATH" wasn't ticked. Go back to [Step 1](#step-1-get-python) and install Python again. **Tick that box!** ✅
 
 </details>
 
@@ -1609,7 +1698,7 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 Audio8D isn't installed in the Python you're using. Either:
 
-- go to the `8D` folder and install it ([Way A or B](#-6-choose-how-to-run-it)). With Way B, open the box first, **or**
+- go to the `8D` folder and install it ([Way A or B](#-9-four-ways-to-start-audio8d)). With Way B, open the box first, **or**
 - skip installing and use **Way C**: in `8D\src`, type `python __main__.py song.mp3`.
 
 </details>
@@ -1626,9 +1715,9 @@ python __main__.py song.mp3
 </details>
 
 <details>
-<summary><b>❗ I double-clicked `__main__.py` and the window closed straight away</b></summary>
+<summary><b>❗ I double-clicked <code>__main__.py</code> and the window closed straight away</b></summary>
 
-1. **Your Python may be too old.** Open a terminal and type `py --version`. It needs to be 3.10 or newer ([Step 1](#step-1--get-python-)).
+1. **Your Python may be too old.** Open a terminal and type `py --version`. It needs to be 3.10 or newer ([Step 1](#step-1-get-python)).
 2. **See the message yourself:** open a terminal in `8D\src` and type `python __main__.py`. The window stays open, so you can read what it says.
 3. **Windows opened it in Notepad instead?** Right-click `__main__.py` → **Open with** → **Python**.
 
@@ -1663,13 +1752,13 @@ Make the room smaller: `--ambience 0.15`, or remove it completely with `--ambien
 <details>
 <summary><b>🔉 It's too quiet</b></summary>
 
-That's normal. See [part 14](#-14-why-is-my-new-song-quieter) for a one-line fix.
+That's normal. See [part 17](#-17-why-is-my-new-song-quieter) for a one-line fix.
 
 </details>
 
 ### 🚦 Exit codes (for programmers and scripts)
 
-When Audio8D finishes, it gives back a number:
+When Audio8D finishes, it gives back a number that other programs can read:
 
 | Number | Meaning |
 |:---:|---|
@@ -1679,9 +1768,11 @@ When Audio8D finishes, it gives back a number:
 
 ---
 
-## 🛡️ 16. How your files stay safe
+## 🔒 19. How your files stay safe
 
-Audio8D is **very careful** with your files. Here's what happens every time:
+Audio8D is **very careful** with your files. **In short:** it builds the new song in a hidden file first, and only shows it to you once it's completely finished. If anything goes wrong, the hidden file is deleted and your folders stay clean.
+
+Here's what happens every time:
 
 ```mermaid
 sequenceDiagram
@@ -1710,7 +1801,7 @@ sequenceDiagram
 | 🔎 Checks FFmpeg first | Confusing crashes if a helper program is missing |
 | 🧾 Checks the song first | Trying to "play" a text file or picture |
 | 🎚️ Checks every knob | Silly settings that would break the sound |
-| 🚫 Never uses the "shell" | A file name like `song & del *.*` being run as a command |
+| 🚫 Never uses the "shell" (the system's command interpreter) | A file name like `song & del *.*` being run as a command |
 | 🫥 Works in a hidden file first | Half-made songs that look finished |
 | ⚡ Finishes in one instant | A broken file if the power goes off at the last second |
 | 🔒 Never replaces files by surprise | Losing a song you already made |
@@ -1720,7 +1811,129 @@ sequenceDiagram
 
 ---
 
-## 🐍 17. For programmers: use it from Python
+## 💬 20. Questions people ask
+
+<details>
+<summary><b>I don't know anything about sound. Can I still use it?</b></summary>
+
+Yes! Type just **`audio8d`** (or double-click `src\__main__.py`). The app asks you 2 easy questions, and pressing <kbd>Enter</kbd> always picks the best answer. While it works, it shows every setting marked **(best)**, warns you about anything risky, and tells you **what to do** if something goes wrong. See [the easiest way](#the-easiest-way-let-the-app-ask-you).
+</details>
+
+<details>
+<summary><b>Which settings give the best, most professional quality?</b></summary>
+
+Just use **`--preset studio`**. It is the best of best: 320 kbps (the MP3 maximum) with LAME's most careful mode, −1.5 dBFS peak headroom, and a −14 LUFS loudness goal reached **without squashing** the music. Start from a FLAC or WAV if you have one. See [part 14](#-14-best-quality-and-sound-styles) for the details and real measurements.
+</details>
+
+<details>
+<summary><b>Does it work on normal speakers?</b></summary>
+
+A little, but not really. Speakers let **both** ears hear **both** sides, so the magic is lost. It just sounds like the music leans left and right. **Use headphones.** 🎧
+</details>
+
+<details>
+<summary><b>Is this the same as Dolby Atmos or "real" 3D sound?</b></summary>
+
+No. Audio8D moves sound **left and right** with a little room sound. Real 3D sound can also place sounds in front, behind, above and below, using much more complicated maths. Audio8D is simpler, fast, and fun.
+</details>
+
+<details>
+<summary><b>Why only MP3?</b></summary>
+
+Because MP3 plays **everywhere**: phones, cars, computers, TVs, old music players. At normal quality (`--quality 2`), almost nobody can hear any difference from the original.
+</details>
+
+<details>
+<summary><b>Can I turn an 8D song back into the normal song?</b></summary>
+
+No. The effect is "baked in", like a cake. 🎂 That's why Audio8D **never touches your original song**. Keep it!
+</details>
+
+<details>
+<summary><b>Where did my album picture go?</b></summary>
+
+Audio8D only takes the **sound**, so the picture is left behind. The song name, singer and album **are** kept. You can add the picture back with your music app or a free tag editor like **Mp3tag**.
+</details>
+
+<details>
+<summary><b>How long does it take?</b></summary>
+
+About **4 seconds** for a 3½-minute song on a normal modern computer with the normal settings. ⚡ The `studio` style takes a little longer (about **20 seconds for a 5-minute song**), because it measures the song first and uses the most careful MP3 mode.
+</details>
+
+<details>
+<summary><b>Can I use a video file?</b></summary>
+
+Yes! Give it an `.mp4`, `.mkv` or `.webm`, and it will make an 8D MP3 from the video's sound.
+</details>
+
+<details>
+<summary><b>Do I need the internet?</b></summary>
+
+Only to download Python (and FFmpeg, if it's missing). Making 8D songs works **completely offline**. ✈️
+</details>
+
+<details>
+<summary><b>Can I share the songs I make?</b></summary>
+
+Making an 8D version doesn't make the song **yours**. Listening yourself is fine. To upload or share someone else's song, you need permission from the people who own it.
+</details>
+
+---
+
+## 📖 21. Word helper
+
+Tricky words, explained simply:
+
+| Word | What it means |
+|---|---|
+| **8D audio** | Music that seems to fly around your head on headphones |
+| **Terminal / PowerShell** | The window where you type commands |
+| **Command** | A line you type in the terminal, then press <kbd>Enter</kbd> |
+| **Folder / directory** | A place on your computer that holds files |
+| **Path** | The "address" of a file, like `C:\Music\song.mp3` |
+| **Install** | Teaching your computer about a new program |
+| **pip** | Python's built-in tool for installing things |
+| **Virtual environment (venv)** | A private box that keeps one project's Python stuff separate |
+| **FFmpeg / FFprobe** | Free helper programs that open, change and save sound and video |
+| **Knob / option** | A setting you add to a command, like `--intensity 0.9` |
+| **Switch** | A setting you turn on just by writing its name, like `--overwrite` |
+| **Channel** | One side of the sound. Stereo = 2 channels (left + right). |
+| **Mono** | Sound with only 1 channel (both ears hear the same) |
+| **Stereo** | Sound with 2 channels (left and right can be different) |
+| **Panning** | Moving a sound between left and right |
+| **Ambience / echo** | Quiet repeats of a sound that make it feel like it's in a room |
+| **Limiter** | A "safety roof" that stops sounds getting too loud |
+| **dB (decibel)** | A way to measure how loud something is |
+| **dBFS** | Loudness in a computer file. 0 is the very top; lower numbers are quieter. |
+| **LUFS** | How loud music *feels* to people. Spotify aims for about −14. |
+| **BPM** | Beats per minute, how fast a song is |
+| **Bar** | A group of beats, usually 4 (count 1-2-3-4) |
+| **MP3** | A popular kind of music file that plays everywhere |
+| **LAME** | The free MP3 maker (encoder) that FFmpeg uses to save MP3 files |
+| **Encode / encoder** | Packing sound into a file format like MP3 / the tool that does it |
+| **Bitrate / kbps** | How much detail is saved each second. Bigger = better and larger. |
+| **Sample rate** | How many tiny "photos" of the sound are taken each second (e.g. 44,100) |
+| **Resample** | Changing a song's sample rate, e.g. from 96,000 to 48,000 |
+| **Tags / ID3** | The song name, singer and album stored inside an MP3 |
+| **Cover art** | The album picture stored inside a music file |
+| **Exit code** | A number a program gives back when it finishes (0 = all good) |
+| **Python package** | A bundle of Python code with a name. Here it's `audio8d`. |
+| **Preset / style** | A ready-made set of knob values with a name, like `studio` |
+| **V0 / V2** | LAME's *variable* quality settings: V0 is the best (about 245 kbps), V2 is the normal one (about 190 kbps) |
+| **CBR / 320 kbps** | Constant bitrate; 320 kbps is the most the MP3 format can hold |
+| **Lossless** | A perfect copy of the sound (FLAC, WAV, AIFF, ALAC) |
+| **Lossy / compressed** | A smaller file that left out sounds ears can't hear (MP3, AAC, OGG, Opus) |
+| **Dynamics / loudness range (LRA)** | The difference between the quiet and loud parts of a song; squashing makes it smaller |
+| **True peak** | The real loudest point of the sound, even between the samples |
+| **EBU R128** | The European standard for measuring and matching loudness |
+| **Git / GitHub** | A tool for saving versions of code / a website for sharing code |
+
+---
+
+## 🐍 22. For programmers: use it from Python
+
+> 👩‍💻 **This part is for programmers.** If you only want to make 8D songs, you can skip it.
 
 You can use Audio8D **inside your own Python program**, like an app, a bot or a website.
 
@@ -1831,11 +2044,11 @@ Anything that is **not** an `Audio8DError` is a real bug. Please report it! 🐛
 
 ---
 
-## 🧑‍🔬 18. For programmers: tests & code
+## 🧪 23. For programmers: tests and code
 
 ### 🧪 Run the automatic tests
 
-The tests check that everything works, in about **15 seconds**.
+The tests are small programs that check Audio8D works correctly. They take about **15 seconds**.
 
 **1️⃣ Install the test tools** (once, from the `8D` folder; with Way B, open the box first):
 ```powershell
@@ -1938,7 +2151,7 @@ flowchart LR
 3. **🌀 Spin it.** A slow wave turns the left ear up and the right ear down, then swaps. The right ear is always half a turn behind. Speed $= \frac{1}{\text{rotation seconds}}$, so 8 seconds is 0.125 turns per second.
 4. **🔊 Loudness (only when `--loudness` is set, e.g. in `studio`).** First a silent **measuring pass** plays the 8D song through FFmpeg's EBU R128 meter. Then **one exact `volume` change** is applied, never lifting the loudest peak past the roof (unless `--exact-loudness` is on). Hi-res songs are resampled once at the very start with a long, high-quality filter.
 5. **🧱 Safety roof.** A limiter (5 ms attack, 50 ms release) stops any sound going above `--limiter-ceiling`.
-6. **💎 Save as MP3.** The LAME encoder, variable quality, with ID3v2.3 + ID3v1 song tags that every player can read.
+6. **💎 Save as MP3.** The LAME encoder, using variable quality (`--quality`), or a constant bitrate when `--bitrate` is set (as in `studio`), with ID3v2.3 + ID3v1 song tags that every player can read.
 
 ### 📏 House rules for changing the code
 
@@ -1952,124 +2165,11 @@ flowchart LR
 ### 📦 About sharing on GitHub
 
 > [!CAUTION]
-> `ffmpeg.exe` and `ffprobe.exe` are about **105 MB each**. GitHub **refuses** files bigger than 100 MB. To upload this project to GitHub, either use **[Git LFS](https://git-lfs.com/)** for the two `.exe` files, or leave them out and let each person install FFmpeg themselves ([Step 2](#step-2--check-the-helper-programs-)).
+> `ffmpeg.exe` and `ffprobe.exe` are about **105 MB each**. GitHub **refuses** files bigger than 100 MB. To upload this project to GitHub, either use **[Git LFS](https://git-lfs.com/)** (a GitHub add-on for large files) for the two `.exe` files, or leave them out and let each person install FFmpeg themselves ([Step 2](#step-2-check-the-helper-programs)).
 
 ---
 
-## 💬 19. Questions people ask
-
-<details>
-<summary><b>I don't know anything about sound. Can I still use it?</b></summary>
-
-Yes! Type just **`audio8d`** (or double-click `src\__main__.py`). The app asks you 2 easy questions, and pressing <kbd>Enter</kbd> always picks the best answer. While it works, it shows every setting marked **(best)**, warns you about anything risky, and tells you **what to do** if something goes wrong. See [the easiest way](#-the-easiest-way-let-the-app-ask-you).
-</details>
-
-<details>
-<summary><b>Which settings give the best, most professional quality?</b></summary>
-
-Just use **`--preset studio`**. It is the best of best: 320 kbps (the MP3 maximum) with LAME's most careful mode, −1.5 dBFS peak headroom, and a −14 LUFS loudness goal reached **without squashing** the music. Start from a FLAC or WAV if you have one. See [part 11](#-11-best-quality--sound-styles) for the details and real measurements.
-</details>
-
-<details>
-<summary><b>Does it work on normal speakers?</b></summary>
-
-A little, but not really. Speakers let **both** ears hear **both** sides, so the magic is lost. It just sounds like the music leans left and right. **Use headphones.** 🎧
-</details>
-
-<details>
-<summary><b>Is this the same as Dolby Atmos or "real" 3D sound?</b></summary>
-
-No. Audio8D moves sound **left and right** with a little room sound. Real 3D sound can also place sounds in front, behind, above and below, using much more complicated maths. Audio8D is simpler, fast, and fun.
-</details>
-
-<details>
-<summary><b>Why only MP3?</b></summary>
-
-Because MP3 plays **everywhere**: phones, cars, computers, TVs, old music players. At normal quality (`--quality 2`), almost nobody can hear any difference from the original.
-</details>
-
-<details>
-<summary><b>Can I turn an 8D song back into the normal song?</b></summary>
-
-No. The effect is "baked in", like a cake. 🎂 That's why Audio8D **never touches your original song**. Keep it!
-</details>
-
-<details>
-<summary><b>Where did my album picture go?</b></summary>
-
-Audio8D only takes the **sound**, so the picture is left behind. The song name, singer and album **are** kept. You can add the picture back with your music app or a free tag editor like **Mp3tag**.
-</details>
-
-<details>
-<summary><b>How long does it take?</b></summary>
-
-About **4 seconds** for a 3½-minute song on a normal modern computer. ⚡
-</details>
-
-<details>
-<summary><b>Can I use a video file?</b></summary>
-
-Yes! Give it an `.mp4`, `.mkv` or `.webm`, and it will make an 8D MP3 from the video's sound.
-</details>
-
-<details>
-<summary><b>Do I need the internet?</b></summary>
-
-Only to download Python (and FFmpeg, if it's missing). Making 8D songs works **completely offline**. ✈️
-</details>
-
-<details>
-<summary><b>Can I share the songs I make?</b></summary>
-
-Making an 8D version doesn't make the song **yours**. Listening yourself is fine. To upload or share someone else's song, you need permission from the people who own it.
-</details>
-
----
-
-## 📖 20. Word helper
-
-Tricky words, explained simply:
-
-| Word | What it means |
-|---|---|
-| **8D audio** | Music that seems to fly around your head on headphones |
-| **Terminal / PowerShell** | The window where you type commands |
-| **Command** | A line you type in the terminal, then press <kbd>Enter</kbd> |
-| **Folder / directory** | A place on your computer that holds files |
-| **Path** | The "address" of a file, like `C:\Music\song.mp3` |
-| **Install** | Teaching your computer about a new program |
-| **Virtual environment (venv)** | A private box that keeps one project's Python stuff separate |
-| **FFmpeg / FFprobe** | Free helper programs that open, change and save sound and video |
-| **Channel** | One side of the sound. Stereo = 2 channels (left + right). |
-| **Mono** | Sound with only 1 channel (both ears hear the same) |
-| **Stereo** | Sound with 2 channels (left and right can be different) |
-| **Panning** | Moving a sound between left and right |
-| **Ambience / echo** | Quiet repeats of a sound that make it feel like it's in a room |
-| **Limiter** | A "safety roof" that stops sounds getting too loud |
-| **dB (decibel)** | A way to measure how loud something is |
-| **dBFS** | Loudness in a computer file. 0 is the very top; lower numbers are quieter. |
-| **LUFS** | How loud music *feels* to people. Spotify aims for about −14. |
-| **BPM** | Beats per minute, how fast a song is |
-| **Bar** | A group of beats, usually 4 (count 1-2-3-4) |
-| **MP3** | A popular kind of music file that plays everywhere |
-| **Bitrate / kbps** | How much detail is saved each second. Bigger = better and larger. |
-| **Sample rate** | How many tiny "photos" of the sound are taken each second (e.g. 44,100) |
-| **Tags / ID3** | The song name, singer and album stored inside an MP3 |
-| **Cover art** | The album picture stored inside a music file |
-| **Exit code** | A number a program gives back when it finishes (0 = all good) |
-| **Python package** | A bundle of Python code with a name. Here it's `audio8d`. |
-| **Preset / style** | A ready-made set of knob values with a name, like `studio` |
-| **V0** | LAME's best *variable* quality setting (about 245 kbps) |
-| **CBR / 320 kbps** | Constant bitrate; 320 kbps is the most the MP3 format can hold |
-| **Lossless** | A perfect copy of the sound (FLAC, WAV, AIFF, ALAC) |
-| **Lossy / compressed** | A smaller file that left out sounds ears can't hear (MP3, AAC, OGG, Opus) |
-| **Dynamics / loudness range (LRA)** | The difference between the quiet and loud parts of a song; squashing makes it smaller |
-| **True peak** | The real loudest point of the sound, even between the samples |
-| **EBU R128** | The European standard for measuring and matching loudness |
-
----
-
-## 🗑️ 21. Remove Audio8D
+## 🧹 24. Remove Audio8D
 
 Want to remove it? Easy. 👋
 
@@ -2088,7 +2188,7 @@ Just delete the **`.venv`** folder inside `8D`. That's it!
 
 ---
 
-## 🏆 22. Credits
+## 🙏 25. Credits
 
 <div align="center">
 
