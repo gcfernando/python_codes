@@ -105,13 +105,13 @@ Your brain works out where a sound comes from with **three clues**. Audio8D give
 On top of that it keeps the **bass in the middle** (like a real mix, so the beat stays solid), adds a small natural **room** (reverb) so the music feels *outside* your head, and makes sure the result is never too loud or crackly. ✨
 
 > [!NOTE]
-> "8D" is just a fun name. There are **not** 8 of anything. It is a clever trick that uses your **2** ears. Audio8D 1.0 only did the loudness clue (left-right "ping-pong"). Version 2 does all three, which is why the sound now goes **around** you and **behind** you. The old sound is still there as the [`retro` style](#all-ready-made-styles).
+> "8D" is just a fun name. There are **not** 8 of anything. It is a clever trick that uses your **2** ears. The first version of Audio8D only did the loudness clue (left-right "ping-pong"). Audio8D 2.0.0 does all three, which is why the sound now goes **around** you and **behind** you. The old sound is still there as the [`retro` style](#all-ready-made-styles).
 
 ---
 
 ## 🆕 2. What's new in 2.0
 
-Making a good 8D song by hand is hard: you need the right effects in the right order, simple 8D makers move the bass (so the beat wobbles), the result is often too quiet or crackly, and album art gets lost. Audio8D 2.0 does all of it for you, now in **a proper window**.
+Making a good 8D song by hand is hard: you need the right effects in the right order, simple 8D makers move the bass (so the beat wobbles), the result is often too quiet or crackly, and album art gets lost. Audio8D 2.0.0 does all of it for you, now in **a proper window**.
 
 <table>
 <tr>
@@ -496,7 +496,19 @@ The **Audio8D** window opens on **Step 1 of 4 · Add your songs**:
 |---|---|
 | **Sidebar** (left) | The four steps in order, then **Your styles** and **Settings**. Click any of them at any time |
 | **The page** (middle) | The current step. Every control has a line of help under it and a tooltip when you rest the mouse on it |
-| **Status bar** (bottom) | Overall progress, what's happening now, and a short summary of your choices (e.g. *3D · circle · 8 s · MP3 · -14 LUFS → next to originals*) |
+| **Status bar** (bottom) | Overall progress, what's happening now, and a short summary of your choices (e.g. *3D · circle · 8 s · MP3 · -14 LUFS → next to originals*). Rest the mouse on it to see *What every song will get. Change it on steps 2 and 3.* |
+
+**Reading the summary on the right of the status bar**, e.g. *3D · circle · 8 s · MP3 · -14 LUFS → next to originals*:
+
+| Part | Means | Change it on |
+|---|---|---|
+| **3D** (or *panning*) | The sound engine: the full 3D head model, or simple left-right panning | Step 2 |
+| **circle** (or *arc*, *figure8*, *wander*) | The route the sound takes around you | Step 2 |
+| **8 s** (or *beat sync*) | Seconds for one full circle, or *beat sync* when it follows the song's tempo | Step 2 |
+| **MP3** (or FLAC, WAV, M4A, OPUS) | The file type of the new songs | Step 3 |
+| **-14 LUFS** (or *original loudness*; missing when loudness is left natural) | How loud the new songs will be | Step 3 |
+| **speaker-safe** (only when on) | **Safe for speakers too** is switched on | Step 2 |
+| **→ next to originals** (or a folder name) | Where the new songs are saved | Step 3 |
 
 😟 **It didn't open?** See [When something goes wrong](#-the-window-doesnt-open).
 
@@ -587,7 +599,7 @@ All of these are explained in [part 9](#-9-every-setting-explained). Press **Nex
 | Setting | Your choices | Recommended |
 |---|---|---|
 | **File type** | **MP3** plays everywhere (320 kbps, the best MP3 can be) · **FLAC** loses nothing · **WAV** for music software · **M4A** for Apple · **Opus** small and modern | MP3, or FLAC to lose nothing |
-| **Loudness** | **Spotify / YouTube (-14)** · **Apple Music (-16)** · **TV & radio (-23)** · **Same as original** · **Natural (off)** · **Custom…** (type any value from -30 to -5) | Spotify / YouTube |
+| **Loudness** | **Spotify / YouTube (-14)** · **Apple Music (-16)** · **TV & radio (-23)** · **Same as original** · **Natural (off)** · **Custom…** (a **Custom loudness** box appears: type any value from -30 to -5) | Spotify / YouTube |
 | **Save the new songs** | **Next to each original**, or **In a folder I choose** (type a path or **Browse**; it's created for you) | Your choice |
 | **The original songs** | **Keep them** · **Replace (original name)** · **Replace (keep '(8D)')**. Replaced originals go to the **Recycle Bin**; on drives that have none (USB sticks, memory cards, network drives) the original stays in its folder, renamed `<song> (original)`. The window asks you to confirm first | Keep them |
 
@@ -629,13 +641,13 @@ If something needs your attention, a **red note** says what and **Start converti
 While it works, each song has its **own row** with what it's doing (*Making the 3D mix*, *Saving the file*, *Checking the result*) and a progress bar, and the **status bar** shows the overall progress and the time. The window stays responsive the whole time: you can scroll, read, or press **Stop**. With more than 25 songs, the first 25 have rows and one line counts the rest (*Songs 26 to 300: 120 made, 180 still to go.*); any of those that fails still gets its own row.
 
 <p align="center">
-  <img src="docs/images/gui-progress.png" alt="Converting five songs: four rows are finished with green ticks, their saved names and measured loudness and Play and Folder buttons; the fifth row shows Saving the file 41% with a purple progress bar; the Stop button is red and active; the status bar reads Converting 5 songs (0:06)" width="100%"/>
+  <img src="docs/images/gui-progress.png" alt="Converting five songs: four rows are finished with green ticks, their saved names and measured loudness and Play and Folder buttons; the fifth row shows Saving the file with a purple progress bar; the Stop button is red and active; the status bar reads Converting 5 songs (0:08)" width="100%"/>
 </p>
 
 When every song is done, a message says how many were made and how long it took:
 
 <p align="center">
-  <img src="docs/images/gui-dialog.png" alt="The All done! message: 5 songs made in 7.0 seconds. Put on your headphones and press play! with Close, Open folder and Play first buttons" width="60%"/>
+  <img src="docs/images/gui-dialog.png" alt="The All done! message: 5 songs made in 10.4 seconds. Put on your headphones and press play! with Close, Open folder and Play first buttons" width="60%"/>
 </p>
 
 Each row then shows the **measured result**, e.g. *Saved as City Rain (8D).mp3 · -14.1 LUFS, peaks -2.2 dBTP, mono-safe*, with **Play** and **Folder** buttons (see the picture at the [top of this guide](#-audio8d)). What those numbers mean: [part 13](#-13-check-your-new-song). A song that failed shows the reason in red in one short line (e.g. *FFmpeg stopped: Permission denied*), with a **What to do:** line; the other songs carry on. The full technical details are in *Technical details* and in the [log file](#-the-log-file).
@@ -690,6 +702,8 @@ Found settings you love? Open **Your styles** in the sidebar, give them a **Name
   <img src="docs/images/gui-settings.png" alt="Settings: Theme (System, Light, Dark), Size (90%, 100%, 110%, 125%), Show technical details, a Tools card showing FFmpeg found in the bin\executable folder and how to get Demucs, Forget remembered measurements and Open log folder buttons, and an About card with Open the full guide" width="100%"/>
 </p>
 
+The page has three cards: **Appearance and details** (the first three rows below), **Tools** and **About**.
+
 | Setting | What it does |
 |---|---|
 | **Theme** | **System** follows your Windows light/dark setting; or pick **Light** or **Dark** |
@@ -716,7 +730,53 @@ Here is the window in the **Light** theme:
 | <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Start converting |
 | <kbd>Esc</kbd> | Stop |
 
-💡 **Closing the window while it works?** It asks first, then stops cleanly, keeping finished songs.
+💡 **Closing the window while it works?** A **Stop and close?** message asks first: **Keep working** carries on, **Stop and close** stops cleanly (finished songs are kept) and closes.
+
+### 💬 What the window tells you
+
+Audio8D talks to you in three places. Here is every message you can meet, what it means, and what to do.
+
+**1. The status bar** (bottom of the window, next to the overall progress bar):
+
+| It says | Meaning |
+|---|---|
+| *Ready.* | Nothing is running; you can change anything |
+| *Converting 5 songs… (0:06)* | The songs are being made; the time in brackets counts up |
+| *Making a 30-second preview of My Song… (0:02)* / *Making an A/B compare of My Song…* | A preview or A/B file is being made |
+| *Making the 3D mix…* / *Saving the file…* / *Checking the result…* | The step a preview is on |
+| *Stopping after the current step…* | You pressed **Stop**; it finishes the current step safely |
+| *Stopped. Finished songs are kept.* | It stopped; songs already made stay, the half-made one is cleaned up |
+| *Done: 5 made, 0 failed, in 0:07.* | Every song is finished; failed ones have a red row on step 4 |
+
+**2. Short notices** (a small coloured box in the status bar for a few seconds; it never covers a button):
+
+| Notice | Meaning | What to do |
+|---|---|---|
+| *Added 5 songs* | The songs are on the list | Nothing |
+| *Those files aren't music (or were made by Audio8D)* | What you added was skipped | Add music files (MP3, FLAC, WAV…), not 8D copies |
+| *No songs found in Rock* | That folder has no music | Check the folder, or turn on **Include songs in sub-folders** |
+| *Add a song first (step 1)* | Preview or A/B needs a song | Add one on step 1 |
+| *Please fix the red items first* | Something on step 4 is red | Press **Fix it** next to the red note |
+| *Please wait until the conversion finishes* | Songs can't be added mid-run | Wait, or press **Stop** |
+| *Skipped 2 song(s) that already have an 8D version* | Those songs were made before | Turn on **Replace 8D files that already exist** to make them again |
+| *Preview ready: My Song (8D preview).mp3* | The sample is made and starts playing | Listen with headphones |
+| *A/B file ready: original first, then 8D* | The comparison is made and starts playing | Listen for the change after the pause |
+| *Style: studio* | A style card was chosen | Nothing |
+| *Saved your style 'party-mix'* / *Deleted 'party-mix'* | Your styles changed | Nothing |
+| *Remembered measurements cleared* | The loudness memory was emptied | Nothing; the next conversion measures again |
+| *Your saved styles couldn't be read: see Your styles* | The styles file has a mistake | Open **Your styles**; it names the line to fix |
+| *Could not clear the cache* / *The log folder can't be created* | Windows refused access to that folder | Close other copies of Audio8D and try again |
+
+**3. Message windows** (they wait for your answer):
+
+| Title | When | Buttons |
+|---|---|---|
+| **Replace the original songs?** | You press **Start converting** with **The original songs** set to *Replace* | **Cancel** goes back without changing anything · **Replace them** starts |
+| **Nothing new to make** | Every song already has an 8D version | **OK**; then turn on **Replace 8D files that already exist** if you want them made again |
+| **All done!** | Every song is finished (shows how many and how long) | **Close** · **Open folder** shows the new songs · **Play first** plays the first one |
+| **Delete this style?** | You press **Delete** on **Your styles** | **Cancel** keeps it · **Delete** removes it for good |
+| **Stop and close?** | You close the window while it's converting | **Keep working** · **Stop and close** |
+| **Something went wrong** | An unexpected problem | **OK**; the message says what happened and what to do, with the full details in *Technical details* and the [log file](#-the-log-file). The window keeps working |
 
 ### 🗂️ Where Audio8D keeps things
 
@@ -786,7 +846,7 @@ A real **convolution reverb**: a short gap, a few early reflections, then a smoo
 | Sound engine | What it does |
 |:---:|---|
 | **3D around you** ⭐ | The real 3D head model: time, loudness and colour clues. Goes **around** you and **behind** you |
-| **Left-right panning** | Simple left-right volume panning (like Audio8D 1.0). Best for speakers |
+| **Left-right panning** | Simple left-right volume panning (like the first version of Audio8D). Best for speakers |
 
 | Path | The route | Try it for |
 |:---:|---|---|
@@ -803,7 +863,7 @@ Everything **below** this many **Hz** (the kick drum and bass guitar) stays in t
 
 | Bass below | Effect |
 |:---:|---|
-| switch **off** | The bass moves too (the old Audio8D 1.0 sound) |
+| switch **off** | The bass moves too (the sound of the first Audio8D) |
 | 80 Hz | Only the deepest bass stays still |
 | **120 Hz** ⭐ | Kick drum and bass guitar stay still, everything else moves |
 | 200 – 250 Hz | Also the low piano and male voices stay still |
@@ -817,7 +877,7 @@ Everything **below** this many **Hz** (the kick drum and bass guitar) stays in t
 
 ### 🥁 Spin in time with the beat · Tempo
 
-Audio8D **finds the song's tempo** (BPM, beats per minute) by listening for the kick drum and hi-hats, then makes one circle last a **whole number of bars** (2, 4, 8, 16 or 32 beats), as close as possible to your spin speed. Know the tempo already? Type it in **Tempo** (40 to 240) to skip the detection. The finished row says what it found, e.g. *89.9 BPM, one circle = 16 beats*. Music with no steady beat (ambient, classical, speech) is recognised as such: the spin keeps its own speed and the row says *no clear beat, so the spin kept its own speed*. Terminal: `--beat-sync`, `--bpm`.
+Audio8D **finds the song's tempo** (BPM, beats per minute) by listening for the kick drum and hi-hats, then makes one circle last a **whole number of bars** (2, 4, 8, 16 or 32 beats), as close as possible to your spin speed. Know the tempo already? Type it in the **Tempo (optional)** box, which appears once the switch is on (40 to 240), to skip the detection. The finished row says what it found, e.g. *89.9 BPM, one circle = 16 beats*. Music with no steady beat (ambient, classical, speech) is recognised as such: the spin keeps its own speed and the row says *no clear beat, so the spin kept its own speed*. Terminal: `--beat-sync`, `--bpm`.
 
 🎯 **Fun fact:** the normal spin of **8 seconds** is exactly **4 bars of a 120 BPM pop song**, the most common song speed!
 
@@ -890,7 +950,7 @@ Music apps play every song at about the same loudness, measured in **LUFS**. The
 |---|---|---|
 | **Save the new songs** | Next to each original, or in a folder you choose (sub-folders are kept) | `--output-dir` |
 | **The original songs** | Keep, or replace: the original goes to the Recycle Bin (or is renamed `<song> (original)` where there is no Recycle Bin) **after** the 8D song is completely saved. Nothing is ever deleted for good | `--replace`, `--name` |
-| **New file name** | `'<song> (8D)'`, **Same as the original** (e.g. in another folder), or **Custom…** for a single song | `--name`, or an output file name |
+| **New file name** | `'<song> (8D)'`, **Same as the original** (e.g. in another folder), or **Custom…** for a single song: a **Custom name** box appears, and the right ending (`.mp3`, `.flac`…) is added for you | `--name`, or an output file name |
 | **Replace 8D files that already exist** | Off: songs that already have an 8D version are skipped | `--overwrite` |
 | **Keep the album picture** | Copies the cover art (MP3, FLAC and M4A can hold it) | `--no-cover` turns it off |
 | **Add ' (8D)' to the song title** | So your music app lists the 8D version as its own track | `--keep-title` turns it off |
@@ -949,7 +1009,7 @@ Real results, measured by Audio8D's own check on the finished files, all made on
 | **`lossless`** (FLAC) | **−14.1 LUFS** ✅ | **−0.9 dBTP** ✅ | 7.7 LU | 8.1 s | 53.4 MB |
 | 💿 **`hifi`** (FLAC, same loudness as the original) | **−13.7 LUFS** | **−0.9 dBTP** ✅ | 7.7 LU | 10.2 s | 52.4 MB |
 | **`groove`** as FLAC (beat sync: 89.9 BPM) | **−14.1 LUFS** ✅ | **−1.4 dBTP** ✅ | 7.6 LU | 10.9 s | 51.9 MB |
-| `retro` (the 1.0 sound) | −14.7 LUFS | −0.8 dBTP ✅ | 7.9 LU | 6.4 s | 6.6 MB |
+| `retro` (the first version's sound) | −14.7 LUFS | −0.8 dBTP ✅ | 7.9 LU | 6.4 s | 6.6 MB |
 
 💡 **Every style stays below 0 dBTP**, so nothing clips, even between samples: the limiter works at twice the sample rate to catch those peaks too. The 3D styles keep almost all of the song's dynamics (7.3 to 7.9 LU against the original's 8.2).
 💡 **`hifi` aims for the original's −11.3 LUFS** but stops at −13.7 LUFS, because getting louder would mean squashing the song's loudest moments. **Always hit the loudness exactly** would force −11.3 by shaving those peaks.
@@ -972,7 +1032,7 @@ Real results, measured by Audio8D's own check on the finished files, all made on
 | ![voice](https://img.shields.io/badge/-🎙️%20voice-2EA44F?style=flat-square) | 3D front arc | 16 | 0.60 | 0 | MP3 V2 | off | Talking, stories, meditation |
 | ![whirlwind](https://img.shields.io/badge/-🌪️%20whirlwind-FF6F00?style=flat-square) | 3D circle | 3 | 1.00 | 0.30 | MP3 V2 | off | Short clips, ringtones |
 | ![speakers](https://img.shields.io/badge/-🚗%20speakers-64748B?style=flat-square) | panning | 8 | 0.55 | 0.20 | MP3 V2 | off | Speakers and car stereos |
-| ![retro](https://img.shields.io/badge/-📼%20retro-9CA3AF?style=flat-square) | panning, bass moves | 8 | 0.85 | 0.30 | MP3 V2 | off | The old Audio8D 1.0 ping-pong sound |
+| ![retro](https://img.shields.io/badge/-📼%20retro-9CA3AF?style=flat-square) | panning, bass moves | 8 | 0.85 | 0.30 | MP3 V2 | off | The old ping-pong sound of the first Audio8D |
 
 💡 **Mix and match:** pick a style, then change one setting, e.g. **smooth** with **Loudness → Spotify / YouTube**.
 
@@ -1577,7 +1637,7 @@ Yes! Double-click `Audio8D.pyw`, drag your songs in, and press **Next** until yo
 <details>
 <summary><b>What's the difference between "8D" and "3D" here?</b></summary>
 
-"8D" is the popular name for music that moves around your head. Audio8D 1.0 made it the simple way, turning the left and right volume up and down. Audio8D 2.0 uses a **3D head model** (time, loudness and colour clues) so the sound truly passes **in front of you and behind you**. The old sound is the `retro` style.
+"8D" is the popular name for music that moves around your head. The first version of Audio8D made it the simple way, turning the left and right volume up and down. Audio8D 2.0.0 uses a **3D head model** (time, loudness and colour clues) so the sound truly passes **in front of you and behind you**. The old sound is the `retro` style.
 </details>
 
 <details>

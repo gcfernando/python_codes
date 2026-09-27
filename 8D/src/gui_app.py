@@ -532,7 +532,7 @@ class SoundPage(Page):
             "Sound engine",
             "3D (recommended) uses the same clues your ears do - timing, loudness and "
             "tone - so the music goes round and behind you. Panning is the simple "
-            "left-right effect of Audio8D 1.0.",
+            "left-right effect of the first Audio8D.",
             {"3D around you": "3d", "Left-right panning": "pan"},
             lambda v: change(engine=v),
         )

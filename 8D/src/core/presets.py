@@ -115,7 +115,7 @@ _ALL_PRESETS = (
     ),
     Preset(
         name="retro",
-        summary="The old left-right ping-pong sound of Audio8D 1.0",
+        summary="The old left-right ping-pong sound of the first Audio8D",
         config=EffectConfig(engine="pan", bass_hz=0.0, fade_seconds=0.0),
     ),
 )
