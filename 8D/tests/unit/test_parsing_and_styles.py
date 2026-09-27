@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks times, keyframes, song picking, saved styles and speaker safety."""
 
 from pathlib import Path
@@ -16,10 +16,15 @@ from src.core.parsing import (
 from src.core.settings import speaker_safe
 from src.core.user_presets import (
     all_presets,
+    check_style_name,
     delete_user_preset,
     dump_toml,
+    duplicate_user_preset,
+    find_style,
     load_user_presets,
     parse_toml,
+    pascal_case,
+    rename_user_preset,
     save_user_preset,
 )
 
@@ -98,13 +103,16 @@ def test_saved_style_only_stores_differences(tmp_path: Path) -> None:
             "loudness_target": None,
         }
     )
-    save_user_preset("party", config, based_on="studio", summary="loud", path=file)
+    name = save_user_preset(
+        "party", config, based_on="studio", summary="loud", path=file
+    )
     text = file.read_text(encoding="utf-8")
 
     assert "intensity = 0.95" in text
     assert 'loudness_target = "off"' in text
     assert "bitrate" not in text
-    loaded = load_user_presets(file)["party"]
+    assert name == "Party"
+    loaded = load_user_presets(file)["Party"]
     assert loaded.config == config
     assert loaded.custom and loaded.summary == "loud"
 
@@ -114,13 +122,125 @@ def test_saved_styles_join_the_built_in_ones() -> None:
     presets = all_presets()
 
     assert list(presets)[: len(PRESETS)] == list(PRESETS)
-    assert presets["chill_2"].config.ambience == 0.5
+    assert presets["Chill2"].config.ambience == 0.5
 
 
-@pytest.mark.parametrize("name", ["studio", "Has Space", "x" * 30])
-def test_bad_style_names_are_refused(name: str, tmp_path: Path) -> None:
-    with pytest.raises(InputValidationError):
-        save_user_preset(name, EffectConfig(), path=tmp_path / "p.toml")
+@pytest.mark.parametrize(
+    ("name", "reason"),
+    [
+        ("studio", "built-in"),
+        ("STUDIO", "built-in"),
+        ("", "Type a name"),
+        ("  --  ", "Type a name"),
+        ("2fast", "start with a letter"),
+        ("x" * 41, "too long"),
+    ],
+)
+def test_bad_style_names_are_refused(name: str, reason: str, tmp_path: Path) -> None:
+    file = tmp_path / "p.toml"
+    with pytest.raises(InputValidationError, match=reason):
+        save_user_preset(name, EffectConfig(), path=file)
+    assert not file.exists()
+
+
+@pytest.mark.parametrize(
+    ("typed", "saved"),
+    [
+        ("Customer Order", "Customer Order"),
+        ("CustomerOrder", "CustomerOrder"),
+        ("customerOrder", "CustomerOrder"),
+        ("customer Order", "Customer Order"),
+        ("customer_order", "CustomerOrder"),
+        ("customer-order", "CustomerOrder"),
+        ("customer order", "Customer Order"),
+        ("UserProfileService", "UserProfileService"),
+        ("party mix 2", "Party Mix 2"),
+        ("Example Custom Name", "Example Custom Name"),
+        ("  example   custom	name ", "Example Custom Name"),
+        ("ExampleCustomName", "ExampleCustomName"),
+    ],
+)
+def test_style_names_become_pascal_case(typed: str, saved: str) -> None:
+    assert pascal_case(typed) == saved
+    assert check_style_name(typed, []) == saved
+
+
+def test_a_style_name_is_never_used_twice(tmp_path: Path) -> None:
+    file = tmp_path / "p.toml"
+    save_user_preset("PartyMix", EffectConfig(intensity=0.9), path=file)
+    before = file.read_text(encoding="utf-8")
+
+    for clash in ("PartyMix", "party mix", "PARTYMIX", "party-mix"):
+        with pytest.raises(InputValidationError, match="already have a style"):
+            save_user_preset(clash, EffectConfig(intensity=0.5), path=file)
+    # Nothing was replaced, merged or renamed
+    assert file.read_text(encoding="utf-8") == before
+
+
+def test_styles_can_be_renamed_and_duplicated_under_free_names(
+    tmp_path: Path,
+) -> None:
+    file = tmp_path / "p.toml"
+    save_user_preset("PartyMix", EffectConfig(intensity=0.9), path=file)
+    save_user_preset("NightDrive", EffectConfig(intensity=0.6), path=file)
+
+    assert rename_user_preset("partymix", "big party", path=file) == "Big Party"
+    # A new letter case of its own name is fine; another style's name is not
+    assert rename_user_preset("Big Party", "BIG-party", path=file) == "BigParty"
+    with pytest.raises(InputValidationError, match="already have a style"):
+        rename_user_preset("BigParty", "night drive", path=file)
+    assert duplicate_user_preset("NightDrive", "night drive 2", path=file) == (
+        "Night Drive 2"
+    )
+    with pytest.raises(InputValidationError, match="already have a style"):
+        duplicate_user_preset("NightDrive", "BigParty", path=file)
+    with pytest.raises(InputValidationError, match="no saved style"):
+        rename_user_preset("Missing", "Other", path=file)
+
+    styles = load_user_presets(file)
+    assert list(styles) == ["BigParty", "NightDrive", "Night Drive 2"]
+    assert styles["Night Drive 2"].config == styles["NightDrive"].config
+
+
+def test_a_name_with_spaces_is_stored_safely_and_found_however_typed(
+    tmp_path: Path,
+) -> None:
+    file = tmp_path / "p.toml"
+    name = save_user_preset(
+        "example custom name", EffectConfig(ambience=0.4), path=file
+    )
+
+    assert name == "Example Custom Name"
+    assert '["Example Custom Name"]' in file.read_text(encoding="utf-8")
+    styles = load_user_presets(file)
+    assert styles["Example Custom Name"].config.ambience == 0.4
+    for typed in ("example custom name", "ExampleCustomName", "EXAMPLE-custom name"):
+        assert find_style(typed, styles) == "Example Custom Name"
+    # Joined or spaced, it's the same name, so it can't be saved twice
+    with pytest.raises(InputValidationError, match="already have a style"):
+        save_user_preset("ExampleCustomName", EffectConfig(), path=file)
+
+
+def test_styles_saved_before_pascal_case_names_still_load(tmp_path: Path) -> None:
+    file = tmp_path / "p.toml"
+    file.write_text('[party-mix]\nbased_on = "groove"\n', encoding="utf-8")
+
+    styles = load_user_presets(file)
+    assert styles["party-mix"].config == PRESETS["groove"].config
+    assert find_style("PARTY-MIX", styles) == "party-mix"
+    # Its old name still counts as taken, whatever way it's written
+    with pytest.raises(InputValidationError, match="already have a style"):
+        save_user_preset("party mix", EffectConfig(), path=file)
+    assert rename_user_preset("party-mix", "PartyMix", path=file) == "PartyMix"
+
+
+def test_a_description_stays_on_one_line(tmp_path: Path) -> None:
+    file = tmp_path / "p.toml"
+    save_user_preset("Lines", EffectConfig(), summary="one\nline\n[evil]", path=file)
+
+    assert load_user_presets(file)["Lines"].summary == "one line [evil]"
+    with pytest.raises(InputValidationError, match="too long"):
+        save_user_preset("Long", EffectConfig(), summary="x" * 200, path=file)
 
 
 def test_broken_style_file_is_explained(tmp_path: Path) -> None:
@@ -159,7 +279,8 @@ def test_saving_styles_never_leaves_a_half_written_file(tmp_path: Path) -> None:
     file = tmp_path / "presets.toml"
     save_user_preset("first", PRESETS["studio"].config, based_on="studio", path=file)
     save_user_preset("second", PRESETS["groove"].config, based_on="groove", path=file)
-    delete_user_preset("first", path=file)
+    assert delete_user_preset("first", path=file)
+    assert not delete_user_preset("first", path=file)
 
     assert list(tmp_path.iterdir()) == [file]
-    assert list(load_user_presets(file)) == ["second"]
+    assert list(load_user_presets(file)) == ["Second"]

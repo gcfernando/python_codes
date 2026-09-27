@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks the allowed range of every knob."""
 
 from dataclasses import replace
@@ -12,6 +12,7 @@ def test_default_config_is_valid() -> None:
     EffectConfig().validate()
 
 
+# The very edges of every allowed range must still be accepted
 @pytest.mark.parametrize(
     ("field", "value"),
     [

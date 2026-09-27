@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Every option the `audio8d` command understands, and how they become settings."""
 
 import argparse
@@ -25,7 +25,7 @@ from .core.settings import (
     EffectConfig,
     speaker_safe,
 )
-from .core.user_presets import all_presets
+from .core.user_presets import all_presets, find_style
 from .files import NAME_STYLES, format_for_extension
 
 LOG = logging.getLogger("audio8d")
@@ -182,9 +182,10 @@ def _curve_value(text: str) -> tuple[tuple[float, float], ...]:
 
 def _preset_name(text: str) -> str:
     """A style that exists: built-in, or saved with --save-preset."""
-    name = text.strip().lower()
     known = known_presets()
-    if name not in known:
+    # Letter case doesn't matter: studio, Studio and STUDIO are the same style
+    name = find_style(text, known)
+    if name is None:
         raise argparse.ArgumentTypeError(
             f"invalid choice: '{text}' (choose from {', '.join(known)})"
         )

@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Writes the movement as a stream of gains that FFmpeg multiplies the song by."""
 
 from array import array

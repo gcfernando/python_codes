@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """The technical log file, and hooks that record any crash before it is lost."""
 
 import logging

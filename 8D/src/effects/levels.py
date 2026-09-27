@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Sample rates and the single volume change that reaches a loudness target."""
 
 import math

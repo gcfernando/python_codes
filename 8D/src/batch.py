@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Converts many songs at once, a few at a time, and keeps score."""
 
 import os
@@ -16,10 +16,12 @@ from .pipeline import ConversionResult, ConvertOptions, convert
 
 @dataclass(frozen=True, slots=True)
 class BatchItem:
-    """One song and where its 8D copy goes."""
+    """One song, where its 8D copy goes, and its own settings if it has them."""
 
     source: Path
     output: Path
+    # None: the song uses the settings every other song uses
+    config: EffectConfig | None = None
 
 
 @dataclass(slots=True)
@@ -43,6 +45,11 @@ class BatchReport:
     def converted(self) -> list[BatchOutcome]:
         """Songs that finished."""
         return [outcome for outcome in self.outcomes if outcome.result is not None]
+
+    @property
+    def results(self) -> list[ConversionResult]:
+        """The finished songs' results, in list order."""
+        return [outcome.result for outcome in self.outcomes if outcome.result]
 
     @property
     def failed(self) -> list[BatchOutcome]:
@@ -96,7 +103,7 @@ def run_batch(  # pylint: disable=too-many-arguments,too-many-locals
             outcome.result = convert(
                 outcome.item.source,
                 outcome.item.output,
-                config,
+                outcome.item.config or config,
                 overwrite=overwrite,
                 options=options,
                 on_progress=progress,

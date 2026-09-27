@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Locates FFmpeg/FFprobe and checks the build has what the effect needs."""
 
 import logging

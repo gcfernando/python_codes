@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """A simple model of your head: how each ear hears a sound from a given direction.
 
 Three cues make a sound seem to sit somewhere around you:

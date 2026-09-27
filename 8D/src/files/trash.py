@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Removes an original song after its 8D copy is safely finished.
 
 On Windows the file goes to the Recycle Bin, so a change of heart is one

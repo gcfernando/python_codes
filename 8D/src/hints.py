@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Plain-word fixes for every error a user can hit, so nobody is left stuck."""
 
 import re
@@ -94,8 +94,29 @@ _FIXES = (
         "fix that line in your styles file (see --list-presets for where it is).",
     ),
     (
-        "style names use",
-        "pick a short name like mine, party-mix or chill_2.",
+        "already have a style called",
+        "pick a name you haven't used yet, like PartyMix2.",
+    ),
+    (
+        "style names",
+        "use words with letters and numbers, like SunsetDrive or PartyMix2.",
+    ),
+    (
+        "Style names start",
+        "start the name with a letter, like Night2Day.",
+    ),
+    (
+        "isn't a PascalCase name",
+        "use words with letters and numbers, like SunsetDrive or PartyMix2.",
+    ),
+    (
+        "This style file can't be imported",
+        "choose a style file exported from Audio8D (Your styles, Export). Nothing "
+        "was changed.",
+    ),
+    (
+        "There is no saved style called",
+        "check the name on the Your styles page.",
     ),
     (
         "style ",

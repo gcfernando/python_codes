@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks the standalone-exe behaviour: paths, bundled tools, the log and startup."""
 
 # pytest hands fixtures to tests by name, which pylint sees as shadowing
@@ -76,6 +76,7 @@ def test_the_log_file_is_started_once(monkeypatch: pytest.MonkeyPatch) -> None:
         for handler in root.handlers:
             handler.flush()
 
+        assert first is not None
         text = first.read_text(encoding="utf-8")
         assert first == second == locations.log_file()
         assert "written to the log" in text

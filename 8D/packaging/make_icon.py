@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Draws src/assets/audio8d.ico: the sidebar's headphones on the app's purple."""
 
 from pathlib import Path
@@ -15,6 +15,8 @@ def draw() -> Image.Image:
     """A rounded square with a diagonal purple-to-pink blend and white headphones."""
     blend = Image.new("RGBA", (SIZE, SIZE))
     pixels = blend.load()
+    # A brand-new image always gives pixel access; this tells type checkers too
+    assert pixels is not None
     start, end = (0x7B, 0x2F, 0xF7), (0xFF, 0x4F, 0xD8)
     for y in range(SIZE):
         for x in range(SIZE):

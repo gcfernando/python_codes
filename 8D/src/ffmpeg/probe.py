@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Reads source-stream metadata through FFprobe's JSON output."""
 
 import json

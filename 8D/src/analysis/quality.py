@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks the finished file: loudness, true peak, and how it holds up in mono."""
 
 import math

@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Runs external tools safely and turns failures into Audio8D errors."""
 
 import os

@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks that finished songs appear all at once and never replace files by surprise."""
 
 import os

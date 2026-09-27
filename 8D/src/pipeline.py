@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """The end-to-end conversion: validate, probe, analyse, measure, render, publish."""
 
 import dataclasses

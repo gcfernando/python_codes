@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """The building blocks of the Audio8D window: colours, icons and friendly controls.
 
 Every control here carries its own explanation: a short line under it that is
@@ -17,10 +17,33 @@ import tkinter as tk
 import tkinter.font as tkfont
 from collections.abc import Callable
 from pathlib import Path
+from typing import Literal
 
 import customtkinter as ctk
 
 from .opener import open_path
+
+# CustomTkinter's own scrollbar drawing, kept so the quicker version can call it
+_SCROLLBAR_DRAW = ctk.CTkScrollbar._draw  # pylint: disable=protected-access
+
+
+def _draw_scrollbar_without_flush(
+    self: ctk.CTkScrollbar, no_color_updates: bool = False
+) -> None:
+    """Draw a scrollbar without forcing the whole window to lay itself out first."""
+    # CustomTkinter 5.2 forces a full layout pass on every redraw; Tk redraws anyway
+    # pylint: disable-next=protected-access
+    self._canvas.update_idletasks = _no_flush
+    _SCROLLBAR_DRAW(self, no_color_updates)
+
+
+def _no_flush() -> None:
+    """Stands in for update_idletasks on a scrollbar's canvas."""
+
+
+# pylint: disable-next=protected-access
+ctk.CTkScrollbar._draw = _draw_scrollbar_without_flush  # type: ignore[method-assign]
+
 
 # ------------------------------------------------------------------ look & feel
 
@@ -76,7 +99,7 @@ _GLYPHS = {
 }
 
 
-def font(size: int = 13, weight: str = "normal") -> ctk.CTkFont:
+def font(size: int = 13, weight: Literal["normal", "bold"] = "normal") -> ctk.CTkFont:
     """The window's text font."""
     return ctk.CTkFont(family="Segoe UI", size=size, weight=weight)
 
@@ -86,7 +109,7 @@ class Icons:
 
     family: str | None = None
     font_file: Path | None = None
-    _cache: dict[tuple, object] = {}
+    _cache: dict[tuple, "ctk.CTkImage | None"] = {}
 
     @classmethod
     def setup(cls) -> None:
@@ -126,10 +149,12 @@ class Icons:
         key = (name, size, color)
         if key not in cls._cache:
             cls._cache[key] = cls._draw(name, size, color)
-        return cls._cache[key]  # type: ignore[return-value]
+        return cls._cache[key]
 
     @classmethod
-    def _draw(cls, name: str, size: int, color: tuple[str, str]) -> object:
+    def _draw(
+        cls, name: str, size: int, color: tuple[str, str]
+    ) -> "ctk.CTkImage | None":
         """Render one glyph four times larger, then let CTk scale it down."""
         if cls.font_file is None:
             return None
@@ -144,7 +169,7 @@ class Icons:
         scale = 4
         glyph_font = ImageFont.truetype(str(cls.font_file), size * scale)
 
-        def draw(fill: str) -> object:
+        def draw(fill: str) -> "Image.Image":
             canvas = Image.new("RGBA", (size * scale, size * scale), (0, 0, 0, 0))
             ImageDraw.Draw(canvas).text(
                 (size * scale / 2, size * scale / 2),
@@ -401,6 +426,7 @@ class Field(ctk.CTkFrame):
         )
         self.label.grid(row=0, column=0, sticky="w")
         # The explanation sits under the control, right of the 150-wide name column
+        self.help_text = help_text
         self.help = hint(self, help_text, margin=170)
         self.help.grid(row=1, column=1, columnspan=2, sticky="ew", pady=(1, 0))
         if tooltip:
@@ -433,8 +459,9 @@ class SliderField(Field):
         self.quiet = False
         self.slider = ctk.CTkSlider(
             self,
-            from_=low,
-            to=high,
+            # CTkSlider takes floats (0.5 to 1.0 here), though its type hints say int
+            from_=low,  # pyright: ignore[reportArgumentType]
+            to=high,  # pyright: ignore[reportArgumentType]
             number_of_steps=steps,
             command=self._moved,
             button_color=ACCENT,
@@ -559,6 +586,41 @@ class SwitchField(ctk.CTkFrame):
         self.help.configure(text=text, text_color=color)
 
 
+class ChoiceMenu(ctk.CTkOptionMenu):
+    """A drop-down list of choices in the window's colours."""
+
+    def __init__(
+        self,
+        master: tk.Misc,
+        values: list[str],
+        on_change: Callable[[str], None],
+        width: int = 280,
+    ) -> None:
+        """values are the words shown; on_change gets the one picked."""
+        super().__init__(
+            master,
+            values=values,
+            width=width,
+            font=font(12),
+            dropdown_font=font(12),
+            dynamic_resizing=False,
+            fg_color=SURFACE,
+            button_color=ACCENT,
+            button_hover_color=ACCENT,
+            text_color=INK,
+            dropdown_hover_color=ACCENT_SOFT,
+            command=on_change,
+        )
+
+    def destroy(self) -> None:
+        """Let go of the drop-down list completely."""
+        dropdown = self._dropdown_menu
+        super().destroy()
+        # CustomTkinter 5.2 forgets this, so a later Size change would hit a closed list
+        # pylint: disable-next=protected-access
+        ctk.ScalingTracker.remove_widget(dropdown._set_scaling, dropdown)
+
+
 class EntryField(Field):
     """A text box checked as you type: red border and a reason when it's wrong."""
 
@@ -586,6 +648,8 @@ class EntryField(Field):
 
     def check(self) -> bool:
         """Store the text; show the reason in red if it can't be used."""
+        # A mistake that has been put right must not leave its red line behind
+        self.explain(self.help_text)
         problem = self.on_change(self.entry.get())
         if problem:
             self.entry.configure(border_color=DANGER)
@@ -654,12 +718,14 @@ class Dialog(ctk.CTkToplevel):
             anchor="w",
             wraplength=460,
         ).grid(row=1, column=1, sticky="w", padx=(0, 24))
-        actions = ctk.CTkFrame(self, fg_color="transparent")
-        actions.grid(row=2, column=0, columnspan=2, sticky="e", padx=24, pady=20)
+        self.actions = ctk.CTkFrame(self, fg_color="transparent")
+        self.actions.grid(row=2, column=0, columnspan=2, sticky="e", padx=24, pady=20)
+        # Each button by its key, so a subclass can switch one off
+        self.buttons: dict[str, ctk.CTkButton] = {}
         for index, (text, key) in enumerate(buttons):
             primary = index == len(buttons) - 1
-            ctk.CTkButton(
-                actions,
+            self.buttons[key] = ctk.CTkButton(
+                self.actions,
                 text=text,
                 width=120,
                 fg_color=ACCENT if primary else "transparent",
@@ -668,7 +734,8 @@ class Dialog(ctk.CTkToplevel):
                 border_color=BORDER,
                 text_color=WHITE if primary else INK,
                 command=lambda key=key: self.close(key),
-            ).pack(side="left", padx=(8, 0))
+            )
+            self.buttons[key].pack(side="left", padx=(8, 0))
         self.bind("<Escape>", lambda _e: self.close(None))
         self.protocol("WM_DELETE_WINDOW", lambda: self.close(None))
         self.after(50, self._center)
@@ -699,6 +766,63 @@ class Dialog(ctk.CTkToplevel):
         """Wait until a button is pressed and return its key."""
         self.master.wait_window(self)
         return self.result
+
+
+class NameDialog(Dialog):
+    """Asks for a style name, checking it as you type; OK only works when it's valid."""
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        master: ctk.CTk,
+        title: str,
+        message: str,
+        initial: str,
+        check: Callable[[str], tuple[str | None, str | None]],
+        ok_text: str = "OK",
+    ) -> None:
+        """check(text) returns (the name it will get, None) or (None, why not)."""
+        super().__init__(master, title, message, [("Cancel", "no"), (ok_text, "ok")])
+        self.check_name = check
+        self.value: str | None = None
+        box = ctk.CTkFrame(self, fg_color="transparent")
+        box.grid(row=2, column=1, sticky="ew", padx=(0, 24), pady=(14, 0))
+        self.entry = ctk.CTkEntry(box, width=320, font=font(13))
+        self.entry.grid(row=0, column=0, sticky="w")
+        self.entry.insert(0, initial)
+        self.note = ctk.CTkLabel(
+            box, text="", font=font(12), anchor="w", justify="left", wraplength=440
+        )
+        self.note.grid(row=1, column=0, sticky="w", pady=(4, 0))
+        self.actions.grid(row=3, column=0, columnspan=2, sticky="e", padx=24, pady=20)
+        self.entry.bind("<KeyRelease>", lambda _e: self.check())
+        self.entry.bind("<Return>", lambda _e: self._accept())
+        self.check()
+        self.after(120, self.entry.focus_set)
+
+    def check(self) -> bool:
+        """Show what the name will be, or why it can't be used."""
+        name, problem = self.check_name(self.entry.get())
+        ok = self.buttons["ok"]
+        if problem or not name:
+            self.value = None
+            self.entry.configure(border_color=DANGER)
+            self.note.configure(text=problem or "", text_color=DANGER)
+            ok.configure(state="disabled")
+            return False
+        self.value = name
+        self.entry.configure(border_color=BORDER)
+        self.note.configure(text=f"It will be saved as {name}", text_color=SUCCESS)
+        ok.configure(state="normal")
+        return True
+
+    def _accept(self) -> None:
+        """Enter works like OK, but only for a valid name."""
+        if self.check():
+            self.close("ok")
+
+    def ask(self) -> str | None:
+        """The valid name that was accepted, or None for Cancel."""
+        return self.value if super().ask() == "ok" else None
 
 
 class Toast(ctk.CTkFrame):

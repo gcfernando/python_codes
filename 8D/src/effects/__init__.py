@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Audio effect graphs handed to FFmpeg, and the data files they read."""
 
 from .control import CONTROL_RATE, write_controls
@@ -13,6 +13,7 @@ from .graph import (
 from .levels import loudness_gain_db, mp3_sample_rate_for, output_sample_rate
 from .reverb import write_room
 
+# The names the rest of Audio8D (and your own code) import from here
 __all__ = [
     "CONTROL_RATE",
     "GRAPH_FILTERS",

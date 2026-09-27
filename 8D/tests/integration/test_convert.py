@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Real conversions through FFmpeg, from test tones to finished 8D files."""
 
 import json

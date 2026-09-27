@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Splits a song into vocals and music with Demucs, so the singer can stay central.
 
 Demucs is a free AI model from Meta that separates voices from instruments.

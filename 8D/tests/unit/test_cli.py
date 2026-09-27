@@ -1,7 +1,8 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks the audio8d command: options, styles, folders, messages and guided mode."""
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -27,10 +28,10 @@ def _pretend_songs_exist(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cli, "_peek_source", lambda path: None)
 
 
-def _recorder(seen: dict[str, object]):
+def _recorder(seen: dict[str, Any]):
     """A stand-in for convert() that remembers its arguments and 'succeeds'."""
 
-    def fake_convert(**kwargs: object) -> ConversionResult:
+    def fake_convert(**kwargs: Any) -> ConversionResult:
         seen.update(kwargs)
         return ConversionResult(
             source=_SOURCE,
@@ -54,7 +55,7 @@ def test_quality_outside_range_is_a_usage_error() -> None:
 
 
 def test_main_passes_options_through(monkeypatch: pytest.MonkeyPatch) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
     code = cli.main(
         ["a.wav", "b.mp3", "--intensity", "0.5", "--quality", "0", "--overwrite"]
@@ -83,7 +84,7 @@ def test_default_output_sits_next_to_the_input() -> None:
 
 
 def test_output_name_is_optional(monkeypatch: pytest.MonkeyPatch) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
 
     assert cli.main(["song.wav"]) == 0
@@ -91,7 +92,7 @@ def test_output_name_is_optional(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_format_changes_the_extension(monkeypatch: pytest.MonkeyPatch) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
 
     assert cli.main(["song.wav", "--format", "flac"]) == 0
@@ -105,7 +106,7 @@ def test_output_extension_picks_the_format() -> None:
 
 
 def test_output_dir_and_original_name(monkeypatch: pytest.MonkeyPatch) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
 
     assert cli.main(["music/a.mp3", "--output-dir", "out", "--name", "original"]) == 0
@@ -115,7 +116,7 @@ def test_output_dir_and_original_name(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_replace_keeps_the_original_name_and_asks_to_remove_it(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
 
     assert cli.main(["music/a.mp3", "--replace"]) == 0
@@ -124,7 +125,7 @@ def test_replace_keeps_the_original_name_and_asks_to_remove_it(
 
 
 def test_replace_can_keep_the_8d_name(monkeypatch: pytest.MonkeyPatch) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
 
     assert cli.main(["music/a.mp3", "--replace", "--name", "8d"]) == 0
@@ -134,7 +135,7 @@ def test_replace_can_keep_the_8d_name(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_trim_and_file_switches_reach_the_options(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
 
     cli.main(
@@ -217,7 +218,7 @@ def _music_folder(tmp_path: Path) -> Path:
     return folder
 
 
-def _fake_batch(seen: dict[str, object]):
+def _fake_batch(seen: dict[str, Any]):
     """A stand-in for run_batch that 'converts' every item."""
 
     def fake_run_batch(items, config, **kwargs):
@@ -237,7 +238,7 @@ def _fake_batch(seen: dict[str, object]):
 def test_a_folder_converts_every_song(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "run_batch", _fake_batch(seen))
     folder = _music_folder(tmp_path)
 
@@ -252,7 +253,7 @@ def test_a_folder_converts_every_song(
 def test_recursive_folder_with_output_dir_mirrors_sub_folders(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "run_batch", _fake_batch(seen))
     folder = _music_folder(tmp_path)
     out = tmp_path / "8D"
@@ -269,7 +270,7 @@ def test_recursive_folder_with_output_dir_mirrors_sub_folders(
 def test_folder_replace_takes_the_original_names(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "run_batch", _fake_batch(seen))
     folder = _music_folder(tmp_path)
 
@@ -313,7 +314,7 @@ def _song(tmp_path: Path) -> Path:
 def test_double_click_asks_four_questions_and_converts(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
     song = _song(tmp_path)
     # Dragged-in path, then Enter for style, destination, originals, and to close
@@ -329,7 +330,7 @@ def test_double_click_asks_four_questions_and_converts(
 def test_guided_mode_can_save_elsewhere_and_replace(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
     song = _song(tmp_path)
     out = tmp_path / "8D songs"
@@ -343,7 +344,7 @@ def test_guided_mode_can_save_elsewhere_and_replace(
 def test_guided_mode_asks_again_for_a_missing_song(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
     song = _song(tmp_path)
     _pretend_double_click(
@@ -358,7 +359,7 @@ def test_guided_mode_asks_again_for_a_missing_song(
 def test_guided_mode_with_a_folder_lets_you_pick_songs(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "run_batch", _fake_batch(seen))
     folder = _music_folder(tmp_path)
     # Songs are listed a.mp3, b.flac; "9" is refused, then "2" picks b.flac
@@ -377,7 +378,7 @@ def test_guided_mode_with_a_folder_lets_you_pick_songs(
 def test_guided_mode_style_menu(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, answer: str, style: str
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
     _pretend_double_click(monkeypatch, [str(_song(tmp_path)), answer, "", "", ""])
 
@@ -450,21 +451,33 @@ def test_unknown_preset_is_a_usage_error() -> None:
 
 
 def test_saved_style_can_be_used_by_name(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     assert (
         cli.main(["--preset", "studio", "--intensity", "0.9", "--save-preset", "mine"])
         == 0
     )
-    assert "Saved your style 'mine'" in capsys.readouterr().err
+    # The name is saved in PascalCase, and letter case doesn't matter when using it
+    assert "Saved your style 'Mine'" in capsys.readouterr().err
 
     args = cli.create_parser().parse_args(["a.mp3", "--preset", "mine"])
+    assert args.preset == "Mine"
     config = cli.resolve_config(args)
     assert config.intensity == 0.9
     assert config.bitrate == PRESETS["studio"].config.bitrate
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
     monkeypatch.setattr(cli, "convert", _recorder(seen))
     assert cli.main(["a.mp3", "--preset", "mine"]) == 0
+
+    # Saving under a name that's taken is refused, and the style is left alone
+    assert (
+        cli.main(["--preset", "studio", "--intensity", "0.5", "--save-preset", "MINE"])
+        == 1
+    )
+    assert "already have a style called 'Mine'" in caplog.text
+    assert cli.resolve_config(args).intensity == 0.9
 
 
 def test_list_presets_prints_every_style_without_a_song(
@@ -583,7 +596,7 @@ def test_unknown_bitrate_is_a_usage_error() -> None:
 def test_preview_and_compare_modes_call_their_helpers(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    seen: dict[str, object] = {}
+    seen: dict[str, Any] = {}
 
     def fake_preview(song, output, config, **kwargs):
         seen["preview"] = (song, output, kwargs["seconds"])

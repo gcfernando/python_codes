@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 
 # Builds the standalone dist\Audio8D folder and its zip (usage: see README part 26)
 

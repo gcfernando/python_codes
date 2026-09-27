@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Plain data types passed between the Audio8D layers."""
 
 from dataclasses import dataclass

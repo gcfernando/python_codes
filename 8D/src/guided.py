@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """The questions the step-by-step helper asks, one small function per question."""
 
 from pathlib import Path
@@ -7,17 +7,20 @@ from . import display
 from .core.errors import InputValidationError
 from .core.parsing import parse_selection
 from .core.presets import RECOMMENDED_PRESET, Preset
+from .core.user_presets import find_style
 from .files import find_songs
 
 
 def clean_typed_path(answer: str) -> str:
     """Strip the quotes, spaces and '& ' that drag-and-drop or 'Copy as path' add."""
     cleaned = answer.strip()
+    # PowerShell puts '& ' in front of a dragged-in path that contains spaces
     if cleaned.startswith("& "):
         cleaned = cleaned[2:]
     return cleaned.strip().strip("\"'").strip()
 
 
+# The helper asks four questions and shows "Step N of 4" on each
 STEPS = 4
 
 
@@ -32,6 +35,7 @@ def ask_for_music(painter: display.Painter) -> Path | None:
     )
     while True:
         answer = clean_typed_path(input("  Song or folder: "))
+        # Enter on its own means the user changed their mind
         if not answer:
             return None
         chosen = Path(answer).expanduser()
@@ -46,6 +50,7 @@ def ask_for_music(painter: display.Painter) -> Path | None:
 def ask_which_songs(painter: display.Painter, folder: Path) -> list[Path] | None:
     """Show the songs in the folder and let the user pick some or all."""
     songs = find_songs(folder)
+    # A folder that only holds album folders: look inside them too
     if not songs:
         songs = find_songs(folder, recursive=True)
     if not songs:
@@ -79,13 +84,15 @@ def ask_for_style(painter: display.Painter, presets: dict[str, Preset]) -> str:
     )
     names = display.show_style_menu(painter, presets)
     while True:
-        answer = input("  Style [1]: ").strip().lower()
+        answer = input("  Style [1]: ").strip()
         if not answer:
             return names[0]
         if answer.isdigit() and 1 <= int(answer) <= len(names):
             return names[int(answer) - 1]
-        if answer in names:
-            return answer
+        # A style can also be typed by name, however it's written ('party mix')
+        typed = find_style(answer, presets)
+        if typed:
+            return typed
         display.show_problem(
             painter, f"Please type a number from 1 to {len(names)}, or press Enter."
         )
@@ -130,6 +137,7 @@ def ask_about_originals(painter: display.Painter) -> tuple[bool, str]:
             ("Replace them, keep '(8D)'", "the 8D song is named '<song> (8D)'"),
         ],
     )
+    # The answer is (replace the originals?, how the new file is named)
     while True:
         answer = input("  Choice [1]: ").strip()
         if answer in {"", "1"}:

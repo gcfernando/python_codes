@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Opens Audio8D in Windows Terminal instead of the old Command Prompt window.
 
 Double-clicking `__main__.py` (or dropping a song on it) makes Windows open

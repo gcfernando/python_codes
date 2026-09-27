@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """The Audio8D desktop window, built with CustomTkinter.
 
 A guided workflow in four steps - 1 Add songs, 2 Sound, 3 Output,
@@ -14,6 +14,7 @@ code as the command line, on a helper thread, reporting back through a queue.
 # CustomTkinter widgets already sit deep in a class tree
 # pylint: disable=too-many-ancestors
 
+import dataclasses
 import gc
 import logging
 import queue
@@ -30,7 +31,7 @@ import customtkinter as ctk
 
 from . import __author__, __version__, hints
 from .analysis import demucs_available, demucs_hint
-from .batch import BatchOutcome, progress_tracker, run_batch
+from .batch import BatchOutcome, BatchReport, progress_tracker, run_batch
 from .core.errors import Audio8DError
 from .core.locations import (
     GUIDE_URL,
@@ -43,7 +44,19 @@ from .core.locations import (
 )
 from .core.parsing import format_time, parse_time
 from .core.presets import PRESETS, RECOMMENDED_PRESET, Preset
-from .core.user_presets import all_presets, delete_user_preset, save_user_preset
+from .core.settings import EffectConfig
+from .core.style_files import FILE_SUFFIX as STYLE_FILE_SUFFIX
+from .core.style_files import export_style, import_style, read_style_file
+from .core.types import AudioStreamInfo
+from .core.user_presets import (
+    all_presets,
+    check_style_name,
+    delete_user_preset,
+    duplicate_user_preset,
+    pascal_case,
+    rename_user_preset,
+    save_user_preset,
+)
 from .dropfiles import enable_file_drop
 from .ffmpeg import FFmpegToolchain, probe_audio
 from .files import (
@@ -55,17 +68,37 @@ from .files import (
 )
 from .gui_model import (
     BITRATE_CHOICES,
+    FILE_CHOICES,
+    LEVEL_CHOICES,
     LOUDNESS_CHOICES,
+    MOVEMENT_CHOICES,
+    MUSIC_CHOICES,
+    PLACE_CHOICES,
+    ROOM_CHOICES,
+    SPEED_CHOICES,
     GuiSettings,
+    StyleNote,
     config_for,
     describe,
     describe_curve,
     destination_for,
     gui_words,
+    guided_config,
+    improve_answers,
+    improved,
     items_for,
     options_for,
+    own_styles_line,
     problems,
     review,
+    song_config,
+    source_notes,
+    style_check,
+    style_label,
+    style_summary,
+    suggested_answers,
+    suggested_description,
+    suggested_name,
     warnings,
 )
 from .gui_widgets import (
@@ -85,9 +118,11 @@ from .gui_widgets import (
     WHITE,
     Card,
     ChoiceField,
+    ChoiceMenu,
     Dialog,
     EntryField,
     Icons,
+    NameDialog,
     Section,
     SliderField,
     SwitchField,
@@ -133,6 +168,8 @@ _STAGE_WORDS = {
     STAGE_SAVE: "Saving the file",
     STAGE_CHECK: "Checking the result",
 }
+# The first choice in every song's style menu
+SAME_STYLE = "Same as all songs"
 _SPIN_HELP = (
     "Seconds for one full circle. Recommended: 8 (classic 8D). Below 5 can make "
     "people dizzy; above 20 is hard to notice."
@@ -173,7 +210,7 @@ class Page(ctk.CTkScrollableFrame):
         )
         hint(head, subtitle).pack(anchor="w", fill="x")
 
-    def add(self, widget: tk.Misc, row: int, pady: tuple[int, int] = (0, 16)) -> None:
+    def add(self, widget: tk.Widget, row: int, pady: tuple[int, int] = (0, 16)) -> None:
         """Place a card on the page."""
         widget.grid(row=row, column=0, sticky="ew", padx=28, pady=pady)
 
@@ -204,6 +241,8 @@ class SongEntry:
         self.folder = folder
         # (codec, seconds, lossless) once the file has been read
         self.details: tuple[str, float | None, bool] | None = None
+        # Everything reading the file found, for the heads-ups about its quality
+        self.info: AudioStreamInfo | None = None
         self.bad = False
         self.selected = False
         self.view: SongRow | None = None
@@ -294,9 +333,12 @@ class SongRow(ctk.CTkFrame):
         remove.bind("<Leave>", lambda _e: remove.configure(text_color=TEXT_DIM))
         Tooltip(remove, "Take this song off the list (the file itself is not touched)")
         Tooltip(name, str(song))
-        for widget in (self, icon, name, self.detail, self.length):
-            widget.bind("<Button-1>", lambda _e: on_select(entry), add="+")
-            widget.bind("<Double-Button-1>", lambda _e: open_path(self.song), add="+")
+        # CustomTkinter types add as True on frames and "+" on labels; both add
+        self.bind("<Button-1>", lambda _e: on_select(entry), add=True)
+        self.bind("<Double-Button-1>", lambda _e: open_path(self.song), add=True)
+        for label in (icon, name, self.detail, self.length):
+            label.bind("<Button-1>", lambda _e: on_select(entry), add="+")
+            label.bind("<Double-Button-1>", lambda _e: open_path(self.song), add="+")
         if entry.bad:
             self.unreadable()
         elif entry.details is not None:
@@ -451,7 +493,7 @@ class SoundPage(Page):
             master,
             "STEP 2 OF 4",
             "Choose the sound",
-            "Pick a style that suits your music (studio is the best of best). You can "
+            "Pick a style that suits your music (Studio is the best of best). You can "
             "fine-tune it below; every setting explains itself.",
         )
         self.app = app
@@ -459,9 +501,10 @@ class SoundPage(Page):
 
         styles = Card(
             self,
-            "1. Pick a style",
-            "Click a card. You can change any detail afterwards; 'Back to the style' "
-            "undoes your changes.",
+            "1. Pick a style for all songs",
+            "Click a card: every song gets this style. You can change any detail "
+            "afterwards; 'Back to the style' undoes your changes. To give one song a "
+            "different style, use card 4 below.",
         )
         self.add(styles, 2)
         self.cards_frame = styles.body
@@ -519,8 +562,17 @@ class SoundPage(Page):
         )
         self.add(adv, 4)
         self._advanced(adv.body, change)
+        self.own = Section(
+            self,
+            "4. A different style for some songs",
+            "Optional. Every song uses the style above, unless you pick another one "
+            "for it here. A song with its own style uses that style exactly as it is, "
+            "including its file type and loudness.",
+        )
+        self.add(self.own, 5)
+        self._song_styles(self.own.body)
         self.footer(
-            5,
+            6,
             lambda: app.show_page("songs"),
             "Next: output options",
             lambda: app.show_page("output"),
@@ -680,6 +732,98 @@ class SoundPage(Page):
         """The bass slider's value, rounded to 10 Hz."""
         return float(round(self.bass.slider.get() / 10) * 10)
 
+    def _song_styles(self, body: ctk.CTkFrame) -> None:
+        """Card 4: every song with a menu, the style for all songs or one of its own."""
+        top = ctk.CTkFrame(body, fg_color="transparent")
+        top.grid(row=0, column=0, sticky="ew")
+        top.grid_columnconfigure(0, weight=1)
+        self.own_note = hint(top, "", margin=340)
+        self.own_note.grid(row=0, column=0, sticky="ew")
+        self.own_reset = button(
+            top,
+            "clear",
+            "All songs use the style above",
+            self.app.clear_song_styles,
+            width=270,
+            height=32,
+            tooltip="Take away every song's own style",
+        )
+        self.own_reset.grid(row=0, column=1, padx=(10, 0))
+        self.own_rows = ctk.CTkFrame(body, fg_color="transparent")
+        self.own_rows.grid(row=1, column=0, sticky="ew", pady=(8, 0))
+        self.own_rows.grid_columnconfigure(0, weight=1)
+        self.own_more = button(
+            body, "add", "Show more", self.show_more_own, width=190, height=32
+        )
+        self.own_shown = SONGS_PER_PAGE
+
+    def style_choices(self) -> dict[str, str | None]:
+        """The menu's words -> the style each means (None: the style for all songs)."""
+        choices: dict[str, str | None] = {SAME_STYLE: None}
+        for preset in self.app.presets.values():
+            choices[preset.label + ("   (yours)" if preset.custom else "")] = (
+                preset.name
+            )
+        return choices
+
+    def show_songs(self) -> None:
+        """Rebuild the song menus (a page of them for a long list)."""
+        for child in self.own_rows.winfo_children():
+            child.destroy()
+        choices = self.style_choices()
+        labels = {name: label for label, name in choices.items()}
+        own = self.app.settings.song_styles
+        for index, entry in enumerate(self.app.rows[: self.own_shown]):
+            line = ctk.CTkFrame(self.own_rows, fg_color=SURFACE_ALT, corner_radius=10)
+            line.grid(row=index, column=0, sticky="ew", pady=3)
+            line.grid_columnconfigure(0, weight=1)
+            name = ctk.CTkLabel(line, text=entry.song.stem, font=font(13), anchor="w")
+            name.grid(row=0, column=0, sticky="ew", padx=(14, 8), pady=8)
+            Tooltip(name, str(entry.song))
+            menu = ChoiceMenu(
+                line,
+                list(choices),
+                lambda value, e=entry: self.app.set_song_style(e, choices.get(value)),
+            )
+            menu.set(labels.get(own.get(entry.song), SAME_STYLE))
+            menu.grid(row=0, column=1, padx=(0, 12), pady=8)
+        hidden = len(self.app.rows) - min(len(self.app.rows), self.own_shown)
+        if hidden:
+            self.own_more.configure(
+                **icon_text("add", f"Show {min(hidden, SONGS_PER_PAGE)} more")
+            )
+            self.own_more.grid(row=2, column=0, sticky="w", pady=(6, 0))
+        else:
+            self.own_more.grid_remove()
+        self.show_own_count()
+
+    def show_own_count(self) -> None:
+        """The line that says how many songs have a style of their own."""
+        songs = [entry.song for entry in self.app.rows]
+        count = sum(1 for song in songs if song in self.app.settings.song_styles)
+        if not songs:
+            text = "Add songs on step 1 first; then any of them can have its own style."
+        elif count:
+            has = "has its" if count == 1 else "have their"
+            text = (
+                f"{count} of {len(songs)} songs {has} own style; the others use the "
+                "style above."
+            )
+        elif len(songs) == 1:
+            text = "The song uses the style above. Pick another style here if you like."
+        else:
+            text = f"All {len(songs)} songs use the style above."
+        self.own_note.configure(text=text)
+        if count:
+            self.own_reset.grid()
+        else:
+            self.own_reset.grid_remove()
+
+    def show_more_own(self) -> None:
+        """Show the next page of song menus."""
+        self.own_shown += SONGS_PER_PAGE
+        self.show_songs()
+
     def build_cards(self) -> None:
         """One card per style (built-in and saved), three to a row."""
         for child in self.cards_frame.winfo_children():
@@ -703,7 +847,9 @@ class SoundPage(Page):
             cursor="hand2",
         )
         card.grid_columnconfigure(0, weight=1)
-        title = preset.name + ("   ★ best" if preset.name == RECOMMENDED_PRESET else "")
+        title = preset.label + (
+            "   ★ best" if preset.name == RECOMMENDED_PRESET else ""
+        )
         title += "   (yours)" if preset.custom else ""
         name = ctk.CTkLabel(card, text=title, font=font(13, "bold"), anchor="w")
         name.grid(row=0, column=0, sticky="ew", padx=12, pady=(10, 0))
@@ -752,7 +898,8 @@ class SoundPage(Page):
         preset = self.app.presets.get(settings.style)
         changed = preset is not None and settings.differs_from(preset)
         self.style_note.configure(
-            text=f"Style: {settings.style}" + ("   (changed by you)" if changed else "")
+            text=f"Style: {style_label(settings.style, self.app.presets)}"
+            + ("   (changed by you)" if changed else "")
         )
         cfg = settings.sound
         self.movement.set(cfg.intensity)
@@ -845,7 +992,7 @@ class OutputPage(Page):
             app.set_custom_loudness,
             width=100,
         )
-        self.place = ChoiceField(
+        self.save_in = ChoiceField(
             basics.body,
             "Save the new songs",
             "Next to each original song, or all in one folder of your choice.",
@@ -886,7 +1033,7 @@ class OutputPage(Page):
                 self.format,
                 self.loudness,
                 self.custom_loud,
-                self.place,
+                self.save_in,
                 self.folder_row,
                 self.originals,
             )
@@ -1127,7 +1274,7 @@ class OutputPage(Page):
             else "Only used when a loudness target is chosen above."
         )
         in_folder = bool(settings.destination) or self.wants_folder
-        self.place.set("folder" if in_folder else "next")
+        self.save_in.set("folder" if in_folder else "next")
         if in_folder:
             self.folder_row.grid()
         else:
@@ -1431,8 +1578,11 @@ class ReviewPage(Page):
                 f"{count} song{'s' if count != 1 else ''}" if count else "none yet",
             )
         ]
+        own = own_styles_line(settings, songs, self.app.presets)
+        if own:
+            lines.append(("Own styles", own))
         try:
-            lines += review(settings)
+            lines += review(settings, self.app.presets)
         except Audio8DError:
             pass
         body.grid_columnconfigure(1, weight=1)
@@ -1458,12 +1608,13 @@ class ReviewPage(Page):
 
         for child in self.notes.winfo_children():
             child.destroy()
-        found = problems(settings, songs)
+        found = problems(settings, songs, self.app.presets)
         row = 0
         for page, text in found:
             self._note(row, "error", text, (DANGER, DANGER_SOFT), page)
             row += 1
-        for text in warnings(settings):
+        read = [(e.song.stem, e.info) for e in self.app.rows if e.info is not None]
+        for text in warnings(settings) + source_notes(read):
             self._note(row, "warning", text, (WARNING, WARNING_SOFT), None)
             row += 1
         if not found:
@@ -1562,8 +1713,16 @@ class ReviewPage(Page):
         self._show_rest(first)
 
 
-class StylesPage(Page):
-    """Save the current settings as a named style, and manage saved ones."""
+# How a style name should look, shown under every name box
+NAME_HELP = (
+    "Words that each start with a capital, with or without spaces: Sunset Drive or "
+    "SunsetDrive. Type it any way you like: 'sunset drive' becomes Sunset Drive."
+)
+_LEVEL_COLOURS = {"error": DANGER, "warning": WARNING, "tip": TEXT_DIM}
+
+
+class StylesPage(Page):  # pylint: disable=too-many-instance-attributes
+    """Create, save, rename, share and manage your own styles."""
 
     def __init__(self, master: tk.Misc, app: "Audio8DApp") -> None:
         """Build the page."""
@@ -1571,24 +1730,33 @@ class StylesPage(Page):
             master,
             "",
             "Your styles",
-            "Keep the settings you love under a name. They appear with the built-in "
-            "styles on step 2, and on the command line as --preset NAME.",
+            "Make a style of your own, then use it on step 2 like the built-in ones: "
+            "for all songs, or just some. Your styles stay on this computer, and can "
+            "be exported to share and imported back.",
         )
         self.app = app
+        self.answers = suggested_answers("mixed")
+        # Set once the name or description is typed, so suggestions stop replacing it
+        self.name_typed = False
+        self.summary_typed = False
+        self.suggested = ("", "")
+        self.notes: list[StyleNote] = []
+        self._build_creator()
+
         save = Card(
             self,
-            "Save the current settings",
-            "Everything from steps 2 and 3 that shapes the sound and the file type is "
-            "saved (not the songs, folders or file names).",
+            "Or save your current settings",
+            "Everything from steps 2 and 3 that shapes the sound, the file type and "
+            "the loudness is saved (not the songs, folders or file names).",
         )
-        self.add(save, 2)
+        self.add(save, 3)
         self.name = EntryField(
             save.body,
             "Name",
-            "Short: a-z, 0-9, - and _ (up to 24 characters), e.g. party-mix.",
-            "e.g. party-mix",
-            self._check_name,
-            width=220,
+            NAME_HELP,
+            "e.g. Party Mix",
+            lambda text: self._name_typed(self.name, text),
+            width=260,
         )
         self.name.grid(row=0, column=0, sticky="ew", pady=4)
         self.summary = EntryField(
@@ -1603,51 +1771,331 @@ class StylesPage(Page):
         button(
             save.body, "save", "Save style", self._save, kind="primary", width=150
         ).grid(row=2, column=0, sticky="w", pady=(10, 0))
+
         self.saved = Card(self, "Saved styles", f"Stored in {presets_file()}")
-        self.add(self.saved, 3, (0, 28))
+        self.add(self.saved, 4, (0, 28))
         self.refresh()
 
-    @staticmethod
-    def _check_name(text: str) -> str | None:
-        """Only simple names, and never a built-in one."""
-        name = text.strip().lower()
-        if not name:
+    # ------------------------------------------------------------ the creator
+
+    def _build_creator(self) -> None:
+        """The guided 'Create your own style' card."""
+        card = Card(
+            self,
+            "Create your own style",
+            "Answer a few questions. Audio8D turns your answers into the right "
+            "settings, checks them, and suggests a name. Try it on a song, then save.",
+        )
+        self.add(card, 2)
+        body = card.body
+        self.q_music = ChoiceField(
+            body,
+            "Music",
+            "What will you listen to? Strong beat: dance, pop, hip-hop. Calm: chill, "
+            "acoustic, lo-fi. Big and loud: rock, EDM, film music. Talking: podcasts, "
+            "audiobooks. Picking one fills in good answers below.",
+            MUSIC_CHOICES,  # type: ignore[arg-type]
+            self._music_picked,
+        )
+        self.q_movement = ChoiceField(
+            body,
+            "Movement",
+            "How far should it travel round your head? Gentle is relaxing; Clear is "
+            "the classic 8D feeling (recommended); Big goes right into each ear.",
+            MOVEMENT_CHOICES,  # type: ignore[arg-type]
+            lambda value: self._answer(movement=str(value)),
+        )
+        self.q_speed = ChoiceField(
+            body,
+            "Speed",
+            "How fast should it go round? Slow: one circle every 12 s. Normal: every "
+            "8 s (recommended). Fast: every 5 s. With the beat: follows the song.",
+            SPEED_CHOICES,  # type: ignore[arg-type]
+            lambda value: self._answer(speed=str(value)),
+        )
+        self.q_room = ChoiceField(
+            body,
+            "Room",
+            "How much room sound? None is dry, best for talking. A little makes "
+            "music feel around you (recommended). A big hall can blur voices.",
+            ROOM_CHOICES,  # type: ignore[arg-type]
+            lambda value: self._answer(room=str(value)),
+        )
+        self.q_place = ChoiceField(
+            body,
+            "Listen on",
+            "3D sound is made for headphones. 'Speakers or a car too' makes a "
+            "gentler version that sounds right everywhere.",
+            PLACE_CHOICES,  # type: ignore[arg-type]
+            lambda value: self._answer(place=str(value)),
+        )
+        self.q_file = ChoiceField(
+            body,
+            "File type",
+            "MP3 plays everywhere, at the best MP3 quality. FLAC keeps every detail "
+            "(bigger files). M4A suits iPhone and iTunes.",
+            FILE_CHOICES,  # type: ignore[arg-type]
+            lambda value: self._answer(file_type=str(value)),
+        )
+        self.q_level = ChoiceField(
+            body,
+            "Loudness",
+            "Like music apps: as loud as Spotify and YouTube (recommended). Same as "
+            "the song: keeps each song's own loudness. Natural: can be quieter.",
+            LEVEL_CHOICES,  # type: ignore[arg-type]
+            lambda value: self._answer(level=str(value)),
+        )
+        self.new_name = EntryField(
+            body,
+            "Name",
+            NAME_HELP,
+            "e.g. Sunset Drive",
+            self._new_name_typed,
+            width=260,
+        )
+        self.new_summary = EntryField(
+            body,
+            "Description",
+            "A few words so you remember what it's for. One is written for you; "
+            "change it if you like.",
+            "e.g. calm songs for late nights",
+            self._new_summary_typed,
+            width=460,
+        )
+        fields = (
+            self.q_music,
+            self.q_movement,
+            self.q_speed,
+            self.q_room,
+            self.q_place,
+            self.q_file,
+            self.q_level,
+            self.new_name,
+            self.new_summary,
+        )
+        for row, widget in enumerate(fields):
+            widget.grid(row=row, column=0, sticky="ew", pady=5)
+        result = ctk.CTkFrame(body, fg_color=SURFACE_ALT, corner_radius=10)
+        result.grid(row=len(fields), column=0, sticky="ew", pady=(10, 4))
+        result.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(result, text="Your style", font=font(13, "bold"), anchor="w").grid(
+            row=0, column=0, sticky="ew", padx=14, pady=(10, 0)
+        )
+        self.result = ctk.CTkLabel(
+            result, text="", font=font(12), anchor="w", justify="left"
+        )
+        self.result.grid(row=1, column=0, sticky="ew", padx=14, pady=(2, 10))
+        self.checks = ctk.CTkFrame(body, fg_color="transparent")
+        self.checks.grid(row=len(fields) + 1, column=0, sticky="ew")
+        self.checks.grid_columnconfigure(0, weight=1)
+        strip = ctk.CTkFrame(body, fg_color="transparent")
+        strip.grid(row=len(fields) + 2, column=0, sticky="ew", pady=(10, 0))
+        strip.grid_columnconfigure(1, weight=1)
+        self.improve = button(
+            strip,
+            "check",
+            "Improve it for me",
+            self._improve,
+            width=200,
+            tooltip="Change the answers the quality check points out",
+        )
+        self.improve.grid(row=0, column=0, sticky="w")
+        button(
+            strip,
+            "preview",
+            "Try it",
+            lambda: self.app.run_preview(guided_config(self.answers)),
+            width=130,
+            tooltip="Make and play a short preview of the chosen song with this style",
+        ).grid(row=0, column=2, padx=8)
+        button(
+            strip, "save", "Save style", self._create, kind="primary", width=160
+        ).grid(row=0, column=3)
+        self._show_answers()
+
+    def _music_picked(self, value: object) -> None:
+        """A kind of music was picked: fill in good answers for it."""
+        self.answers = suggested_answers(str(value))
+        self._show_answers()
+
+    def _answer(self, **answer: str) -> None:
+        """One answer changed."""
+        self.answers = dataclasses.replace(self.answers, **answer)
+        self._show_creator()
+
+    def _show_answers(self) -> None:
+        """Show every answer, then what they make."""
+        answers = self.answers
+        for field, value in (
+            (self.q_music, answers.music),
+            (self.q_movement, answers.movement),
+            (self.q_speed, answers.speed),
+            (self.q_room, answers.room),
+            (self.q_place, answers.place),
+            (self.q_file, answers.file_type),
+            (self.q_level, answers.level),
+        ):
+            field.set(value)
+        self._show_creator()
+
+    def _show_creator(self) -> None:
+        """Refresh the suggested name and description, the summary and the check."""
+        config = guided_config(self.answers)
+        name = suggested_name(self.answers, self.taken())
+        summary = suggested_description(self.answers)
+        if not self.name_typed and self.new_name.entry.get() in ("", self.suggested[0]):
+            self.new_name.set(name)
+            self._name_typed(self.new_name, name)
+        if not self.summary_typed:
+            self.new_summary.set(summary)
+        self.suggested = (name, summary)
+        self.result.configure(text=style_summary(config))
+        self.notes = style_check(config, self.new_summary.entry.get())
+        for child in self.checks.winfo_children():
+            child.destroy()
+        if not self.notes:
+            self.notes_line(
+                "check", "Quality check: this style looks good.", SUCCESS, 0
+            )
+        for row, note in enumerate(self.notes):
+            icon = {"error": "error", "warning": "warning"}.get(note.level, "info")
+            self.notes_line(icon, note.text, _LEVEL_COLOURS[note.level], row)
+        if any(note.fix for note in self.notes):
+            self.improve.grid()
+        else:
+            self.improve.grid_remove()
+
+    def notes_line(
+        self, icon: str, text: str, colour: tuple[str, str], row: int
+    ) -> None:
+        """One line of the quality check."""
+        line = ctk.CTkFrame(self.checks, fg_color="transparent")
+        line.grid(row=row, column=0, sticky="ew", pady=2)
+        line.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(
+            line, text=Icons.glyph(icon), font=Icons.font(14), text_color=colour
+        ).grid(row=0, column=0, padx=(0, 8))
+        message = ctk.CTkLabel(
+            line, text=text, font=font(12), text_color=colour, anchor="w",
+            justify="left", wraplength=640,
+        )  # fmt: skip
+        message.grid(row=0, column=1, sticky="ew")
+        fit_width(message, line, 40)
+
+    def _new_name_typed(self, text: str) -> str | None:
+        """The creator's name box."""
+        self.name_typed = bool(text.strip()) and text != self.suggested[0]
+        return self._name_typed(self.new_name, text)
+
+    def _new_summary_typed(self, text: str) -> None:
+        """The creator's description box (any text is fine, even none)."""
+        self.summary_typed = text != self.suggested[1]
+        self._show_creator()
+
+    def _improve(self) -> None:
+        """Follow the quality check's advice."""
+        self.answers = improve_answers(self.answers, self.notes)
+        self._show_answers()
+        Toast(self.app, "Improved: the answers now follow the advice", "ok")
+
+    def _create(self) -> None:
+        """Save the style the answers make."""
+        config = guided_config(self.answers)
+        if self._store(self.new_name, config, self.new_summary.entry.get()):
+            self.name_typed = self.summary_typed = False
+            self.new_name.set("")
+            self._show_creator()
+
+    # ------------------------------------------------------------ saving
+
+    def taken(self) -> list[str]:
+        """The names of your saved styles."""
+        return [preset.name for preset in self.app.presets.values() if preset.custom]
+
+    def check_name(
+        self, text: str, keep: str | None = None
+    ) -> tuple[str | None, str | None]:
+        """(the name it will get, None), or (None, why it can't be used)."""
+        try:
+            return check_style_name(text, self.taken(), keep=keep), None
+        except Audio8DError as exc:
+            return None, gui_words(str(exc)) + "."
+
+    def _name_typed(self, field: EntryField, text: str) -> str | None:
+        """A name box changed: say what it becomes, or why it can't be used."""
+        if not text.strip():
+            field.explain(NAME_HELP)
             return None
-        if name in PRESETS:
-            return f"'{name}' is a built-in style. Pick another name."
-        if not all(c.isalnum() or c in "-_" for c in name) or len(name) > 24:
-            return "Use a-z, 0-9, - and _ only (up to 24 characters)."
-        return None
+        name, problem = self.check_name(text)
+        if name:
+            field.explain(f"It will be saved as {name}.", SUCCESS)
+        return problem
 
     def _save(self) -> None:
-        """Save the settings under the typed name."""
-        name = self.name.entry.get().strip().lower()
-        if not name:
-            self.name.explain("Type a name first.", DANGER)
-            return
-        based_on = self.app.settings.style
+        """Save the current settings under the typed name."""
         try:
-            save_user_preset(
-                name,
-                config_for(self.app.settings),
-                based_on=based_on if based_on in PRESETS else "classic",
-                summary=self.summary.entry.get().strip() or "your own style",
+            config = config_for(self.app.settings)
+        except Audio8DError as exc:
+            self.name.explain(f"Fix the settings first: {gui_words(str(exc))}.", DANGER)
+            return
+        if self._store(self.name, config, self.summary.entry.get()):
+            self.name.set("")
+            self.summary.set("")
+            self.name.explain(NAME_HELP)
+
+    def _store(self, field: EntryField, config: EffectConfig, summary: str) -> bool:
+        """Check a new style fully, offer to improve it, then save it."""
+        name, problem = self.check_name(field.entry.get())
+        if name is None:
+            field.entry.configure(border_color=DANGER)
+            field.explain(problem or "Type a name first.", DANGER)
+            return False
+        notes = style_check(config, summary)
+        errors = [note for note in notes if note.level == "error"]
+        if errors:
+            field.explain(errors[0].text, DANGER)
+            return False
+        warnings_ = [note for note in notes if note.level == "warning"]
+        if warnings_:
+            answer = Dialog(
+                self.app,
+                "Save it as it is?",
+                "The quality check found something that may not sound its best:\n\n"
+                + "\n".join(f"•  {note.text}" for note in warnings_)
+                + "\n\nImprove and save follows the advice for you.",
+                [
+                    ("Go back", "no"),
+                    ("Save as it is", "as-is"),
+                    ("Improve and save", "improve"),
+                ],
+                icon="warning",
+                color=WARNING,
+            ).ask()
+            if answer not in ("as-is", "improve"):
+                return False
+            if answer == "improve":
+                config = improved(config, warnings_)
+        try:
+            saved = save_user_preset(
+                name, config, based_on=self.app.settings.style, summary=summary
             )
         except Audio8DError as exc:
-            self.name.explain(gui_words(str(exc)), DANGER)
-            return
-        self.name.explain(
-            f"Saved '{name}'. It's now on step 2 with the other styles.", SUCCESS
+            field.explain(gui_words(str(exc)) + ".", DANGER)
+            return False
+        field.explain(
+            f"Saved '{saved}'. It's now on step 2 with the other styles.", SUCCESS
         )
-        self.app.reload_styles(select=name)
-        Toast(self.app, f"Saved your style '{name}'", "ok")
+        self.app.reload_styles(select=saved)
+        Toast(self.app, f"Saved your style '{saved}'", "ok")
+        return True
+
+    # ------------------------------------------------------------ saved styles
 
     def refresh(self) -> None:
-        """List the saved styles with Use and Delete buttons."""
+        """List the saved styles, each with what can be done with it."""
         body = self.saved.body
         for child in body.winfo_children():
             child.destroy()
-        mine = [p for p in self.app.presets.values() if p.custom]
         if self.app.styles_problem:
             problem = ctk.CTkLabel(
                 body,
@@ -1664,39 +2112,184 @@ class StylesPage(Page):
             problem.grid(row=0, column=0, sticky="ew")
             fit_width(problem, body, 10)
             return
-        if not mine:
-            hint(body, "No saved styles yet.").grid(row=0, column=0, sticky="w")
+        top = ctk.CTkFrame(body, fg_color="transparent")
+        top.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        top.grid_columnconfigure(0, weight=1)
+        mine = [p for p in self.app.presets.values() if p.custom]
+        hint(
+            top,
+            f"{len(mine)} saved style{'s' if len(mine) != 1 else ''}."
+            if mine
+            else "No saved styles yet. Create one above, or import a style file.",
+            margin=260,
+        ).grid(row=0, column=0, sticky="ew")
+        button(
+            top,
+            "open",
+            "Import a style…",
+            self._import,
+            width=190,
+            height=32,
+            tooltip="Add a style from a file exported by Audio8D",
+        ).grid(row=0, column=1, padx=(10, 0))
+        for index, preset in enumerate(mine, start=1):
+            self._saved_row(body, index, preset)
+
+    def _saved_row(self, body: ctk.CTkFrame, index: int, preset: Preset) -> None:
+        """One saved style: its name and description, then its buttons."""
+        row = ctk.CTkFrame(body, fg_color=SURFACE_ALT, corner_radius=10)
+        row.grid(row=index, column=0, sticky="ew", pady=3)
+        row.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(
+            row, text=Icons.glyph("star"), font=Icons.font(14), text_color=ACCENT
+        ).grid(row=0, column=0, padx=12, pady=(10, 0))
+        title = ctk.CTkLabel(
+            row,
+            text=f"{preset.name}  ·  {preset.summary}",
+            font=font(13),
+            anchor="w",
+            justify="left",
+            wraplength=640,
+        )
+        title.grid(row=0, column=1, sticky="ew", pady=(10, 0), padx=(0, 12))
+        fit_width(title, row, 60)
+        actions = ctk.CTkFrame(row, fg_color="transparent")
+        # Under the star as well, so five buttons fit the narrowest window at 125 %
+        actions.grid(row=1, column=0, columnspan=2, sticky="w", padx=12, pady=(6, 10))
+        name = preset.name
+        for key, (icon, text, command, kind) in enumerate(
+            (
+                (
+                    "check",
+                    "Use",
+                    lambda: self.app.choose_style(name, go=True),
+                    "primary",
+                ),
+                ("save", "Rename", lambda: self._rename(name), "outline"),
+                ("add", "Duplicate", lambda: self._duplicate(name), "outline"),
+                ("open", "Export", lambda: self._export(name), "outline"),
+                ("delete", "Delete", lambda: self._delete(name), "outline"),
+            )
+        ):
+            button(actions, icon, text, command, kind=kind, width=92, height=32).grid(
+                row=0, column=key, padx=(0, 6)
+            )
+
+    def _failed(self, title: str, error: Audio8DError) -> None:
+        """Explain a style operation that couldn't be done; nothing was changed."""
+        fix = hints.fix_for(error)
+        message = gui_words(str(error)) + "."
+        if fix:
+            message += f"\n\nWhat to do: {gui_words(fix)}"
+        Dialog(
+            self.app,
+            title,
+            message + "\n\nNothing was changed.",
+            [("OK", "ok")],
+            icon="error",
+            color=DANGER,
+        ).ask()
+
+    def _free_name(self, stem: str) -> str:
+        """stem, or stem2, stem3… whichever is not taken yet."""
+        name, number = pascal_case(stem), 2
+        while self.check_name(name)[1]:
+            name, number = f"{pascal_case(stem)} {number}", number + 1
+        return name
+
+    def _rename(self, name: str) -> None:
+        """Give a saved style a new name; songs that use it keep it."""
+        new = NameDialog(
+            self.app,
+            "Rename this style",
+            f"Choose a new name for '{name}'. Songs that use it keep using it.",
+            name,
+            lambda text: self.check_name(text, keep=name),
+            "Rename",
+        ).ask()
+        if not new or new == name:
             return
-        for index, preset in enumerate(mine):
-            row = ctk.CTkFrame(body, fg_color=SURFACE_ALT, corner_radius=10)
-            row.grid(row=index, column=0, sticky="ew", pady=3)
-            row.grid_columnconfigure(1, weight=1)
-            ctk.CTkLabel(
-                row, text=Icons.glyph("star"), font=Icons.font(14), text_color=ACCENT
-            ).grid(row=0, column=0, padx=12, pady=10)
-            ctk.CTkLabel(
-                row,
-                text=f"{preset.name}  ·  {preset.summary}",
-                font=font(13),
-                anchor="w",
-            ).grid(row=0, column=1, sticky="ew")
-            button(
-                row,
-                "check",
-                "Use",
-                lambda n=preset.name: self.app.choose_style(n, go=True),
-                kind="primary",
-                width=90,
-                height=32,
-            ).grid(row=0, column=2, padx=6)
-            button(
-                row,
-                "delete",
-                "Delete",
-                lambda n=preset.name: self._delete(n),
-                width=100,
-                height=32,
-            ).grid(row=0, column=3, padx=(0, 10))
+        try:
+            renamed = rename_user_preset(name, new)
+        except Audio8DError as exc:
+            self._failed("Can't rename this style", exc)
+            return
+        self.app.reload_styles(renamed=(name, renamed))
+        Toast(self.app, f"Renamed '{name}' to '{renamed}'", "ok")
+
+    def _duplicate(self, name: str) -> None:
+        """Copy a saved style under a new name."""
+        new = NameDialog(
+            self.app,
+            "Duplicate this style",
+            f"The copy of '{name}' needs a name of its own.",
+            self._free_name(f"{name} Copy"),
+            self.check_name,
+            "Duplicate",
+        ).ask()
+        if not new:
+            return
+        try:
+            copy = duplicate_user_preset(name, new)
+        except Audio8DError as exc:
+            self._failed("Can't duplicate this style", exc)
+            return
+        self.app.reload_styles()
+        Toast(self.app, f"Made '{copy}', a copy of '{name}'", "ok")
+
+    def _export(self, name: str) -> None:
+        """Save a style to a file, to keep or share."""
+        chosen = filedialog.asksaveasfilename(
+            title="Export a style",
+            initialfile=f"{name}{STYLE_FILE_SUFFIX}",
+            defaultextension=STYLE_FILE_SUFFIX,
+            filetypes=[("Audio8D style", f"*{STYLE_FILE_SUFFIX}")],
+        )
+        if not chosen:
+            return
+        try:
+            target = export_style(self.app.presets[name], Path(chosen))
+        except Audio8DError as exc:
+            self._failed("Can't export this style", exc)
+            return
+        Toast(self.app, f"Exported '{name}' to {target.name}", "ok")
+
+    def _import(self) -> None:
+        """Add a style from a file, after checking all of it and its new name."""
+        chosen = filedialog.askopenfilename(
+            title="Import a style",
+            filetypes=[
+                ("Audio8D style", f"*{STYLE_FILE_SUFFIX}"),
+                ("All files", "*.*"),
+            ],
+        )
+        if not chosen:
+            return
+        path = Path(chosen)
+        try:
+            style = read_style_file(path)
+        except Audio8DError as exc:
+            self._failed("Can't import this style", exc)
+            return
+        description = f" ({style.summary})" if style.summary else ""
+        new = NameDialog(
+            self.app,
+            "Import a style",
+            f"'{style.name}'{description} passed every check. Choose its name: it "
+            "can't be the name of a style you already have.",
+            pascal_case(style.name),
+            self.check_name,
+            "Import",
+        ).ask()
+        if not new:
+            return
+        try:
+            imported = import_style(path, new)
+        except Audio8DError as exc:
+            self._failed("Can't import this style", exc)
+            return
+        self.app.reload_styles()
+        Toast(self.app, f"Imported '{imported}'", "ok")
 
     def _delete(self, name: str) -> None:
         """Delete a saved style after asking."""
@@ -1704,15 +2297,18 @@ class StylesPage(Page):
             self.app,
             "Delete this style?",
             f"'{name}' will be removed from your saved styles. Songs you made with it "
-            "are not touched.",
+            "are not touched; songs on the list that use it go back to the style for "
+            "all songs.",
             [("Cancel", "no"), ("Delete", "yes")],
             icon="delete",
             color=DANGER,
         ).ask()
         if answer == "yes":
             delete_user_preset(name)
-            self.app.reload_styles()
-            Toast(self.app, f"Deleted '{name}'")
+            moved = self.app.reload_styles()
+            songs = f"{moved} song{'s' if moved != 1 else ''}"
+            extra = f"; {songs} now use the style for all songs" if moved else ""
+            Toast(self.app, f"Deleted '{name}'{extra}")
 
 
 class SettingsPage(Page):
@@ -1731,7 +2327,7 @@ class SettingsPage(Page):
             "Theme",
             "System follows your Windows light/dark setting.",
             {"System": "System", "Light": "Light", "Dark": "Dark"},
-            ctk.set_appearance_mode,
+            lambda mode: ctk.set_appearance_mode(str(mode)),
         )
         self.mode.set("System")
         self.mode.grid(row=0, column=0, sticky="ew", pady=4)
@@ -1899,7 +2495,7 @@ class Audio8DApp(ctk.CTk):
         self.rows: list[SongEntry] = []
         # How many songs the list shows; more are one click away
         self.shown = SONGS_PER_PAGE
-        self.selected: SongRow | None = None
+        self.selected: SongEntry | None = None
         self.events: queue.Queue[tuple] = queue.Queue()
         self.cancel = threading.Event()
         self.busy = False
@@ -1918,7 +2514,7 @@ class Audio8DApp(ctk.CTk):
         self.content.grid(row=0, column=1, sticky="nsew")
         self.content.grid_columnconfigure(0, weight=1)
         self.content.grid_rowconfigure(0, weight=1)
-        self.pages: dict[str, ctk.CTkFrame] = {
+        self.pages: dict[str, Page] = {
             "songs": SongsPage(self.content, self),
             "sound": SoundPage(self.content, self),
             "output": OutputPage(self.content, self),
@@ -2011,7 +2607,7 @@ class Audio8DApp(ctk.CTk):
             ),
             ("review", "4  Review & convert", "Step 4: check, preview, start (Ctrl+4)"),
             (None, "", ""),
-            ("styles", "Your styles", "Save and manage your own styles (Ctrl+5)"),
+            ("styles", "Your styles", "Create and share your own styles (Ctrl+5)"),
             ("settings", "Settings", "Theme, technical details, tools, about (Ctrl+6)"),
         )
         for row, (key, text, tip) in enumerate(entries, start=1):
@@ -2160,7 +2756,7 @@ class Audio8DApp(ctk.CTk):
         self.settings.apply_style(self.presets[name])
         self.settings.speakers = False
         self.sync_controls()
-        Toast(self, f"Style: {name}")
+        Toast(self, f"Style: {style_label(name, self.presets)}")
         if go:
             self.show_page("sound")
 
@@ -2173,16 +2769,51 @@ class Audio8DApp(ctk.CTk):
         """Back to the chosen style's own values."""
         self.choose_style(self.settings.style)
 
-    def reload_styles(self, select: str | None = None) -> None:
-        """Saved styles changed: rebuild the cards and the list."""
+    def reload_styles(
+        self, select: str | None = None, renamed: tuple[str, str] | None = None
+    ) -> int:
+        """Saved styles changed: rebuild the cards, lists and menus.
+
+        renamed is (old name, new name) after a rename, so songs keep their style.
+        Returns how many songs went back to the style for all songs because their
+        own style is gone.
+        """
         self.presets = self._load_styles()
+        own = self.settings.song_styles
+        if renamed:
+            old, new = renamed
+            for song, name in own.items():
+                if name == old:
+                    own[song] = new
+            if self.settings.style == old:
+                self.settings.style = new
+        gone = [song for song, name in own.items() if name not in self.presets]
+        for song in gone:
+            del own[song]
         self.pages["sound"].build_cards()  # type: ignore[attr-defined]
         self.pages["styles"].refresh()  # type: ignore[attr-defined]
         if select:
             self.settings.style = select
         elif self.settings.style not in self.presets:
             self.settings.apply_style(self.presets[RECOMMENDED_PRESET])
+        self.pages["sound"].show_songs()  # type: ignore[attr-defined]
         self.sync_controls()
+        return len(gone)
+
+    def set_song_style(self, entry: SongEntry, name: str | None) -> None:
+        """Give one song a style of its own, or None for the style for all songs."""
+        if name is None:
+            self.settings.song_styles.pop(entry.song, None)
+        else:
+            self.settings.song_styles[entry.song] = name
+        self.pages["sound"].show_own_count()  # type: ignore[attr-defined]
+        self.refresh_status()
+
+    def clear_song_styles(self) -> None:
+        """Every song uses the style for all songs again."""
+        self.settings.song_styles.clear()
+        self.pages["sound"].show_songs()  # type: ignore[attr-defined]
+        self.refresh_status()
 
     def set_speakers(self, on: bool) -> None:
         """'Safe for speakers too'."""
@@ -2296,6 +2927,7 @@ class Audio8DApp(ctk.CTk):
                 added.append(row)
         self._layout_rows()
         if added:
+            self.pages["sound"].show_songs()  # type: ignore[attr-defined]
             Toast(
                 self, f"Added {len(added)} song{'s' if len(added) != 1 else ''}", "ok"
             )
@@ -2393,10 +3025,12 @@ class Audio8DApp(ctk.CTk):
         if row is None or self.busy:
             return
         self.rows.remove(row)
+        self.settings.song_styles.pop(row.song, None)
         if self.selected is row:
             self.selected = None
         row.hide()
         self._layout_rows()
+        self.pages["sound"].show_songs()  # type: ignore[attr-defined]
         self.sync_controls()
 
     def clear_songs(self) -> None:
@@ -2406,9 +3040,11 @@ class Audio8DApp(ctk.CTk):
         for row in self.rows:
             row.hide()
         self.rows.clear()
+        self.settings.song_styles.clear()
         self.shown = SONGS_PER_PAGE
         self.selected = None
         self._layout_rows()
+        self.pages["sound"].show_songs()  # type: ignore[attr-defined]
         self.sync_controls()
 
     def ask_files(self) -> None:
@@ -2429,7 +3065,9 @@ class Audio8DApp(ctk.CTk):
 
     def _ready(self) -> bool:
         """Check everything first; if something's wrong, show step 4's list."""
-        found = problems(self.settings, [(row.song, row.folder) for row in self.rows])
+        found = problems(
+            self.settings, [(row.song, row.folder) for row in self.rows], self.presets
+        )
         if found:
             self.show_page("review")
             Toast(self, "Please fix the red items first", "error")
@@ -2461,15 +3099,20 @@ class Audio8DApp(ctk.CTk):
 
         threading.Thread(target=target, daemon=True).start()
 
-    def run_preview(self) -> None:
-        """Make and play a short sample of the chosen song."""
+    def run_preview(self, config: EffectConfig | None = None) -> None:
+        """Make and play a short sample of the chosen song.
+
+        With a config (a style being created), that's what it tries; the other
+        settings don't matter then, so their problems don't stop it.
+        """
         row = self.chosen_song()
         if row is None:
             Toast(self, "Add a song first (step 1)", "error")
             return
-        if self.busy or not self._ready():
+        if self.busy or (config is None and not self._ready()):
             return
-        config = config_for(self.settings)
+        if config is None:
+            config = song_config(self.settings, row.song, self.presets)
         seconds = float(self.settings.preview_seconds)
 
         def work() -> None:
@@ -2494,7 +3137,7 @@ class Audio8DApp(ctk.CTk):
             return
         if self.busy or not self._ready():
             return
-        config = config_for(self.settings)
+        config = song_config(self.settings, row.song, self.presets)
 
         def work() -> None:
             made = compare(
@@ -2529,7 +3172,9 @@ class Audio8DApp(ctk.CTk):
             ).ask()
             if answer != "yes":
                 return
-        items = items_for(settings, [(row.song, row.folder) for row in self.rows])
+        items = items_for(
+            settings, [(row.song, row.folder) for row in self.rows], self.presets
+        )
         # Songs that already have an 8D version are skipped, as on the command line
         todo = [
             item
@@ -2611,6 +3256,7 @@ class Audio8DApp(ctk.CTk):
             self.pages["review"].write_log(event[1])  # type: ignore[attr-defined]
         elif kind == "probed":
             _, row, info = event
+            row.info = info
             row.show_details(info.codec_name, info.duration_seconds, info.is_lossless)
         elif kind == "unreadable":
             event[1].unreadable()
@@ -2662,9 +3308,10 @@ class Audio8DApp(ctk.CTk):
         Dialog(self, "Something went wrong", message, [("OK", "ok")], icon="error",
                color=DANGER)  # fmt: skip
 
-    def _show_report(self, report: object) -> None:
+    def _show_report(self, report: BatchReport) -> None:
         """The summary dialog after converting a list."""
         converted = report.converted
+        results = report.results
         failed = report.failed
         seconds = report.seconds
         self.status_text.configure(
@@ -2672,10 +3319,10 @@ class Audio8DApp(ctk.CTk):
             f"in {format_time(seconds)}."
         )
         if converted and self.settings.play_when_done:
-            open_path(converted[0].result.output)
+            open_path(results[0].output)
         if self.cancel.is_set():
             return
-        places = [o.result.original_removed_to for o in converted]
+        places = [result.original_removed_to for result in results]
         lines = [
             f"{len(converted)} song{'s' if len(converted) != 1 else ''} made in "
             f"{seconds:.1f} seconds."
@@ -2699,9 +3346,9 @@ class Audio8DApp(ctk.CTk):
             color=SUCCESS if not failed else WARNING,
         ).ask()
         if answer == "folder":
-            open_path(converted[0].result.output.parent)
+            open_path(results[0].output.parent)
         elif answer == "play":
-            open_path(converted[0].result.output)
+            open_path(results[0].output)
 
 
 def launch(songs: Sequence[Path] = ()) -> int:

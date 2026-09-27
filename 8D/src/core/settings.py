@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """User-facing knobs for the 8D effect and the encoder."""
 
 from dataclasses import dataclass, replace

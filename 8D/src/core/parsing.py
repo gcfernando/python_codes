@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Turns what people type (times, keyframe lists) into numbers."""
 
 from .errors import InputValidationError
@@ -19,6 +19,7 @@ def parse_time(text: str) -> float:
     if any(number < 0 for number in numbers) or any(n >= 60 for n in numbers[1:]):
         raise InputValidationError(f"'{text}' is not a time like 90 or 1:30")
     seconds = 0.0
+    # 1:02:03 is ((1 * 60) + 2) * 60 + 3 seconds
     for number in numbers:
         seconds = seconds * 60 + number
     return seconds
@@ -37,6 +38,7 @@ def format_time(seconds: float) -> str:
 def parse_keyframes(text: str) -> Keyframes:
     """'0=10, 1:00=6, 2:30=10' -> ((0, 10), (60, 6), (150, 10))."""
     frames = []
+    # People write both 0=10, 1:00=6 and 0=10; 1:00=6, so both separators work
     for item in text.replace(";", ",").split(","):
         if not item.strip():
             continue
@@ -65,6 +67,7 @@ def format_keyframes(frames: Keyframes) -> str:
 def parse_selection(text: str, count: int) -> list[int]:
     """'all', '1,3,5-7' -> zero-based indexes, in the order the list shows them."""
     cleaned = text.strip().lower()
+    # Enter on its own, or any common word for "everything", picks every song
     if cleaned in {"", "all", "a", "*"}:
         return list(range(count))
     chosen: set[int] = set()

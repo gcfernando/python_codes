@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Safe handling of input paths, output publishing, folders and old files."""
 
 from .atomic import commit_output, create_temporary_output
@@ -14,6 +14,7 @@ from .paths import (
 )
 from .trash import describe_removal, removal_summary, remove_original
 
+# The names the rest of Audio8D (and your own code) import from here
 __all__ = [
     "AUDIO_EXTENSIONS",
     "NAME_STYLES",

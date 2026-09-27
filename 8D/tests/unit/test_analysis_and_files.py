@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks tempo maths, loudest-section search, the cache, folders, batches, launcher."""
 
 import math
@@ -232,7 +232,26 @@ def test_batch_keeps_going_after_a_failure(monkeypatch: pytest.MonkeyPatch) -> N
 
     assert len(report.converted) == 2
     assert [o.item.source.name for o in report.failed] == ["bad.mp3"]
+    assert [r.output.name for r in report.results] == ["a (8D).mp3", "c (8D).mp3"]
     assert sorted(finished) == [0, 1, 2]
+
+
+def test_batch_uses_each_songs_own_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    used: dict[str, EffectConfig] = {}
+
+    def fake_convert(source, output, config, **_):  # type: ignore[no-untyped-def]
+        used[source.name] = config
+        return ConversionResult(AudioStreamInfo("mp3", 2, 44100, 1.0), output, config)
+
+    monkeypatch.setattr("src.batch.convert", fake_convert)
+    own = EffectConfig(intensity=0.5, output_format="flac")
+    items = [
+        BatchItem(Path("a.mp3"), Path("a (8D).mp3")),
+        BatchItem(Path("b.mp3"), Path("b (8D).flac"), own),
+    ]
+
+    run_batch(items, EffectConfig(), jobs=2)
+    assert used == {"a.mp3": EffectConfig(), "b.mp3": own}
 
 
 def test_batch_stops_when_cancelled(monkeypatch: pytest.MonkeyPatch) -> None:

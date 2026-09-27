@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """A layout self-check for the window: no control may overlap another or spill out.
 
 Used by the tests (and handy while designing pages): it measures every visible

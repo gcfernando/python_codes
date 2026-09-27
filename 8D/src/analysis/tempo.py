@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Finds a song's tempo, so one full circle can last a whole number of bars.
 
 FFmpeg decodes up to 90 seconds into two small envelopes (the kick range and

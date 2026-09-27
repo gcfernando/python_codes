@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks that every error and typing mistake comes with a plain fix."""
 
 import pytest
@@ -13,6 +13,7 @@ from src import (
 )
 
 
+# Each known error, and a word its plain-English fix must contain
 @pytest.mark.parametrize(
     ("error", "expected"),
     [
@@ -86,7 +87,9 @@ def test_a_locked_folder_gets_a_plain_fix() -> None:
         "Permission denied"
     )
 
-    assert "isn't allowed to write there" in hints.fix_for(error)
+    fix = hints.fix_for(error)
+    assert fix is not None
+    assert "isn't allowed to write there" in fix
 
 
 @pytest.mark.parametrize(

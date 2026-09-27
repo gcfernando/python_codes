@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks the 3D engine: paths, the head model, the gain streams, room and graph."""
 
 import math

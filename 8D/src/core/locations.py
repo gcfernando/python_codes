@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Where Audio8D finds its own files, and where it keeps your styles, cache and log."""
 
 import os

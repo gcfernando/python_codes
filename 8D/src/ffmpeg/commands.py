@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Assembles the exact ffmpeg argument lists used for measuring and encoding."""
 
 from dataclasses import dataclass

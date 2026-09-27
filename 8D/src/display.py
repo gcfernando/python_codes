@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Friendly, colourful terminal output for the `audio8d` command."""
 
 import ctypes
@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TextIO
 
 from .analysis import QualityReport
+from .batch import BatchOutcome, BatchReport
 from .core.parsing import format_time
 from .core.presets import PRESETS, RECOMMENDED_PRESET, Preset
 from .core.settings import EffectConfig
@@ -225,62 +226,66 @@ def extras(config: EffectConfig, trim: Trim | None = None) -> list[str]:
     return notes
 
 
-def advice(config: EffectConfig) -> list[str]:  # pylint: disable=too-many-branches
+# A heads-up, and the setting changes that follow its advice
+Advice = tuple[str, dict[str, object]]
+
+
+def advice_items(config: EffectConfig) -> list[Advice]:  # pylint: disable=too-many-branches
     """Plain-word warnings for settings that may not sound their best, with fixes."""
-    notes = []
+    notes: list[Advice] = []
+
+    def add(text: str, **fix: object) -> None:
+        notes.append((text, fix))
+
     if not config.speed_curve and config.rotation_seconds < 5:
-        notes.append(
-            "A spin this fast can make people dizzy. Most people like 6 to 10 s."
-        )
+        add("A spin this fast can make people dizzy. Most people like 6 to 10 s.",
+            rotation_seconds=8.0)  # fmt: skip
     elif not config.speed_curve and config.rotation_seconds > 20:
-        notes.append("A spin this slow is hard to notice. Most people like 6 to 10 s.")
+        add("A spin this slow is hard to notice. Most people like 6 to 10 s.",
+            rotation_seconds=8.0)  # fmt: skip
     if 0 < config.intensity < 0.5:
-        notes.append(
-            "The movement is gentle and may be hard to hear. Try --intensity 0.8"
-        )
+        add("The movement is gentle and may be hard to hear. Try --intensity 0.8",
+            intensity=0.8, intensity_curve=())  # fmt: skip
     elif config.intensity > 0.95 and config.engine == "pan":
-        notes.append(
-            "One ear goes almost silent at times, which can tire your ears. Try 0.8"
-        )
+        add("One ear goes almost silent at times, which can tire your ears. Try 0.8",
+            intensity=0.8)  # fmt: skip
     if config.ambience > 0.6:
-        notes.append("This much room sound can make voices blurry. Try --ambience 0.25")
+        add("This much room sound can make voices blurry. Try --ambience 0.25",
+            ambience=0.25)  # fmt: skip
     if config.output_format == "mp3":
         if config.bitrate is None and config.quality >= 6:
-            notes.append(
-                "Lower quality: you may hear swishy sounds. Best is --bitrate 320"
-            )
+            add("Lower quality: you may hear swishy sounds. Best is --bitrate 320",
+                bitrate=320)  # fmt: skip
         elif config.bitrate is not None and config.bitrate < 192:
-            notes.append(
-                "Low bitrate: you may hear swishy sounds. Best is --bitrate 320"
-            )
+            add("Low bitrate: you may hear swishy sounds. Best is --bitrate 320",
+                bitrate=320)  # fmt: skip
+    best_roof = BEST.limiter_ceiling
     if config.limiter_ceiling > 0.95:
-        best_roof = BEST.limiter_ceiling
-        notes.append(f"Peaks this high may crackle on some phones. Best is {best_roof}")
+        add(f"Peaks this high may crackle on some phones. Best is {best_roof}",
+            limiter_ceiling=best_roof)  # fmt: skip
     elif config.limiter_ceiling < 0.5:
-        notes.append(
-            "A peak roof this low makes the song very quiet. "
-            f"Best is {BEST.limiter_ceiling}"
-        )
+        add(f"A peak roof this low makes the song very quiet. Best is {best_roof}",
+            limiter_ceiling=best_roof)  # fmt: skip
     if config.match_loudness:
         pass
     elif config.loudness_target is None:
-        notes.append(
-            "Your 8D song will be quieter than normal music. "
-            "Add --loudness -14 to fix it."
-        )
+        add("Your 8D song will be quieter than normal music. "
+            "Add --loudness -14 to fix it.", loudness_target=-14.0)  # fmt: skip
     elif config.loudness_target > -9:
-        notes.append(
-            "That is very loud; music apps will turn it down anyway. Best is -14"
-        )
+        add("That is very loud; music apps will turn it down anyway. Best is -14",
+            loudness_target=-14.0)  # fmt: skip
     elif config.loudness_target < -20:
-        notes.append(
-            "Quieter than music apps (-23 is for TV and radio). Best for music is -14"
-        )
+        add("Quieter than music apps (-23 is for TV and radio). Best for music is -14",
+            loudness_target=-14.0)  # fmt: skip
     if config.engine == "3d" and config.bass_hz == 0:
-        notes.append(
-            "Moving bass can feel unsteady. --bass 120 keeps it in the middle."
-        )
+        add("Moving bass can feel unsteady. --bass 120 keeps it in the middle.",
+            bass_hz=120.0)  # fmt: skip
     return notes
+
+
+def advice(config: EffectConfig) -> list[str]:
+    """The heads-ups alone, as the terminal prints them."""
+    return [text for text, _fix in advice_items(config)]
 
 
 def describe_source(info: AudioStreamInfo) -> str:
@@ -769,12 +774,10 @@ def show_batch_plan(
     painter.line()
 
 
-def batch_line(painter: Painter, number: int, total: int, outcome: object) -> str:
+def batch_line(painter: Painter, number: int, total: int, outcome: BatchOutcome) -> str:
     """One finished song's line: a green tick and its size, or a red cross."""
-    result = getattr(outcome, "result", None)
-    error = getattr(outcome, "error", None)
-    item = outcome.item
-    seconds = getattr(outcome, "seconds", 0.0)
+    result, error, item = outcome.result, outcome.error, outcome.item
+    seconds = outcome.seconds
     tick, cross = ("✓", "✗") if painter.fancy else ("OK", "X")
     counter = painter.paint(f"[{number:>{len(str(total))}}/{total}]", "dim")
     if result is not None:
@@ -795,7 +798,7 @@ def batch_line(painter: Painter, number: int, total: int, outcome: object) -> st
     )
 
 
-def show_batch_summary(painter: Painter, report: object) -> None:
+def show_batch_summary(painter: Painter, report: BatchReport) -> None:
     """The totals at the end of a batch."""
     converted = report.converted
     failed = report.failed
@@ -807,7 +810,7 @@ def show_batch_summary(painter: Painter, report: object) -> None:
         + (painter.paint(f", {len(failed)} failed", "bold", "red") if failed else "")
         + painter.paint(f" in {format_time(seconds)} ({seconds:.1f} s).", "green")
     )
-    places = [o.result.original_removed_to for o in converted]
+    places = [result.original_removed_to for result in report.results]
     for line in removal_summary([place for place in places if place]):
         painter.line(painter.paint(f"  {line}", "dim"))
 

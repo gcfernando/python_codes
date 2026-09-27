@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Finds the loudest stretch of a song: usually the chorus, the best preview."""
 
 import re

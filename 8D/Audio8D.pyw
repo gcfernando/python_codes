@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 r"""Double-click me to open the Audio8D window (.pyw files run with no console).
 
 Songs or folders dropped onto this file in File Explorer open with the window.

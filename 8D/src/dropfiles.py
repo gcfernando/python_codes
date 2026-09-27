@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Windows drag-and-drop for any Tk window (Tk has none of its own)."""
 
 import ctypes

@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 
 # Two programs (window and terminal) sharing one _internal folder; run via build.ps1
 

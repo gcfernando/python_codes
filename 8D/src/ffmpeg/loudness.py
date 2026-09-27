@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Measures loudness with FFmpeg's EBU R128 meter before the real encode."""
 
 import re

@@ -1,6 +1,7 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks the window's decisions: settings to jobs, validation and plain words."""
 
+import dataclasses
 import re
 from pathlib import Path
 
@@ -8,16 +9,31 @@ import pytest
 
 from src import PRESETS, InputValidationError
 from src.cli import _output_for, create_parser, plan_from_args
+from src.core.types import AudioStreamInfo
 from src.gui_model import (
+    MUSIC_CHOICES,
     GuiSettings,
+    StyleAnswers,
     config_for,
     describe,
     describe_curve,
     gui_words,
+    guided_config,
+    improve_answers,
+    improved,
     items_for,
     options_for,
+    own_styles_line,
     problems,
     review,
+    song_config,
+    source_notes,
+    style_check,
+    style_label,
+    style_summary,
+    suggested_answers,
+    suggested_description,
+    suggested_name,
     warnings,
 )
 
@@ -304,3 +320,162 @@ def test_no_hint_shows_terminal_words_in_the_window() -> None:
     for _, fix in _FIXES + _ANYWHERE_FIXES:
         shown = gui_words(fix)
         assert not re.search(r"--[a-z]|audio8d |python -", shown), shown
+
+
+# ------------------------------------------------------ styles per song
+
+_TWO = [(Path("music/a.mp3"), None), (Path("music/b.mp3"), None)]
+
+
+def test_one_style_for_every_song_is_still_the_default() -> None:
+    settings = _settings("studio")
+    items = items_for(settings, _TWO, PRESETS)
+
+    assert [item.config for item in items] == [None, None]
+    assert [item.output.name for item in items] == ["a (8D).mp3", "b (8D).mp3"]
+    assert own_styles_line(settings, _TWO, PRESETS) is None
+    assert "own style" not in describe(settings)
+
+
+def test_a_song_can_have_a_style_of_its_own() -> None:
+    settings = _settings("studio")
+    settings.song_styles[Path("music/b.mp3")] = "lossless"
+    items = items_for(settings, _TWO, PRESETS)
+
+    assert items[0].config is None
+    assert items[1].config == PRESETS["lossless"].config
+    # Its own style brings its own file type
+    assert items[1].output.name == "b (8D).flac"
+    assert song_config(settings, Path("music/b.mp3"), PRESETS) == (
+        PRESETS["lossless"].config
+    )
+    assert song_config(settings, Path("music/a.mp3"), PRESETS) == config_for(settings)
+    assert own_styles_line(settings, _TWO, PRESETS) == (
+        "1 song with its own style (b: Lossless)"
+    )
+    assert "1 song with own style" in describe(settings)
+    assert not problems(settings, _TWO, PRESETS)
+
+
+def test_a_song_whose_style_is_gone_must_be_fixed_first() -> None:
+    settings = _settings("studio")
+    settings.song_styles[Path("music/b.mp3")] = "Deleted"
+
+    found = problems(settings, _TWO, PRESETS)
+    assert found == [
+        (
+            "sound",
+            "'b' uses the style 'Deleted', which no longer exists. "
+            "Choose another style for it.",
+        )
+    ]
+
+
+def test_many_own_styles_are_summed_up_briefly() -> None:
+    songs = [(Path(f"s{n}.mp3"), None) for n in range(5)]
+    settings = _settings("studio")
+    for song, _folder in songs:
+        settings.song_styles[song] = "voice"
+
+    line = own_styles_line(settings, songs, PRESETS)
+    assert line is not None and line.startswith("5 songs with their own style")
+    assert line.endswith(", and 2 more)")
+
+
+def test_built_in_style_names_are_shown_capitalised() -> None:
+    assert PRESETS["studio"].label == "Studio"
+    assert PRESETS["streaming"].label == "Streaming"
+    assert style_label("studio") == "Studio"
+    assert style_label("unknown") == "unknown"
+    # Only what people see changes; the names they type stay the same
+    assert "studio" in PRESETS and "Studio" not in PRESETS
+    assert review(_settings("streaming"))[0] == ("Style", "Streaming")
+    assert gui_words("Try --preset studio") == "Try the Studio style (Sound page)"
+
+
+# ------------------------------------------------------ creating a style
+
+
+@pytest.mark.parametrize("music", list(MUSIC_CHOICES.values()))
+def test_every_kind_of_music_makes_a_good_complete_style(music: str) -> None:
+    answers = suggested_answers(music)
+    config = guided_config(answers)
+
+    config.validate()
+    assert not style_check(config, suggested_description(answers))
+    assert config.intensity > 0
+    assert suggested_name(answers, []).endswith("Mix")
+
+
+def test_the_answers_turn_into_the_right_settings() -> None:
+    config = guided_config(
+        StyleAnswers(
+            music="calm",
+            movement="big",
+            speed="beat",
+            room="hall",
+            file_type="flac",
+            level="original",
+        )
+    )
+
+    assert config.intensity == 0.95 and config.beat_sync
+    assert config.ambience == 0.5
+    assert config.output_format == "flac" and config.bitrate is None
+    assert config.match_loudness and config.loudness_target is None
+    speakers = guided_config(StyleAnswers(place="speakers", movement="big"))
+    assert speakers.engine == "pan" and speakers.intensity <= 0.6
+
+
+def test_a_suggested_name_is_always_free() -> None:
+    answers = suggested_answers("calm")
+
+    assert suggested_name(answers, []) == "Calm Mix"
+    # Taken names count however they're written: CalmMix is Calm Mix
+    assert suggested_name(answers, ["CalmMix", "calm mix 2"]) == "Calm Mix 3"
+
+
+def test_the_quality_check_finds_weak_styles_and_can_fix_them() -> None:
+    config = dataclasses.replace(
+        PRESETS["studio"].config, intensity=0.0, ambience=0.9, loudness_target=None
+    )
+    notes = style_check(config, "")
+
+    assert [note.level for note in notes] == ["error", "warning", "warning", "tip"]
+    assert "no 8D effect" in notes[0].text
+    better = improved(config, notes)
+    assert better.intensity == 0.8 and better.ambience == 0.25
+    assert better.loudness_target == -14.0
+    assert [note.level for note in style_check(better, "why")] == []
+
+
+def test_improving_answers_follows_the_advice() -> None:
+    answers = StyleAnswers(level="natural")
+    notes = style_check(guided_config(answers), "x")
+
+    assert improve_answers(answers, notes).level == "apps"
+    assert not style_check(guided_config(improve_answers(answers, notes)), "x")
+
+
+def test_a_style_summary_is_plain_words() -> None:
+    text = style_summary(guided_config(suggested_answers("talk")))
+
+    assert "front" in text and "dry" in text
+    assert text.count("\n") == 5
+
+
+def test_the_song_files_themselves_get_honest_heads_ups() -> None:
+    good = AudioStreamInfo("flac", 2, 44100, 60.0, 900_000)
+    best_mp3 = AudioStreamInfo("mp3", 2, 44100, 60.0, 320_000)
+    small = AudioStreamInfo("mp3", 2, 44100, 60.0, 128_000)
+    memo = AudioStreamInfo("aac", 1, 16000, 30.0, 64_000)
+
+    assert not source_notes([("A", good), ("B", best_mp3)])
+    notes = source_notes([("Small", small), ("Memo", memo), ("A", good)])
+    assert len(notes) == 2
+    low, thin = notes[0], notes[1]
+    assert low.startswith("2 songs are low-quality files (Small, Memo)")
+    assert "use a better copy" in low
+    assert thin.startswith("1 song is a low-detail recording (Memo)")
+    many = source_notes([(f"S{n}", small) for n in range(4)])[0]
+    assert "(S0, S1 and others)" in many

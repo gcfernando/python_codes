@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """The `audio8d` command-line tool."""
 
 import argparse
@@ -17,8 +17,15 @@ if __name__ == "__main__" and not __package__:
 
 # pylint: disable=wrong-import-position
 from . import __version__, display, guided, hints, launcher
-from .batch import BatchItem, default_jobs, progress_tracker, run_batch
+from .batch import (
+    BatchItem,
+    BatchOutcome,
+    default_jobs,
+    progress_tracker,
+    run_batch,
+)
 from .core.errors import Audio8DError, InputValidationError
+from .core.locations import presets_file
 from .core.presets import Preset
 from .core.settings import (
     EffectConfig,
@@ -202,7 +209,7 @@ def _batch_display(
 ) -> tuple[
     display.BatchBar,
     Callable[[int, str, float], None],
-    Callable[[int, object], None],
+    Callable[[int, BatchOutcome], None],
 ]:
     """The overall bar plus the two callbacks that keep it up to date."""
     stages = stages_for(plan.options)
@@ -215,7 +222,7 @@ def _batch_display(
         update(index, stage, share)
         progress_bar.draw(overall())
 
-    def on_done(_index: int, outcome: object) -> None:
+    def on_done(_index: int, outcome: BatchOutcome) -> None:
         """Print the finished song's line above the bar."""
         number = progress_bar.finished + 1
         progress_bar.song_line(display.batch_line(painter, number, count, outcome))
@@ -385,7 +392,8 @@ def _save_preset(args: argparse.Namespace, config: EffectConfig) -> int:
     """Save the typed settings as a named style and say where."""
     painter = display.Painter(sys.stderr)
     try:
-        where = save_user_preset(
+        # Names become PascalCase ('party mix' -> 'PartyMix'), and never replace one
+        name = save_user_preset(
             args.save_preset,
             config,
             based_on=args.preset or "classic",
@@ -396,10 +404,10 @@ def _save_preset(args: argparse.Namespace, config: EffectConfig) -> int:
         return 1
     painter.line(
         "  "
-        + painter.paint(f"Saved your style '{args.save_preset}'", "bold", "green")
-        + painter.paint(f" in {where}", "green")
+        + painter.paint(f"Saved your style '{name}'", "bold", "green")
+        + painter.paint(f" in {presets_file()}", "green")
     )
-    painter.line(f'  Use it with: audio8d "My Song.mp3" --preset {args.save_preset}')
+    painter.line(f'  Use it with: audio8d "My Song.mp3" --preset {name}')
     return 0
 
 

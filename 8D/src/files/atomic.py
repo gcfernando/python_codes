@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Write-then-publish helpers so a half-encoded file is never visible."""
 
 import os

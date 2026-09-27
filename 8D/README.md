@@ -1,4 +1,4 @@
-<!-- Developed by Gehan Fernando -->
+<!-- Developed by ::> Gehan Fernando -->
 <div align="center">
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:00d4ff,50:7b2ff7,100:ff4fd8&height=220&section=header&text=Audio8D&fontSize=80&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Make%20your%20music%20fly%20around%20your%20head&descAlignY=60&descSize=20" alt="Audio8D banner" width="100%"/>
@@ -17,7 +17,7 @@
 <p>
 <img src="https://img.shields.io/badge/makes-MP3%20%7C%20FLAC%20%7C%20WAV%20%7C%20M4A%20%7C%20Opus-FF6F00?style=flat-square" alt="Makes MP3, FLAC, WAV, M4A and Opus"/>
 <img src="https://img.shields.io/badge/also%20runs%20on-macOS%20%7C%20Linux-555?style=flat-square" alt="Also runs on macOS and Linux"/>
-<img src="https://img.shields.io/badge/tests-399%20passing-2EA44F?style=flat-square" alt="399 tests passing"/>
+<img src="https://img.shields.io/badge/tests-499%20passing-2EA44F?style=flat-square" alt="499 tests passing"/>
 <img src="https://img.shields.io/badge/FFmpeg-inside-007808?style=flat-square&logo=ffmpeg&logoColor=white" alt="FFmpeg inside"/>
 </p>
 
@@ -96,7 +96,7 @@ Your brain works out where a sound comes from using **three clues**. Audio8D giv
 It also keeps the **bass and drums in the middle** (like a real record, so the beat stays steady), adds a little natural **room sound** so the music feels *outside* your head, and makes sure nothing ends up too loud or crackly. ✨
 
 > [!NOTE]
-> "8D" is just a fun name: there are **not** eight of anything. The trick uses your **two** ears. The first version of Audio8D only used the loudness clue, so the sound bounced left and right. Audio8D 2.0.0 uses all three clues, so the sound goes **around** you and **behind** you. The old sound is still there as the [`retro` style](#-all-the-ready-made-styles).
+> "8D" is just a fun name: there are **not** eight of anything. The trick uses your **two** ears. The first version of Audio8D only used the loudness clue, so the sound bounced left and right. Audio8D 2.0.0 uses all three clues, so the sound goes **around** you and **behind** you. The old sound is still there as the [**Retro** style](#-all-the-ready-made-styles).
 
 ---
 
@@ -114,7 +114,9 @@ It also keeps the **bass and drums in the middle** (like a real record, so the b
 - 🎧 **Preview** a short sample, or hear an **A/B compare** (before and after)
 - 📊 A **progress bar for every song**, then its **measured result**
 - ⏹️ **Stop** at any time; finished songs are kept
-- 💾 Save your favourite settings as **your own styles**
+- 🎚️ **One style for all songs, or a different style for any song**
+- ✨ **Create your own styles** with a few simple questions and a built-in quality check
+- 📤 **Export and import** your styles to share them
 - 🌗 Light or dark look, and bigger or smaller text
 
 </td>
@@ -123,7 +125,7 @@ It also keeps the **bass and drums in the middle** (like a real record, so the b
 **🎵 Great sound, safe files**
 - 🧠 A real **3D effect** that goes around and behind you
 - 🥁 **Bass stays in the middle**, like every professional record
-- 🎨 **15 ready-made styles**, from gentle to wild, plus your own
+- 🎨 **14 ready-made styles**, from gentle to wild, plus your own
 - 🥁 Can **spin in time with the beat** of the song
 - 🔊 Can make songs **as loud as Spotify and YouTube**
 - 📚 Converts **whole folders**, several songs at once
@@ -439,14 +441,14 @@ flowchart LR
   <img src="docs/images/gui-songs.png" alt="Step 1 with five songs on the list: City Lights, Morning Drive, Thunder Road, Wild Horses and Sunset Boulevard. Each row shows the folder it came from, whether it is MP3 or FLAC, and its length. Morning Drive has a purple outline because it was clicked. The heading says 5 songs ready." width="100%"/>
 </p>
 
-**2️⃣ Press Next: choose the sound.** The **studio** style is already chosen; it's the best one for most music. Press **Next: output options**.
+**2️⃣ Press Next: choose the sound.** The **Studio** style is already chosen; it's the best one for most music. Press **Next: output options**.
 
 **3️⃣ Output options.** The best choices are already selected: an MP3 file, as loud as Spotify, saved next to your original song. Press **Next: review and convert**.
 
 **4️⃣ Review and convert.** You see a summary of your choices and a purple note saying *Everything is ready*. Press **▶ Start converting**.
 
 <p align="center">
-  <img src="docs/images/gui-review.png" alt="Step 4: the Your choices card lists 5 songs, the studio style, 3D sound circling clockwise, 8 seconds per circle, movement 0.80, bass in the middle below 120 Hz, room 0.25, 320 kbps MP3, loudness -14 LUFS, and more. Below it, a purple note says Everything is ready. Press Start converting when you are." width="100%"/>
+  <img src="docs/images/gui-review.png" alt="Step 4: the Your choices card lists 5 songs, the Studio style, 3D sound circling clockwise, 8 seconds per circle, movement 0.80, bass in the middle below 120 Hz, room 0.25, 320 kbps MP3, loudness -14 LUFS, and more. Below it, a purple note says Everything is ready. Press Start converting when you are." width="100%"/>
 </p>
 
 **5️⃣ Wait a few seconds.** Each song gets a row with a progress bar. When all are finished, a message pops up:
@@ -475,7 +477,7 @@ This part explains the pieces that appear all over the window. Once you know the
 | **2 Sound** | Step 2: pick a style and fine-tune the sound | <kbd>Ctrl</kbd>+<kbd>2</kbd> |
 | **3 Output** | Step 3: file type, loudness, where to save | <kbd>Ctrl</kbd>+<kbd>3</kbd> |
 | **4 Review & convert** | Step 4: check, try a preview, start | <kbd>Ctrl</kbd>+<kbd>4</kbd> |
-| **Your styles** | Save and manage your own styles | <kbd>Ctrl</kbd>+<kbd>5</kbd> |
+| **Your styles** | Create, save, rename, share and manage your own styles | <kbd>Ctrl</kbd>+<kbd>5</kbd> |
 | **Settings** | Look of the window, helpers, about | <kbd>Ctrl</kbd>+<kbd>6</kbd> |
 
 You don't have to go in order: click any button at any time. The bottom of the sidebar shows the version (**v2.0.0**) and the author.
@@ -522,6 +524,7 @@ The strip along the bottom of the window has three parts:
 | **MP3** (or FLAC, WAV, M4A, OPUS) | The type of file that will be made | Step 3 |
 | **-14 LUFS** (or *original loudness*) | How loud the new songs will be. Missing when loudness is left natural | Step 3 |
 | **speaker-safe** (only when on) | *Safe for speakers too* is switched on | Step 2 |
+| **2 songs with own style** (only when some have one) | How many songs use a style of their own | Step 2, card 4 |
 | **→ next to originals** (or a folder name) | Where the new songs will be saved | Step 3 |
 
 If a setting has a mistake, the summary says *some settings need fixing (see step 4)*.
@@ -531,7 +534,7 @@ If a setting has a mistake, the summary says *some settings need fixing (see ste
 Sometimes a small box with a coloured border appears in the right-hand corner of the status bar for about **4 seconds**, then disappears by itself. It replaces the summary for that moment and never covers a button:
 
 - **Green** ✔: something worked (*Added 5 songs*, *Preview ready: …*).
-- **Purple** ℹ: for your information (*Style: studio*).
+- **Purple** ℹ: for your information (*Style: Studio*).
 - **Red** ✖: something needs your attention (*Add a song first (step 1)*).
 
 <p align="center">
@@ -542,7 +545,7 @@ Sometimes a small box with a coloured border appears in the right-hand corner of
 ### 🪟 The window itself
 
 - It opens at a comfortable size and you can **resize** or **maximise** it like any window (it won't get smaller than 1100 × 720, so nothing gets squashed). Nothing ever overlaps, at any size.
-- **Audio8D doesn't remember your choices** after you close it. Each time it opens, it starts fresh with the **studio** style and the recommended settings. To keep settings you like, save them as [your own style](#-13-your-styles-page).
+- **Audio8D doesn't remember your choices** after you close it. Each time it opens, it starts fresh with the **Studio** style and the recommended settings. To keep settings you like, save them as [your own style](#-13-your-styles-page).
 - If you **close the window while it's working**, it asks first ([Stop and close?](#stop-and-close)).
 
 ### ⌨️ Keyboard shortcuts
@@ -651,25 +654,25 @@ When you're happy with the list, press **Next: choose the sound**.
 **What it's for:** deciding how the 8D effect sounds.
 **Where:** **2 Sound** in the sidebar.
 
-The page has three cards, from simplest to most detailed: **1. Pick a style**, **2. The essentials** and **3. Advanced sound**. Most people only ever use the first one.
+The page has four cards: **1. Pick a style for all songs**, **2. The essentials**, **3. Advanced sound**, and **4. A different style for some songs**. Most people only ever use the first one.
 
-### 🎨 9.1 Pick a style
+### 🎨 9.1 Pick a style for all songs
 
-A **style** is a ready-made set of settings with a name. **studio ★ best** is chosen when the window opens.
+A **style** is a ready-made set of settings with a name. The style you click here is used for **every song** on the list (unless you give a song [its own style](#-94-a-different-style-for-some-songs)). **Studio ★ best** is chosen when the window opens.
 
 <p align="center">
-  <img src="docs/images/gui-sound.png" alt="Step 2, Choose the sound. The card 1. Pick a style shows a grid of style cards three to a row: studio (marked best, with a purple outline because it is chosen), streaming, lossless, hifi, classic, groove, smooth, strong, spacious, sky, voice, whirlwind, speakers, retro, and a saved style called party-mix marked yours. Each card has a purple line such as 3D · Circle · MP3 · -14 LUFS and a short description." width="100%"/>
+  <img src="docs/images/gui-sound.png" alt="Step 2, Choose the sound. The card 1. Pick a style for all songs says: Click a card: every song gets this style. To give one song a different style, use card 4 below. Below is a grid of style cards three to a row: Studio (marked best, with a purple outline because it is chosen), Streaming, Lossless, Hifi, Classic, Groove, Smooth, Strong, Spacious, Sky, Voice, Whirlwind, Speakers, Retro, and a saved style called Party Mix marked yours. Each card has a purple line such as 3D · Circle · MP3 · -14 LUFS and a short description." width="100%"/>
 </p>
 
 **Each style card shows:**
 
 | Part | Example | Meaning |
 |---|---|---|
-| **Name** | **studio ★ best** | The style's name. **★ best** marks the recommended one; **(yours)** marks [a style you saved](#-13-your-styles-page) |
+| **Name** | **Studio ★ best** | The style's name. **★ best** marks the recommended one; **(yours)** marks [a style you saved](#-13-your-styles-page) |
 | **Purple line** | *3D · Circle · MP3 · -14 LUFS* | The engine (3D or Panning), the route (Circle, Front arc, Figure-8, Wander), the file type, **beat** if it follows the beat, and the loudness goal if it has one |
 | **Description** | *Best of best: 3D sound, 320 kbps…* | What it's good for |
 
-**To choose a style: click its card.** It gets a purple outline and a notice says, for example, *Style: groove*.
+**To choose a style: click its card.** It gets a purple outline and a notice says, for example, *Style: Groove*.
 
 > [!NOTE]
 > Clicking a style sets **every** sound setting and the file type and loudness to that style's values. It also switches *Safe for speakers too* off. It doesn't change your songs, where they're saved, or what happens to the originals.
@@ -678,20 +681,20 @@ A **style** is a ready-made set of settings with a name. **studio ★ best** is 
 
 | Style | Great for |
 |---|---|
-| **studio** ★ | **Everything.** The best overall choice |
-| **streaming** | Playlists where every song must be exactly as loud as the others |
-| **lossless** | Saving as FLAC so nothing at all is lost |
-| **hifi** | The most faithful copy: FLAC, the song's own loudness, gentle 3D |
-| **classic** | The everyday default (what you get if you pick nothing) |
-| **groove** | Dance, pop, hip-hop: loops round each ear **in time with the beat** |
-| **smooth** | Slow and relaxed: lo-fi, acoustic, background |
-| **strong** | Big, obvious movement: pop, EDM, "8D video" feel |
-| **spacious** | Roomy and atmospheric: slow songs, film music |
-| **sky** | Drifts up over your head and back: chill, ambient |
-| **voice** | Gentle and dry: podcasts, audiobooks, meditation |
-| **whirlwind** | Very fast spin: short clips and ringtones |
-| **speakers** | Speakers and car stereos, not just headphones |
-| **retro** | The old left-right ping-pong sound of the first Audio8D |
+| **Studio** ★ | **Everything.** The best overall choice |
+| **Streaming** | Playlists where every song must be exactly as loud as the others |
+| **Lossless** | Saving as FLAC so nothing at all is lost |
+| **Hifi** | The most faithful copy: FLAC, the song's own loudness, gentle 3D |
+| **Classic** | The everyday default (what you get if you pick nothing) |
+| **Groove** | Dance, pop, hip-hop: loops round each ear **in time with the beat** |
+| **Smooth** | Slow and relaxed: lo-fi, acoustic, background |
+| **Strong** | Big, obvious movement: pop, EDM, "8D video" feel |
+| **Spacious** | Roomy and atmospheric: slow songs, film music |
+| **Sky** | Drifts up over your head and back: chill, ambient |
+| **Voice** | Gentle and dry: podcasts, audiobooks, meditation |
+| **Whirlwind** | Very fast spin: short clips and ringtones |
+| **Speakers** | Speakers and car stereos, not just headphones |
+| **Retro** | The old left-right ping-pong sound of the first Audio8D |
 
 All the exact values are in [part 16](#-all-the-ready-made-styles).
 
@@ -700,10 +703,10 @@ All the exact values are in [part 16](#-all-the-ready-made-styles).
 The three settings that change the sound the most.
 
 <p align="center">
-  <img src="docs/images/gui-sound-essentials.png" alt="The card 2. The essentials. A purple label says Style: studio. Below are three sliders: Movement at 0.80, Spin speed at 8 s, and Room at 0.25, each with a line of help giving the recommended value. Under it is the folded card 3. Advanced sound with a Show button, and the Back and Next: output options buttons." width="100%"/>
+  <img src="docs/images/gui-sound-essentials.png" alt="The card 2. The essentials. A purple label says Style: Studio. Below are three sliders: Movement at 0.80, Spin speed at 8 s and Room at 0.25, each with a line of help giving the recommended value. Under it is the folded card 3. Advanced sound with a Show button." width="100%"/>
 </p>
 
-At the top, a purple label shows the chosen style, for example **Style: studio**. As soon as you change anything, it says **Style: studio (changed by you)**. To undo your changes, use **Back to the style** in the Advanced card, or simply click the style card again.
+At the top, a purple label shows the chosen style, for example **Style: Studio**. As soon as you change anything, it says **Style: Studio (changed by you)**. To undo your changes, use **Back to the style** in the Advanced card, or simply click the style card again.
 
 #### 💪 Movement: how FAR the music travels
 
@@ -846,20 +849,44 @@ While it's on, **Sound engine** is greyed out, and the summary in the status bar
 
 The button at the bottom of the card. It **undoes every change** you made on this page and goes back to the chosen style's own values.
 
+### 🎼 9.4 A different style for some songs
+
+**What it's for:** giving one or more songs a different style from the rest. For example, a playlist in **Studio**, but the podcast episode in **Voice**, or one song kept lossless in **Lossless**.
+
+**Where:** card **4. A different style for some songs**, at the bottom of step 2. Press **⌄ Show** to open it.
+
+<p align="center">
+  <img src="docs/images/gui-sound-own.png" alt="The card 4. A different style for some songs, open. Its explanation says every song uses the style above unless you pick another one here, and that a song with its own style uses it exactly as it is, including its file type and loudness. A line says 2 of 5 songs have their own style; the others use the style above, next to a button All songs use the style above. Below, each song has a row with a menu: City Lights, Thunder Road and Sunset Boulevard say Same as all songs; Morning Drive says Lossless; Wild Horses says Night Drive (yours)." width="100%"/>
+</p>
+
+**How it works:**
+
+- Every song starts on **Same as all songs**: it uses the style from card 1, with your changes from cards 2 and 3 and from step 3. **This is exactly how Audio8D always worked**, so if you never open this card, nothing changes.
+- To give a song its own style, open its menu and pick one: every built-in style (**Studio**, **Streaming**, **Lossless**…) and every style of yours (marked **(yours)**).
+- **A song with its own style uses that style exactly as it is**, including **its file type and loudness**. The changes you make on cards 2 and 3, and the file type and loudness on step 3, apply to the songs that use the style for all songs. (So a song set to **Lossless** is saved as FLAC while the others are MP3.) Everything else on step 3 applies to every song: where they're saved, the names, the originals, trimming and so on.
+- You can change a song's style as often as you like, before or after changing the style for all songs. To undo one song, pick **Same as all songs** again; to undo them all, press **All songs use the style above**.
+- The line at the top says how many songs have their own style. The same count appears in the status-bar summary (*1 song with own style*), and step 4 lists them on an **Own styles** line.
+- **Preview** and **A/B compare** on step 4 use the chosen song's own style when it has one.
+- Long lists show 25 songs at a time, with a **Show 25 more** button, like step 1. Taking a song off the list forgets its own style.
+- If a style you gave a song is **deleted** on *Your styles*, that song goes back to the style for all songs (a notice says so). If it's **renamed**, the song keeps it under its new name.
+
+> [!NOTE]
+> Songs' own styles are part of the list you're working on: like the other choices, they are not remembered after you close Audio8D. Your saved styles themselves are always kept.
+
 ### 🔁 Not quite right? Quick fixes for the sound
 
 Change **one** thing, then use **Preview** on step 4 to hear it:
 
 | It sounds… | Try this |
 |---|---|
-| 😵 Too strong or dizzy | The **smooth** style, or lower **Movement** |
+| 😵 Too strong or dizzy | The **Smooth** style, or lower **Movement** |
 | 🐌 Spinning too fast for a slow song | Raise **Spin speed** to 12 |
-| 🥁 Not in time with the beat | Switch on **Spin in time with the beat**, or pick the **groove** style |
+| 🥁 Not in time with the beat | Switch on **Spin in time with the beat**, or pick the **Groove** style |
 | 😐 Hardly moving | Raise **Movement** to 0.95, and check you're wearing headphones |
 | 🌫️ Too echoey | Lower **Room** to 0.15 |
 | 🎤 The voice moves too much | **Keep the singer in the middle** (needs Demucs) |
 | 🔉 Quieter than my other songs | Step 3: **Loudness → Spotify / YouTube (-14)** |
-| 🚗 Sounds odd in my car | Switch on **Safe for speakers too**, or pick the **speakers** style |
+| 🚗 Sounds odd in my car | Switch on **Safe for speakers too**, or pick the **Speakers** style |
 
 Press **Next: output options** to continue.
 
@@ -970,13 +997,14 @@ The page has five parts, from top to bottom: **Your choices**, the **notes**, **
 A plain-words summary of everything, so you can check it at a glance:
 
 <p align="center">
-  <img src="docs/images/gui-review.png" alt="The Your choices card: Songs 5 songs; Style studio; Sound 3D, circles your head, clockwise; Spin 8 s per full circle; Movement 0.80 (strong); Bass stays in the middle below 120 Hz; Room 0.25 (subtle room); File type 320 kbps CBR; Loudness -14 LUFS goal; Peak roof 0.84; Extras eases in/out over 3 s; Save in the Music 8D folder; New names '<song> (8D)'; Originals kept as they are; Files album art kept, (8D) added to titles, each song checked; Speed 4 songs at once. A purple note says Everything is ready." width="100%"/>
+  <img src="docs/images/gui-review.png" alt="Step 4: the Your choices card lists 5 songs, the Studio style, 3D sound circling clockwise, 8 seconds per circle, movement 0.80, bass in the middle below 120 Hz, room 0.25, 320 kbps MP3, loudness -14 LUFS, and more. Below it, a purple note says Everything is ready. Press Start converting when you are." width="100%"/>
 </p>
 
 | Line | Shows |
 |---|---|
 | **Songs** | How many songs are on the list |
-| **Style** | The chosen style |
+| **Own styles** (only when some songs have one) | Which songs have a style of their own, e.g. *1 song with its own style (Morning Drive: Lossless)* |
+| **Style** | The style for all songs |
 | **Sound** · **Spin** · **Movement** · **Bass** · **Room** | The sound settings from step 2, in words |
 | **File type** · **Loudness** · **Peak roof** | The file settings from step 3 |
 | **Extras** | Anything extra: easing in and out, height, changes over time, the singer kept in the middle, a trimmed part |
@@ -1006,6 +1034,17 @@ Under the summary, coloured notes tell you whether you're ready:
 </p>
 <p align="center"><sub>☝️ A yellow note: a heads-up that the originals will go to the Recycle Bin. You can still start.</sub></p>
 
+**Heads-ups about the song files themselves.** Once Audio8D has read your songs, step 4 also tells you if any of them will hold the result back, because an 8D version can never sound better than the file it's made from:
+
+- *2 songs are low-quality files (Track 01, Track 02), under 192 kbps. The 8D version can't sound better than the file you give it: use a better copy (FLAC, WAV or a 320 kbps MP3) if you have one.*
+- *1 song is a low-detail recording (Voice Memo), like a phone or voice memo. Audio8D raises it so the 3D effect works, but it can't add the missing high notes.*
+
+These are yellow: you can still start, but if you have a better copy of the song, use it.
+
+<p align="center">
+  <img src="docs/images/gui-review-source.png" alt="Step 4 after adding a folder of 31 songs. A yellow note at the top says 30 songs are low-quality files (Track 01, Track 02 and others), under 192 kbps. The 8D version can't sound better than the file you give it: use a better copy (FLAC, WAV or a 320 kbps MP3) if you have one. Below it, the purple note says Everything is ready." width="100%"/>
+</p>
+
 All the possible notes are listed in [part 15](#-red-and-yellow-notes-on-step-4).
 
 ### 🎧 Try it, then make it
@@ -1016,7 +1055,7 @@ This card holds the main buttons:
 |---|---|
 | **Preview length** | How long a preview is: 10 to 60 seconds (normally **30 s**) |
 | **Preview and A/B use: …** | Names the song used for Preview and A/B compare. To use another song, click it on step 1 |
-| 🎧 **Preview** (<kbd>Ctrl</kbd>+<kbd>P</kbd>) | Makes a short 8D sample from the **loudest part** of the chosen song (usually the chorus), with your current settings, and plays it in your music player. It takes a few seconds. The sample is saved next to the song as **`<song> (8D preview)`** and replaced each time you make a new one |
+| 🎧 **Preview** (<kbd>Ctrl</kbd>+<kbd>P</kbd>) | Makes a short 8D sample from the **loudest part** of the chosen song (usually the chorus), with its style (its own, if it has one), and plays it in your music player. It takes a few seconds. The sample is saved next to the song as **`<song> (8D preview)`** and replaced each time you make a new one |
 | 🔀 **A/B compare** | Makes one file that plays **15 seconds of the original**, a short pause, then **the same 15 seconds in 8D**, both at the same loudness, so you hear only the effect. Saved next to the song as **`<song> (A-B compare).mp3`** and played straight away |
 | ⏹️ **Stop** (<kbd>Esc</kbd>) | **Red only while something is running**; otherwise it's a grey outline and does nothing. Stops after the current step: finished songs are kept, and the half-made file is cleaned up |
 | ▶️ **Start converting** (<kbd>Ctrl</kbd>+<kbd>Enter</kbd>) | Makes the 8D version of **every song on the list**. Greyed out while there's a red note or while something is running |
@@ -1122,11 +1161,23 @@ For even more detail, switch on **Settings → Show technical details**.
 | What you hear | What it means | What to do |
 |---|---|---|
 | 😍 Smooth movement, clear voice, steady beat | **Perfect!** | Enjoy! |
-| 😵 Too much, dizzy | Too strong or too fast | Lower **Movement**, raise **Spin speed**, or use **smooth** |
+| 😵 Too much, dizzy | Too strong or too fast | Lower **Movement**, raise **Spin speed**, or use **Smooth** |
 | 🌫️ Echoey or muddy | Too much room sound | Lower **Room** |
 | 😐 Hardly moving | Maybe not on headphones | Use headphones, then raise **Movement** |
 | 🎤 The voice wanders too much | The whole song moves | **Keep the singer in the middle** |
 | 🥁 Movement fights the rhythm | The spin isn't in time | **Spin in time with the beat** |
+
+### ✅ The best-sound checklist
+
+Audio8D already chooses good settings and warns you about weak ones. These five things make the biggest difference to the result:
+
+| | Do this | Why |
+|:---:|---|---|
+| 1️⃣ | **Start from the best copy of the song** you have: FLAC or WAV, or at least a 320 kbps MP3 | An 8D song can't be better than its source. Step 4 warns you about low-quality files |
+| 2️⃣ | **Use the Studio style** (or Lossless / Hifi), unless you have a reason not to | They follow the standards music apps use |
+| 3️⃣ | **Try a Preview or A/B compare** before converting a whole folder | You hear the result in seconds, and can change one thing at a time |
+| 4️⃣ | **Keep the yellow notes in mind** on step 4 (and the quality check when you create a style) | Each one says what may not sound its best, and what to do |
+| 5️⃣ | **Listen on headphones**, left on your left ear | The effect is made for two ears; on speakers use *Safe for speakers too* |
 
 ### 🏷️ What your new song has
 
@@ -1153,42 +1204,162 @@ If a row says **weak on one speaker**, the song may sound thin on a single speak
 
 ## 💾 13. Your styles page
 
-**What it's for:** saving settings you love under a name, so you can use them again with one click.
+**What it's for:** making styles of your own, and keeping, renaming, copying, sharing and removing them.
 **Where:** **Your styles** in the sidebar (<kbd>Ctrl</kbd>+<kbd>5</kbd>).
 
+Your styles work exactly like the built-in ones: they appear as cards on step 2 (marked **(yours)**), and in every song's menu in [card 4](#-94-a-different-style-for-some-songs), so you can use them for all songs or just some. They're kept on this computer and are still there next time you open Audio8D.
+
+The page has three cards, from top to bottom: **Create your own style**, **Or save your current settings**, and **Saved styles**.
+
+### ✨ Create your own style (the guided way)
+
+You don't need to know anything about sound: you answer a few simple questions, and Audio8D turns your answers into the right settings, checks them, suggests a name and a description, and lets you try the result before you save.
+
 <p align="center">
-  <img src="docs/images/gui-styles.png" alt="The Your styles page. The card Save the current settings has a Name box (example: party-mix), a Description box (example: big figure-8 for parties) and a purple Save style button. The card Saved styles says where the styles are stored and lists party-mix (big figure-8 for parties) and night-drive (slow and floating, for late nights), each with a star, a purple Use button and a Delete button." width="100%"/>
+  <img src="docs/images/gui-styles.png" alt="The top of the Your styles page. The card Create your own style asks seven questions as rows of choice buttons: Music (Strong beat, Calm, Big and loud, Talking, A bit of everything), Movement (Gentle, Clear, Big), Speed (Slow, Normal, Fast, With the beat), Room (None, A little, A big hall), Listen on (Headphones, Speakers or a car too), File type (MP3, FLAC, M4A) and Loudness (Like music apps, Same as the song, Natural). Each has a line of help under it. Below are the Name box, filled in with the suggestion Everyday Mix and a green line It will be saved as Everyday Mix, and the Description box, filled in with All kinds of music: clear movement, normal spin, a little room, MP3." width="100%"/>
 </p>
 
-### 💾 Save the current settings
+**Step by step:**
 
-1. Set up the sound on step 2 and the file type and loudness on step 3 the way you like them.
-2. Open **Your styles**.
-3. Type a **Name**: short, using only a–z, 0–9, `-` and `_`, up to 24 characters (for example `party-mix`). You can't use the name of a built-in style.
-4. Optionally type a **Description**: a few words to remind you what it's for.
-5. Press **Save style**.
+1. **Music: what will you listen to?** Pick the closest: **Strong beat** (dance, pop, hip-hop), **Calm** (chill, acoustic, lo-fi), **Big and loud** (rock, EDM, film music), **Talking** (podcasts, audiobooks) or **A bit of everything**. This **fills in good answers for all the other questions**, so a beginner can simply press **Save style** now.
+2. **Change any answer you like** (every question explains its choices in the line under it):
 
-✅ **You should see:** a green line under the name, *Saved 'party-mix'. It's now on step 2 with the other styles.*, and a notice *Saved your style 'party-mix'*. Your style now appears on step 2 as a card marked **(yours)**, and it's selected.
+   | Question | Choices | What they mean |
+   |---|---|---|
+   | **Movement** | Gentle · **Clear** · Big | How far the music travels round your head: relaxing · the classic 8D feeling (recommended) · right into each ear |
+   | **Speed** | Slow · **Normal** · Fast · With the beat | One circle every 12 s · every 8 s (recommended) · every 5 s · in time with the song's beat |
+   | **Room** | None · **A little** · A big hall | No room sound (best for talking) · music feels around you (recommended) · spacious, but voices can blur |
+   | **Listen on** | **Headphones** · Speakers or a car too | Full 3D · a gentler version that sounds right everywhere |
+   | **File type** | **MP3** · FLAC · M4A | Plays everywhere, at the best MP3 quality · keeps every detail · for iPhone and iTunes |
+   | **Loudness** | **Like music apps** · Same as the song · Natural | As loud as Spotify and YouTube (recommended) · keeps each song's own loudness · can sound quieter |
 
-**What's saved:** every setting from steps 2 and 3 that shapes **the sound, the file type and the loudness**. Not saved: your songs, folders, file names, and what happens to originals. Saving again with the same name replaces the old version.
+3. **Name.** A free name is suggested for you (for example *Calm Mix*; if you already have one, *Calm Mix 2*). Type your own if you like, **in any form**: the line under the box shows what it will be saved as (see [style names](#-style-names) below).
+4. **Description.** One is written for you from your answers (for example *Calm music: gentle movement, slow spin, a little room, MP3*). Change it if you like; it's shown on the style's card.
+5. **Look at "Your style"** underneath: it describes in plain words what the style will do (sound, spin, movement, room, file and loudness).
+6. **Read the quality check** (see below).
+7. Press **🎧 Try it** to hear a short preview of the chosen song (step 1) with this style, before saving. It uses **only** these answers, so it works even if something on steps 2 or 3 still needs fixing.
+8. Press **💾 Save style**.
 
-**Mistakes are explained under the Name box**, for example *'studio' is a built-in style. Pick another name.*, *Use a-z, 0-9, - and _ only (up to 24 characters).* or *Type a name first.*
+✅ **You should see:** a green line under the name, *Saved 'Calm Mix'. It's now on step 2 with the other styles.*, and a notice *Saved your style 'Calm Mix'*. The new style is selected on step 2 for all songs, and the creator is ready for another style.
+
+#### ✅ The quality check
+
+As you answer, Audio8D checks the style the way a sound engineer would, and tells you if anything would make it weaker:
+
+<p align="center">
+  <img src="docs/images/gui-styles-check.png" alt="The lower part of the creator with Calm music and Natural loudness chosen. The name box holds the suggestion Calm Mix. The Your style box lists Sound 3D circles your head clockwise, Spin 12 s per full circle, Movement 0.60, Room 0.25, File 320 kbps MP3 and Loudness off. Under it, an orange warning says Your 8D song will be quieter than normal music. Below are the buttons Improve it for me, Try it and Save style, and the card Or save your current settings, whose name box shows the example Party Mix." width="100%"/>
+</p>
+
+| You see | Means |
+|---|---|
+| ✔ *Quality check: this style looks good.* (green) | Nothing to improve |
+| ⚠ An orange line, e.g. *Your 8D song will be quieter than normal music.* | Something may not sound its best. **Improve it for me** changes the answers to follow the advice |
+| ✖ A red line, e.g. *This style doesn't move the music at all, so there would be no 8D effect.* | The style can't be saved like this |
+| ℹ *Add a few words to the description so you remember its use.* | A friendly tip; it doesn't stop you saving |
+
+If you press **Save style** while an orange warning is showing, Audio8D asks first:
+
+<p align="center"><img src="docs/images/gui-dialog-save-check.png" alt="The Save it as it is? message with a yellow warning sign: The quality check found something that may not sound its best: Your 8D song will be quieter than normal music. Improve and save follows the advice for you. Buttons: Go back, Save as it is, Improve and save." width="70%"/></p>
+
+**Go back** returns without saving · **Save as it is** saves it anyway · **Improve and save** follows the advice, then saves.
+
+### 💾 Or save your current settings
+
+The quick way when you've already set everything up on steps 2 and 3:
+
+1. Set up the sound on step 2 and the file type and loudness on step 3.
+2. Open **Your styles**, type a **Name** (in any form) and optionally a **Description**.
+3. Press **Save style**.
+
+**What's saved:** every setting from steps 2 and 3 that shapes **the sound, the file type and the loudness**, including *Safe for speakers too*. Not saved: your songs, folders, file names, what happens to originals, and the songs' own styles. The same quality check runs, and the same **Save it as it is?** question appears if there's a warning. If a setting on steps 2 or 3 has a mistake, the line under the name says *Fix the settings first: …*.
+
+### 🔤 Style names
+
+Every style of yours has a **unique name made of words that each start with a capital letter** (PascalCase). You choose whether the words are **kept apart by spaces** or **joined**: **Example Custom Name** and **ExampleCustomName** are both fine.
+
+- **Type it any way you like; Audio8D tidies it up:**
+
+  | You type | It's saved as |
+  |---|---|
+  | `example custom name` | **Example Custom Name** |
+  | `Example   custom Name` (extra spaces) | **Example Custom Name** |
+  | `ExampleCustomName` | **ExampleCustomName** |
+  | `exampleCustomName` | **ExampleCustomName** |
+  | `example_custom_name` or `example-custom-name` | **ExampleCustomName** (underscores and hyphens join the words) |
+  | `party mix 2` | **Party Mix 2** |
+
+- The line under every name box shows what it will be saved as (*It will be saved as Example Custom Name.*) or exactly why it can't be:
+
+| Message | Why | Fix |
+|---|---|---|
+| *You already have a style called 'Party Mix'; pick another name.* | Names must be unique. Spaces, letter case and separators don't count, so *PartyMix*, *party mix* and *PARTY-MIX* are all the same name as *Party Mix* | Choose another name, e.g. Party Mix 2 |
+| *'Studio' is a built-in style; pick another name for your own style.* | Built-in names are taken | Choose another name |
+| *Style names start with a letter ('2 Night' starts with a number).* | A name must begin with a letter (numbers are fine later on) | e.g. Night 2 |
+| *'…' is too long: style names have at most 40 letters, numbers and spaces.* | Too long | Use fewer words |
+| *Type a name for the style, e.g. Sunset Drive* | The box is empty, or holds only symbols | Type a name |
+
+Audio8D **never** replaces, merges or quietly renames a style: saving, renaming, copying and importing all refuse a name that's already taken, and nothing is changed until you choose a free one. (Styles saved by an older version with names like `party-mix` keep working; their names count as taken, and you can tidy them with **Rename**.)
 
 ### 📂 Saved styles
 
-This card lists your styles, each with its name and description, and says which file they're stored in. Each has two buttons:
+<p align="center">
+  <img src="docs/images/gui-styles-saved.png" alt="The Saved styles card. It says where the styles are stored and 2 saved styles, with an Import a style button on the right. Below are two styles, Party Mix (big figure-8 for parties) and Night Drive (slow and floating, for late nights), each with a star and a row of buttons: Use, Rename, Duplicate, Export and Delete." width="100%"/>
+</p>
+
+The card says which file your styles are stored in, and how many you have. Each style shows its name and description, and five buttons:
 
 | Button | What it does |
 |---|---|
-| **Use** | Chooses that style and takes you to step 2 |
-| **Delete** | Removes it, after asking you to confirm ([Delete this style?](#delete-this-style)). Songs you made with it are not touched |
+| **Use** | Chooses that style for all songs and takes you to step 2 |
+| **Rename** | Asks for a new name ([the name window](#the-name-window)). Songs on your list that use the style keep using it under its new name |
+| **Duplicate** | Makes a copy under a new name (a free name like *Party Mix Copy* is suggested), handy for trying a variation |
+| **Export** | Saves the style to a file (for example `Party Mix.json`) that you can keep as a backup or give to someone else |
+| **Delete** | Removes it, after asking ([Delete this style?](#delete-this-style)). Songs you made with it are not touched; songs on the list that used it go back to the style for all songs |
 
-If you have no saved styles yet, it says *No saved styles yet.*
+**Import a style…** (top right) adds a style from a file exported by Audio8D: see below.
+
+If you have no saved styles yet, it says *No saved styles yet. Create one above, or import a style file.*
+
+### 📤 Export and 📥 import
+
+**To share a style:** press **Export** on it, choose where to save the file, and send the file to someone (by e-mail, a USB stick…). The file holds **every** setting of the style, so it sounds exactly the same on their computer.
+
+**To add a style from a file:**
+
+1. Press **Import a style…** and choose the file.
+2. Audio8D **checks the whole file first**: that it really is an Audio8D style file, of a version it understands, with every setting present, of the right kind, and within the allowed range. If anything is wrong, it says exactly what, **and nothing is changed** (see [import messages](#-import-messages)).
+3. If the file passes, the name window asks what to call it. The file's own name is suggested, but you can type any name you like. **If you already have a style with that name, the box turns red and Import stays off until you choose a free name**, so an existing style can never be overwritten:
+
+<p align="center"><img src="docs/images/gui-dialog-import.png" alt="The Import a style window: 'Party Mix' (big figure-8 for parties) passed every check. Choose its name: it can't be the name of a style you already have. The name box holds Party Mix with a red border, and a red line says You already have a style called 'Party Mix'; pick another name. The Import button is greyed out; Cancel is available." width="70%"/></p>
+
+4. Press **Import**. A notice says *Imported 'Party Mix 2'*, and the style is on step 2 and in the song menus straight away.
+
+#### The name window
+
+Rename, Duplicate and Import all use the same small window: a message, a name box, and a line underneath that says *It will be saved as …* in green, or exactly why the name can't be used in red. The main button (**Rename**, **Duplicate** or **Import**) only works when the name is valid; <kbd>Enter</kbd> does the same, and **Cancel** or <kbd>Esc</kbd> closes it without changing anything.
+
+#### What's inside a style file
+
+For the curious: a style file is a small, readable text file in **JSON** format, with a version number so future versions of Audio8D can read it:
+
+```json
+{
+  "format": "audio8d-style",
+  "version": 1,
+  "name": "Party Mix",
+  "description": "big figure-8 for parties",
+  "settings": {
+    "rotation_seconds": 8.0,
+    "intensity": 0.95,
+    "...": "every one of the 21 settings, nothing left out"
+  }
+}
+```
 
 > [!NOTE]
 > 📝 **Your styles live in one small text file**, `presets.toml` (on Windows in `%APPDATA%\Audio8D`). If that file ever gets a mistake (for example after editing it by hand), Audio8D says so when it opens (*Your saved styles couldn't be read: see Your styles*), and this card names the line to fix. The built-in styles keep working meanwhile. You can fix the line in any text editor, or delete the file to start again.
 
-💡 Styles saved here also work in the [terminal app](#-25-extra-the-terminal-app) (`--preset party-mix`), and styles saved there appear here.
+💡 Styles saved here also work in the [terminal app](#-25-extra-the-terminal-app) (`--preset "Party Mix"`, written any way: `--preset partymix` works too), and styles saved there appear here.
 
 ---
 
@@ -1263,8 +1434,10 @@ Audio8D talks to you in four places. Here is everything it can say, what it mean
 | ℹ *Skipped 2 song(s) that already have an 8D version* | Those songs were made before | Switch on **Replace 8D files that already exist** to make them again |
 | ✔ *Preview ready: My Song (8D preview).mp3* | The sample is made and starts playing | Listen with headphones |
 | ✔ *A/B file ready: original first, then 8D* | The comparison is made and starts playing | Listen for the change after the pause |
-| ℹ *Style: studio* | A style was chosen | Nothing |
-| ✔ *Saved your style 'party-mix'* / ℹ *Deleted 'party-mix'* | Your styles changed | Nothing |
+| ℹ *Style: Studio* | A style was chosen | Nothing |
+| ✔ *Saved your style 'Party Mix'* / *Imported 'Party Mix 2'* / *Renamed 'Party Mix' to 'Big Party'* / *Made 'Party Mix Copy', a copy of 'Party Mix'* / *Exported 'Party Mix' to Party Mix.json* | Your styles changed | Nothing |
+| ℹ *Deleted 'Party Mix'* (… *; 2 songs now use the style for all songs*) | A style was deleted, and any songs that used it went back to the style for all songs | Nothing |
+| ✔ *Improved: the answers now follow the advice* | **Improve it for me** changed the creator's answers | Check the new answers |
 | ✔ *Remembered measurements cleared* | The loudness memory was emptied | Nothing |
 | ✖ *Your saved styles couldn't be read: see Your styles* | The styles file has a mistake | Open **Your styles**; it names the line to fix |
 | ✖ *Could not clear the cache* / *The log folder can't be created* | Windows refused access to that folder | Close other copies of Audio8D and try again |
@@ -1276,6 +1449,7 @@ Audio8D talks to you in four places. Here is everything it can say, what it mean
 | Red note | How to fix it |
 |---|---|
 | *Add at least one song or folder first.* | Add songs on step 1 |
+| *'Morning Drive' uses the style 'X', which no longer exists. Choose another style for it.* | Pick another style for that song in card 4 of step 2 |
 | *A custom file name only works with exactly one song.* | Choose another **New file name**, or keep only one song |
 | *Type the custom file name, or choose another naming.* | Fill in the **Custom name** box |
 | *File names can't contain < > : " / \ \| ? \** | Remove those characters from the custom name |
@@ -1303,6 +1477,8 @@ Audio8D talks to you in four places. Here is everything it can say, what it mean
 | *The original songs will be moved to the Recycle Bin…* | Replacing originals | Choose **Keep them** if you'd rather |
 | *8D files that already exist will be replaced.* | *Replace 8D files that already exist* is on | Switch it off to skip them |
 | *Keeping the singer in the middle takes a minute or two per song.* | Singer switch on | Nothing; just be patient |
+| *2 songs are low-quality files (…), under 192 kbps…* | Some songs are MP3/AAC files below 192 kbps | Use a better copy (FLAC, WAV or a 320 kbps MP3) if you have one |
+| *1 song is a low-detail recording (…), like a phone or voice memo…* | A song is recorded below 32 kHz | Fine for speech; for music, find a better recording |
 
 🏆 **The studio style gives no yellow notes at all.**
 
@@ -1333,7 +1509,19 @@ Shown when a conversion finishes: see [When it's finished](#-when-its-finished).
 <p align="center"><img src="docs/images/gui-dialog-delete.png" alt="The Delete this style? message with a red bin icon: 'night-drive' will be removed from your saved styles. Songs you made with it are not touched. Buttons: Cancel and Delete." width="70%"/></p>
 
 **When:** you press **Delete** on *Your styles*.
-**Cancel** keeps the style. **Delete** removes it for good.
+**Cancel** keeps the style. **Delete** removes it for good. Songs you made with it aren't touched; songs on the list that used it go back to the style for all songs.
+
+#### Save it as it is?
+
+**When:** you save a style while the quality check shows a warning. See [the quality check](#-the-quality-check).
+
+#### Rename this style / Duplicate this style / Import a style
+
+**When:** you press **Rename**, **Duplicate** or **Import a style…** on *Your styles*. See [the name window](#the-name-window).
+
+#### Can't import this style / Can't rename this style / Can't duplicate this style / Can't export this style
+
+**When:** a style file or name fails a check, or the file can't be read or written. The message says exactly why, what to do, and *Nothing was changed.* **OK** closes it. See [import messages](#-import-messages).
 
 #### Stop and close?
 
@@ -1355,43 +1543,61 @@ It says **what happened**, **What to do**, and where to find more detail. **OK**
 
 ### 🥇 The best choice
 
-**Leave everything as it is.** The window starts with the **studio** style, which follows the standards streaming services use. Want **zero** loss? Pick **lossless** (FLAC) or **hifi** (FLAC, the original's own loudness, gentle 3D).
+**Leave everything as it is.** The window starts with the **Studio** style, which follows the standards streaming services use. Want **zero** loss? Pick **Lossless** (FLAC) or **Hifi** (FLAC, the original's own loudness, gentle 3D).
 
 > [!IMPORTANT]
-> 🙋 **The honest truth:** an MP3 always leaves out a tiny bit of sound that ears can't hear. **studio** keeps that loss as small as MP3 allows (320 kbps). For **no** loss at all, choose **FLAC**. And an 8D song can never sound better than the file you start with.
+> 🙋 **The honest truth:** an MP3 always leaves out a tiny bit of sound that ears can't hear. **Studio** keeps that loss as small as MP3 allows (320 kbps). For **no** loss at all, choose **FLAC**. And an 8D song can never sound better than the file you start with.
 
-**🥇 The 3 golden rules:** 1️⃣ start from the **best copy** you have · 2️⃣ use **studio** (or **lossless** / **hifi**) · 3️⃣ always convert from the **original**, never from an 8D file.
+**🥇 The 3 golden rules:** 1️⃣ start from the **best copy** you have · 2️⃣ use **Studio** (or **Lossless** / **Hifi**) · 3️⃣ always convert from the **original**, never from an 8D file.
 
 | Your file | Best style | What to expect |
 |---|---|---|
-| 💿 **FLAC, WAV, AIFF, ALAC** (lossless) | **lossless** or **hifi** (or **studio** for an MP3) | 🥇 The best possible 8D song |
-| 💿 **Hi-res** (88.2 to 192 kHz) | **lossless** / **hifi** keep the hi-res; MP3 converts it once to 44.1 or 48 kHz | 🥇 Same as above |
-| 🎵 **MP3 256–320 kbps, M4A 256 kbps** | **studio** (or **hifi** to avoid compressing twice) | 🥈 Sounds the same as the original to almost everyone |
-| 🎵 **MP3 192 kbps or less, OGG, Opus, WMA** | **studio** | 🥉 Can't sound better than the file you give it |
-| 🎞️ **Videos** (MP4, MKV, WEBM) | **studio** | Takes the sound only |
+| 💿 **FLAC, WAV, AIFF, ALAC** (lossless) | **Lossless** or **Hifi** (or **Studio** for an MP3) | 🥇 The best possible 8D song |
+| 💿 **Hi-res** (88.2 to 192 kHz) | **Lossless** / **Hifi** keep the hi-res; MP3 converts it once to 44.1 or 48 kHz | 🥇 Same as above |
+| 🎵 **MP3 256–320 kbps, M4A 256 kbps** | **Studio** (or **Hifi** to avoid compressing twice) | 🥈 Sounds the same as the original to almost everyone |
+| 🎵 **MP3 192 kbps or less, OGG, Opus, WMA** | **Studio** | 🥉 Can't sound better than the file you give it |
+| 🎞️ **Videos** (MP4, MKV, WEBM) | **Studio** | Takes the sound only |
+
+### ⚡ Speed and quality, measured
+
+Measured on a normal Windows PC with the current version (times vary with the computer and what else it's doing):
+
+| What | Result |
+|---|---|
+| A 5-minute song, **Studio** (MP3 320) | about 17 s: **18× faster** than playing it |
+| The same song as **Lossless** (FLAC) | about 10 s: **29× faster** |
+| **Groove** (listens for the beat first) | about 20 s |
+| **8 one-minute songs**, one at a time → 4 at once | 26 s → **6 s** (4× faster) |
+| Memory used while converting | about **13 MB**, even for long songs |
+| Loudness reached (Studio, Lossless, Groove) | **−14.0 LUFS** exactly, peaks between −1.1 and −2.1 dBTP, mono-safe |
+| Opening the window | about **4 s** (the standalone app's terminal version starts in 0.3 s) |
+| Adding 300 songs to the list | about **1.4 s** (the list shows 25 at a time) |
+| Switching pages | 0.1 to 0.5 s |
+| Giving a song its own style / changing an answer in the style creator | instant (under 0.05 s) |
+| Checking a style file before import | under 1 ms |
 
 ### 📋 All the ready-made styles
 
 | Style | Sound | Spin | Movement | Room | File | Loudness | Great for |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|---|
-| ![studio](https://img.shields.io/badge/-🏆%20studio-7B2FF7?style=flat-square) ⭐ | 3D circle | 8 s | 0.80 | 0.25 | MP3 320 | −14 goal | **Everything. The best of best** |
-| ![streaming](https://img.shields.io/badge/-📻%20streaming-E5484D?style=flat-square) | 3D circle | 8 s | 0.80 | 0.25 | MP3 320 | −14 exact | Playlists where every song must be equally loud |
-| ![lossless](https://img.shields.io/badge/-💿%20lossless-0E7490?style=flat-square) | 3D circle | 8 s | 0.80 | 0.25 | FLAC 24-bit | −14 goal | Nothing lost at all |
-| ![hifi](https://img.shields.io/badge/-🎼%20hifi-15803D?style=flat-square) | 3D circle | 8 s | 0.75 | 0.20 | FLAC 24-bit | original | The most faithful copy |
-| ![classic](https://img.shields.io/badge/-🎵%20classic-555555?style=flat-square) | 3D circle | 8 s | 0.85 | 0.30 | MP3 V2 | natural | What you get if you pick nothing |
-| ![groove](https://img.shields.io/badge/-🥁%20groove-D97706?style=flat-square) | 3D figure-8 | beat | 0.90 | 0.25 | MP3 320 | −14 goal | Dance, pop, hip-hop |
-| ![smooth](https://img.shields.io/badge/-🌊%20smooth-00B4D8?style=flat-square) | 3D circle | 12 s | 0.75 | 0.20 | MP3 V2 | natural | Chill, lo-fi, acoustic |
-| ![strong](https://img.shields.io/badge/-🌀%20strong-FF4FD8?style=flat-square) | 3D circle | 8 s | 0.95 | 0.35 | MP3 V2 | natural | Pop, EDM, "8D video" style |
-| ![spacious](https://img.shields.io/badge/-🌌%20spacious-4F46E5?style=flat-square) | 3D circle | 10 s | 0.82 | 0.50 | MP3 V2 | natural | Slow songs, film music |
-| ![sky](https://img.shields.io/badge/-☁️%20sky-38BDF8?style=flat-square) | 3D wander + height | 12 s | 0.80 | 0.45 | MP3 V2 | natural | Chill, ambient |
-| ![voice](https://img.shields.io/badge/-🎙️%20voice-2EA44F?style=flat-square) | 3D front arc | 16 s | 0.60 | 0 | MP3 V2 | natural | Talking, stories, meditation |
-| ![whirlwind](https://img.shields.io/badge/-🌪️%20whirlwind-FF6F00?style=flat-square) | 3D circle | 3 s | 1.00 | 0.30 | MP3 V2 | natural | Short clips, ringtones |
-| ![speakers](https://img.shields.io/badge/-🚗%20speakers-64748B?style=flat-square) | panning | 8 s | 0.55 | 0.20 | MP3 V2 | natural | Speakers and car stereos |
-| ![retro](https://img.shields.io/badge/-📼%20retro-9CA3AF?style=flat-square) | panning, bass moves | 8 s | 0.85 | 0.30 | MP3 V2 | natural | The old ping-pong sound of the first Audio8D |
+| ![Studio](https://img.shields.io/badge/-🏆%20Studio-7B2FF7?style=flat-square) ⭐ | 3D circle | 8 s | 0.80 | 0.25 | MP3 320 | −14 goal | **Everything. The best of best** |
+| ![Streaming](https://img.shields.io/badge/-📻%20Streaming-E5484D?style=flat-square) | 3D circle | 8 s | 0.80 | 0.25 | MP3 320 | −14 exact | Playlists where every song must be equally loud |
+| ![Lossless](https://img.shields.io/badge/-💿%20Lossless-0E7490?style=flat-square) | 3D circle | 8 s | 0.80 | 0.25 | FLAC 24-bit | −14 goal | Nothing lost at all |
+| ![Hifi](https://img.shields.io/badge/-🎼%20Hifi-15803D?style=flat-square) | 3D circle | 8 s | 0.75 | 0.20 | FLAC 24-bit | original | The most faithful copy |
+| ![Classic](https://img.shields.io/badge/-🎵%20Classic-555555?style=flat-square) | 3D circle | 8 s | 0.85 | 0.30 | MP3 V2 | natural | What you get if you pick nothing |
+| ![Groove](https://img.shields.io/badge/-🥁%20Groove-D97706?style=flat-square) | 3D figure-8 | beat | 0.90 | 0.25 | MP3 320 | −14 goal | Dance, pop, hip-hop |
+| ![Smooth](https://img.shields.io/badge/-🌊%20Smooth-00B4D8?style=flat-square) | 3D circle | 12 s | 0.75 | 0.20 | MP3 V2 | natural | Chill, lo-fi, acoustic |
+| ![Strong](https://img.shields.io/badge/-🌀%20Strong-FF4FD8?style=flat-square) | 3D circle | 8 s | 0.95 | 0.35 | MP3 V2 | natural | Pop, EDM, "8D video" style |
+| ![Spacious](https://img.shields.io/badge/-🌌%20Spacious-4F46E5?style=flat-square) | 3D circle | 10 s | 0.82 | 0.50 | MP3 V2 | natural | Slow songs, film music |
+| ![Sky](https://img.shields.io/badge/-☁️%20Sky-38BDF8?style=flat-square) | 3D wander + height | 12 s | 0.80 | 0.45 | MP3 V2 | natural | Chill, ambient |
+| ![Voice](https://img.shields.io/badge/-🎙️%20Voice-2EA44F?style=flat-square) | 3D front arc | 16 s | 0.60 | 0 | MP3 V2 | natural | Talking, stories, meditation |
+| ![Whirlwind](https://img.shields.io/badge/-🌪️%20Whirlwind-FF6F00?style=flat-square) | 3D circle | 3 s | 1.00 | 0.30 | MP3 V2 | natural | Short clips, ringtones |
+| ![Speakers](https://img.shields.io/badge/-🚗%20Speakers-64748B?style=flat-square) | panning | 8 s | 0.55 | 0.20 | MP3 V2 | natural | Speakers and car stereos |
+| ![Retro](https://img.shields.io/badge/-📼%20Retro-9CA3AF?style=flat-square) | panning, bass moves | 8 s | 0.85 | 0.30 | MP3 V2 | natural | The old ping-pong sound of the first Audio8D |
 
 *"MP3 V2" means MP3 with bitrate Auto at quality V2 (about 190 kbps). "−14 goal" aims for −14 LUFS without squeezing the song; "−14 exact" always reaches it.*
 
-💡 **Mix and match:** pick a style, then change one setting, e.g. **smooth** with **Loudness → Spotify / YouTube**.
+💡 **Mix and match:** pick a style, then change one setting, e.g. **Smooth** with **Loudness → Spotify / YouTube**.
 
 ### 📏 Measured, not guessed
 
@@ -1399,15 +1605,15 @@ Real results measured by Audio8D's own check, all on the same PC. The song was a
 
 | Style | Loudness | Loudest peak | Time | Size |
 |---|:---:|:---:|:---:|:---:|
-| `classic` (nothing chosen) | −15.0 LUFS | **−1.0 dBTP** ✅ | 10.1 s | 6.6 MB |
-| 🏆 **`studio`** | **−14.3 LUFS** ✅ | **−2.2 dBTP** ✅ | 15.9 s | 11.2 MB |
-| **`streaming`** | **−14.3 LUFS** ✅ | **−2.2 dBTP** ✅ | 13.4 s | 11.2 MB |
-| **`lossless`** (FLAC) | **−14.1 LUFS** ✅ | **−0.9 dBTP** ✅ | 8.1 s | 53.4 MB |
-| 💿 **`hifi`** (FLAC) | **−13.7 LUFS** | **−0.9 dBTP** ✅ | 10.2 s | 52.4 MB |
-| **`groove`** as FLAC (found 89.9 BPM) | **−14.1 LUFS** ✅ | **−1.4 dBTP** ✅ | 10.9 s | 51.9 MB |
-| `retro` | −14.7 LUFS | −0.8 dBTP ✅ | 6.4 s | 6.6 MB |
+| **Classic** (nothing chosen) | −15.0 LUFS | **−1.0 dBTP** ✅ | 10.1 s | 6.6 MB |
+| 🏆 ****Studio**** | **−14.3 LUFS** ✅ | **−2.2 dBTP** ✅ | 15.9 s | 11.2 MB |
+| ****Streaming**** | **−14.3 LUFS** ✅ | **−2.2 dBTP** ✅ | 13.4 s | 11.2 MB |
+| ****Lossless**** (FLAC) | **−14.1 LUFS** ✅ | **−0.9 dBTP** ✅ | 8.1 s | 53.4 MB |
+| 💿 ****Hifi**** (FLAC) | **−13.7 LUFS** | **−0.9 dBTP** ✅ | 10.2 s | 52.4 MB |
+| ****Groove**** as FLAC (found 89.9 BPM) | **−14.1 LUFS** ✅ | **−1.4 dBTP** ✅ | 10.9 s | 51.9 MB |
+| **Retro** | −14.7 LUFS | −0.8 dBTP ✅ | 6.4 s | 6.6 MB |
 
-💡 **Every style stays below 0 dBTP**, so nothing crackles. **hifi** aimed for the original's −11.3 LUFS but stopped at −13.7, because getting louder would have squashed the song's loudest moments (*Always hit the loudness exactly* would force it).
+💡 **Every style stays below 0 dBTP**, so nothing crackles. **Hifi** aimed for the original's −11.3 LUFS but stopped at −13.7, because getting louder would have squashed the song's loudest moments (*Always hit the loudness exactly* would force it).
 
 ---
 
@@ -1430,7 +1636,7 @@ Real results measured by Audio8D's own check, all on the same PC. The song was a
 
 | File type | Quality | Album picture | Best for |
 |:---:|---|:---:|---|
-| **MP3** ⭐ | 320 kbps with **studio** | ✅ | Playing **everywhere** |
+| **MP3** ⭐ | 320 kbps with **Studio** | ✅ | Playing **everywhere** |
 | **FLAC** | Lossless, 24-bit, keeps hi-res | ✅ | Keeping the best copy |
 | **WAV** | Lossless, 24-bit | – | Music-editing software |
 | **M4A** (AAC) | 256 kbps (or the chosen bitrate) | ✅ | Apple devices |
@@ -1451,9 +1657,9 @@ Real results measured by Audio8D's own check, all on the same PC. The song was a
 
 ## 🔉 18. Loudness: why is my song quieter?
 
-With the normal **studio** choice (**Spotify / YouTube (-14)**), it **isn't**: it matches Spotify and YouTube.
+With the normal **Studio** choice (**Spotify / YouTube (-14)**), it **isn't**: it matches Spotify and YouTube.
 
-With **Natural (off)** (used by the **classic**, **smooth**, **strong** and other styles), the song keeps its natural level, **turned down a little**, so it can be a bit quieter than the original. **That's on purpose:** the 3D movement makes the nearer ear briefly louder, and those short moments need room so the song never crackles.
+With **Natural (off)** (used by the **Classic**, **Smooth**, **Strong** and other styles), the song keeps its natural level, **turned down a little**, so it can be a bit quieter than the original. **That's on purpose:** the 3D movement makes the nearer ear briefly louder, and those short moments need room so the song never crackles.
 
 **How to make it louder (pick one):**
 
@@ -1503,6 +1709,7 @@ Don't worry! 🤗 Audio8D always says **what** went wrong in one plain line, and
 | *"… isn't allowed to write there"* / *Permission denied* | That folder is protected. Choose another folder on step 3, such as your Music folder |
 | **Keep the singer in the middle** is greyed out | Source-code version: install Demucs (`python -m pip install demucs`) and restart. The standalone app doesn't include it |
 | *"Your saved styles couldn't be read"* | Open **Your styles**: it names the line to fix. Or delete the styles file |
+| *"You already have a style called …"* | Names are unique: choose another name (the red line under the box says why a name can't be used) |
 | Only 25 songs are shown | On purpose, to keep the window quick. Press **Show 25 more**; every song is converted either way |
 | Dragging songs onto the window does nothing | Drag-and-drop works on Windows only; on macOS/Linux use **Add songs**. On Windows, Audio8D and File Explorer must both run normally (a window started "as administrator" can't receive dragged files) |
 | `python` is not recognized | Windows: try `py`, or reinstall Python and tick **"Add python.exe to PATH"** ([Step 1](#step-1-get-python)). macOS/Linux: type `python3` |
@@ -1557,6 +1764,29 @@ Install the window toolkit for your Python: `sudo apt install python3-tk` (Ubunt
 | `Audio8D could not open its window` | Something stopped the window from starting | The message names the reason; details are in the log file |
 | `Audio8D needs Python 3.10 or newer` | Your Python is too old | Install a newer Python ([Step 1](#step-1-get-python)) |
 
+### 📥 Import messages
+
+When a style file can't be imported, the message starts with *This style file can't be imported:* and says exactly why. **Nothing is ever partly imported**: your styles stay exactly as they were.
+
+| The message ends with… | Means |
+|---|---|
+| *… does not exist* / *can't be read* | The file was moved, or Windows refused access |
+| *it is 80 KB, far too big for a style file* | It isn't a style file (a real one is under 2 KB) |
+| *it is not a text file* / *the file is empty* | It isn't a style file, or it's damaged |
+| *it is not valid JSON (line 3, column 5: …)* | The text is damaged, e.g. after editing it by hand |
+| *it does not hold a style (expected a JSON object)* | It's some other kind of JSON file |
+| *it is not an Audio8D style file (format "…")* | It was made by another program |
+| *it was made by a newer Audio8D (style file version 2)* | Update Audio8D to import it |
+| *the file is missing 'settings'* / *'settings' is missing 'intensity'* | A required part is missing |
+| *the file has an unknown property 'x'* / *'settings' has an unknown property 'x'* | Something is there that a style file never has |
+| *'x' appears twice* | The same property is written twice |
+| *setting 'intensity' must be a number, not "big"* (or *a whole number*, *true or false*, *text*) | A setting has the wrong kind of value |
+| *setting 'engine' is "4d"; it must be one of 3d, pan* | A setting has a value Audio8D doesn't know |
+| *intensity must be between 0.0 and 1.0* | A setting is out of range |
+| *its 'name' must be some text* / *its 'description' is longer than 120 characters* | The name or description is missing or too long |
+
+After the file passes, the **name** you choose gets the usual [name checks](#-style-names).
+
 ### 📄 The log file
 
 Audio8D writes a **log**: a text file recording what it did, with which settings, and the full details of any error. You never need to read it, but it's the first thing to send when you ask someone for help.
@@ -1589,7 +1819,8 @@ Your 8D songs go only where you choose on step 3. Because these files live outsi
 | The standalone `Audio8D.exe` is for **Windows 10/11, 64-bit** only | On macOS and Linux, run Audio8D from its source code ([5.2](#-52-from-the-source-code-any-computer)) |
 | **Keep the singer in the middle** isn't in the standalone app | Use the source-code version with `python -m pip install demucs` |
 | **Drag-and-drop** works on Windows only | Use **Add songs** / **Add folder** |
-| The window **doesn't remember your settings** after closing | Save them as [your own style](#-13-your-styles-page) |
+| The window **doesn't remember your settings** (or the songs' own styles) after closing | Save them as [your own style](#-13-your-styles-page) |
+| A different style **per song** is a window feature | The terminal app uses one style for all the songs in a command; run it once per style |
 | Only the **first sound track** of a file is used, and everything becomes **stereo** | Mono is copied to both ears; 5.1 is folded down to two |
 | **Opus** and **WAV** files can't hold the album picture | Use MP3, FLAC or M4A to keep it |
 | **Copy-protected** songs can't be read | Use songs you own as normal files |
@@ -1616,7 +1847,7 @@ No. Audio8D makes a **new** file and leaves your original alone. Only if you cho
 <details>
 <summary><b>Does it work on normal speakers?</b></summary>
 
-The headphone effect doesn't, because on speakers both ears hear both sides. For speakers, car stereos and phone speakers, switch on **Safe for speakers too** or use the **speakers** style.
+The headphone effect doesn't, because on speakers both ears hear both sides. For speakers, car stereos and phone speakers, switch on **Safe for speakers too** or use the **Speakers** style.
 </details>
 
 <details>
@@ -1628,7 +1859,7 @@ Yes. Add your whole `Music` folder (sub-folders included), choose **In a folder 
 <details>
 <summary><b>How long does it take?</b></summary>
 
-For a 5-minute song on a normal PC: about **10 seconds** with **classic**, about **8 to 11 seconds** as FLAC (**lossless**, **hifi**), and about **16 seconds** with **studio**. A preview takes a few seconds. Folders go faster per song, because several are made at once. *Keep the singer in the middle* adds a minute or two per song.
+For a 5-minute song on a normal PC: about **10 seconds** with **Classic**, about **8 to 11 seconds** as FLAC (**Lossless**, **Hifi**), and about **16 seconds** with **Studio**. A preview takes a few seconds. Folders go faster per song, because several are made at once. *Keep the singer in the middle* adds a minute or two per song.
 </details>
 
 <details>
@@ -1640,7 +1871,7 @@ No. The effect is "baked in", like a cake. 🎂 Keep your originals.
 <details>
 <summary><b>What's the difference between "8D" and "3D" here?</b></summary>
 
-"8D" is the popular name for music that moves around your head. Audio8D makes it with a **3D** head model (timing, loudness and tone clues), so the sound truly passes in front of you and behind you. The simpler left-right version is the **retro** style.
+"8D" is the popular name for music that moves around your head. Audio8D makes it with a **3D** head model (timing, loudness and tone clues), so the sound truly passes in front of you and behind you. The simpler left-right version is the **Retro** style.
 </details>
 
 <details>
@@ -1659,6 +1890,24 @@ Only to download Audio8D (and, for the source-code version, Python and the add-o
 <summary><b>Why are my settings gone when I reopen Audio8D?</b></summary>
 
 Audio8D always starts fresh with the recommended settings. Save the settings you like on **Your styles**, then pick your style on step 2 next time.
+</details>
+
+<details>
+<summary><b>Can I use different styles for different songs?</b></summary>
+
+Yes. Pick the style for most songs on step 2, then open card **4. A different style for some songs** and choose another style for any song. See [9.4](#-94-a-different-style-for-some-songs).
+</details>
+
+<details>
+<summary><b>My 8D song doesn't sound as clear as I hoped. Why?</b></summary>
+
+Usually it's the song file: an 8D version can't sound better than the file it's made from. Step 4 warns you about low-quality files (under 192 kbps) and low-detail recordings. Use the best copy you have (FLAC, WAV or a 320 kbps MP3), the **Studio** style, and headphones. See [the best-sound checklist](#-the-best-sound-checklist).
+</details>
+
+<details>
+<summary><b>Can I share my styles with a friend?</b></summary>
+
+Yes. On **Your styles**, press **Export** on a style and send them the file. They press **Import a style…** and choose it. Audio8D checks the whole file first and asks them for a name that isn't taken yet.
 </details>
 
 <details>
@@ -1681,7 +1930,10 @@ Making an 8D version doesn't make the song yours. Listening yourself is fine. To
 |---|---|
 | **8D audio** | Music that seems to travel around your head on headphones |
 | **3D sound** | Sound made for two ears so it seems to come from a real place around you |
-| **Style** (or **preset**) | A ready-made set of settings with a name, like **studio** |
+| **Style** (or **preset**) | A ready-made set of settings with a name, like **Studio** |
+| **PascalCase** | Words that each start with a capital letter, joined or kept apart by spaces: SunsetDrive, Sunset Drive, Party Mix 2 |
+| **Export / import** | Save something to a file to share it / add it back from such a file |
+| **JSON** | A common, readable text format for data, used by style files |
 | **Standalone app** | A program folder that carries everything it needs, so nothing has to be installed |
 | **Source code** | The original program files that a program is made from |
 | **Terminal / command** | A window where you type instructions / one instruction you type and send with <kbd>Enter</kbd> |
@@ -1936,13 +2188,15 @@ audio8d --preset studio --path figure8 --elevation 0.4 --save-preset mine
 audio8d "My Song.mp3" --preset mine
 ```
 
+Names are tidied the same way as in the window (`--save-preset mine` saves **Mine**; `--save-preset "night drive"` saves **Night Drive**), and a name that's already taken is refused, so a saved style is never replaced. `--preset` doesn't mind letter case or spaces: `--preset "Night Drive"`, `--preset nightdrive` and `--preset NIGHT-DRIVE` all find it. Put a name with spaces in quotes.
+
 Styles saved here and in the window live in one small, readable **`presets.toml`** file (see [Where Audio8D keeps things](#-where-audio8d-keeps-things)). It only holds what differs from the style it's based on:
 
 ```toml
 # Audio8D custom styles. Save new ones with --save-preset NAME.
 # Any setting left out comes from the style named in based_on.
 
-[mine]
+[Mine]
 based_on = "studio"
 summary = "your style, based on studio"
 path = "figure8"
@@ -2033,7 +2287,9 @@ else:
 
 **`ConversionResult`**: `source` (an `AudioStreamInfo`), `output`, `config` (after beat sync), `loudness`, `quality` (a `QualityReport`), `bpm`, `beats_per_turn`, `original_removed_to`.
 
-**Also:** `preview(song, output, config, seconds=30.0)` → `ConversionResult`, and `compare(song, output, config, seconds=15.0)` → `Path`. For folders, `audio8d.batch.run_batch(items, config, jobs=4, …)` returns a `BatchReport`.
+**Also:** `preview(song, output, config, seconds=30.0)` → `ConversionResult`, and `compare(song, output, config, seconds=15.0)` → `Path`. For folders, `audio8d.batch.run_batch(items, config, jobs=4, …)` returns a `BatchReport`; a `BatchItem(source, output, config)` with its own `config` uses that instead of the shared one (that's how songs get their own style).
+
+**Styles:** `audio8d.core.user_presets` has `save_user_preset`, `rename_user_preset`, `duplicate_user_preset` and `delete_user_preset` (all refuse a taken name), `check_style_name` and `pascal_case`. `audio8d.core.style_files` has `export_style(preset, path)`, `read_style_file(path)` (checks everything, raises `InputValidationError` with the exact reason) and `import_style(path, name)`.
 
 **`EffectConfig`** (frozen; `config.validate()` checks it):
 
@@ -2075,19 +2331,20 @@ Audio8DError                  ← catch this one to catch everything below
 
 ```powershell
 python -m pip install -e ".[dev,gui]"   # or: python -m pip install pytest ruff pylint customtkinter pillow
-python -m pytest                        # all 399 tests
-python -m pytest tests/unit             # the quick ones (347)
-python -m pytest tests/integration      # real conversions and the real window (52)
+python -m pytest                        # all 499 tests
+python -m pytest tests/unit             # the quick ones (438)
+python -m pytest tests/integration      # real conversions and the real window (61)
 ```
 
-✅ **Success looks like:** `399 passed`
+✅ **Success looks like:** `499 passed`
 
 The tests always use the code in `src`. They keep saved styles and the cache in a private temporary folder, never open Windows Terminal windows, and never touch the Recycle Bin. Without FFmpeg the music tests are skipped; without CustomTkinter (or a screen) the window tests are skipped.
 
 | Test file | What it checks |
 |---|---|
-| 🪟 `integration/test_gui.py` | **The real window:** starts on step 1 with `studio`; adding songs reads their details; Start stays off until the setup is valid; a real conversion shows the measured result; a failing song shows the reason and the fix; **no control overlaps another** at 100 % and 125 % size and at 1100×720 and 1600×1000; controls appear only when they apply; preview and A/B compare; saving and deleting a style; Stop keeps the window usable; replacing originals; notices never cover a button; clean-up only runs on the window's own thread; a real Windows drag-and-drop adds the song; long lists show a page at a time; message windows keep the Audio8D icon; **Open the full guide** falls back to the online copy |
-| 🧭 `unit/test_gui_model.py` | **Window ↔ terminal parity:** each window control gives exactly the same conversion as its terminal option (35 cases); the problems, warnings and plain-word summaries |
+| 🪟 `integration/test_gui.py` | **The real window:** starts on step 1 with `studio`; adding songs reads their details; Start stays off until the setup is valid; a real conversion shows the measured result; a failing song shows the reason and the fix; **no control overlaps another** at 100 % and 125 % size and at 1100×720 and 1600×1000; controls appear only when they apply; preview and A/B compare; saving and deleting a style; Stop keeps the window usable; replacing originals; notices never cover a button; clean-up only runs on the window's own thread; a real Windows drag-and-drop adds the song; long lists show a page at a time; message windows keep the Audio8D icon; **Open the full guide** falls back to the online copy; per-song styles really convert (MP3 and FLAC side by side); the style creator, the name window, rename, duplicate, export and import |
+| 🧭 `unit/test_gui_model.py` | **Window ↔ terminal parity:** each window control gives exactly the same conversion as its terminal option (35 cases); the problems, warnings and plain-word summaries; one style for all songs and a style per song; the style creator's answers, suggestions and quality check; the Studio/Streaming labels |
+| 📤 `unit/test_style_files.py` | Export and import: a style comes back exactly; every part of a file is checked (missing, unknown, wrongly typed and out-of-range properties, corrupted, empty, huge and newer-version files); the chosen name must be free and valid; nothing is ever partly imported or overwritten |
 | 🎧 `integration/test_convert.py` | Real conversions: every format and sample rate, album art, trimming, **the sound really moves between the ears**, **the bass really stays in the middle**, beat sync finds 120 BPM, replace-in-place, preview and A/B lengths, batches, loudness goals, measurements are reused, progress never goes backwards |
 | 🎛️ `unit/test_effects.py` | The paths, curves, fades and height; the head model; the gain streams; the room; the filter graph |
 | 🧮 `unit/test_parsing_and_styles.py` · 🥁 `unit/test_analysis_and_files.py` | Times, curves, saved styles, speaker safety; tempo detection, the loudest part, the check maths, the cache, output names, folder scanning, **originals are never deleted for good** |
@@ -2140,12 +2397,12 @@ The window and the terminal app are two front doors to the **same engine**: neit
 | `packaging/` | `build.ps1` (the one-step build), `audio8d.spec` (the PyInstaller recipe), `window_entry.py` · `terminal_entry.py` (the two exes), `version.txt` (the exe's details), `make_icon.py` (draws the icon) |
 | `src/gui.py` · `gui_app.py` | Opens the window (or explains what to install) · the window: sidebar, the six pages, song and progress rows, the background worker and its event queue |
 | `src/gui_model.py` | The window's settings with no Tk in sight: turns them into an `EffectConfig` and options, finds problems and warnings, writes the plain-word summaries |
-| `src/gui_widgets.py` · `gui_layout.py` | Theme colours, icons, tooltips, cards, sliders, choices, switches, text boxes, dialogs and notices · finds controls that overlap (used by the tests) |
+| `src/gui_widgets.py` · `gui_layout.py` | Theme colours, icons, tooltips, cards, sliders, choices, drop-down menus, switches, text boxes, dialogs (including the name window) and notices, plus two CustomTkinter fixes: scrollbars no longer force a full layout on every redraw (much faster opening and Size changes), and closed drop-down menus stop being resized · finds controls that overlap (used by the tests) |
 | `src/dropfiles.py` | Windows drag-and-drop (`WM_DROPFILES`) |
 | `src/__main__.py` · `launcher.py` | The start button · moves a double-clicked terminal app into Windows Terminal |
 | `src/cli.py` · `options.py` · `guided.py` · `display.py` · `hints.py` | The terminal app, its options, the step-by-step helper, the panel and progress bars, the "What to do" fixes |
 | `src/pipeline.py` · `batch.py` · `cache.py` · `logs.py` | One song · many songs on a thread pool · remembered measurements · the rotating log file and crash hooks |
-| `src/core/` | `settings.py`, `presets.py`, `user_presets.py`, `parsing.py`, `locations.py`, `types.py`, `errors.py` |
+| `src/core/` | `settings.py`, `presets.py` (with each style's display `label`), `user_presets.py` (saving, PascalCase names, rename, duplicate), `style_files.py` (the versioned export/import format and its checks), `parsing.py`, `locations.py`, `types.py`, `errors.py` |
 | `src/effects/` | `motion.py` (where the sound is), `head.py` (the head model), `control.py` · `wavfile.py` (gain streams), `reverb.py` (the room), `graph.py` (the FFmpeg filter graph), `levels.py` (sample rates, loudness gain) |
 | `src/analysis/` | `tempo.py`, `sections.py` (loudest part), `quality.py` (the check), `stems.py` (Demucs) |
 | `src/ffmpeg/` · `src/files/` | Finding FFmpeg, commands, progress, song facts, loudness · safe names, hidden-file-then-rename, folder scanning, the Recycle Bin |
@@ -2166,7 +2423,8 @@ The window and the terminal app are two front doors to the **same engine**: neit
 
 ### 📏 House rules for changing the code
 
-- ✍️ Every code file starts with `# Developed by Gehan Fernando`.
+- ✍️ Every code file starts with `# Developed by ::> Gehan Fernando`.
+- 💬 Every comment is one meaningful line; a longer thought goes in the docstring.
 - 💬 Comments are one short, natural line that explains *why*.
 - 🧭 Keep the window thin: settings logic goes in `gui_model.py` (testable without a screen), sound and file logic in the engine.
 - 📐 Never let controls overlap: `test_no_control_ever_overlaps_or_spills_out` must stay green.

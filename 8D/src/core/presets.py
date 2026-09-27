@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Ready-made sound styles, so nobody has to guess numbers."""
 
 from dataclasses import dataclass, replace
@@ -15,6 +15,11 @@ class Preset:
     config: EffectConfig
     # True for styles the user saved with --save-preset
     custom: bool = False
+
+    @property
+    def label(self) -> str:
+        """The name people see: built-in styles capitalised (Studio), yours as saved."""
+        return self.name if self.custom else self.name[:1].upper() + self.name[1:]
 
 
 # Best of best: top MP3 bitrate, MP3-safe peak headroom, loudness without squashing
@@ -37,12 +42,12 @@ _ALL_PRESETS = (
     ),
     Preset(
         name="streaming",
-        summary="Like studio, always exactly -14 LUFS (light peak limiting)",
+        summary="Like Studio, always exactly -14 LUFS (light peak limiting)",
         config=replace(_STUDIO, exact_loudness=True),
     ),
     Preset(
         name="lossless",
-        summary="Like studio, saved as FLAC: nothing lost at all",
+        summary="Like Studio, saved as FLAC: nothing lost at all",
         # FLAC has no encoder overshoot, so the roof can sit at -1 dBFS
         config=replace(_STUDIO, output_format="flac", limiter_ceiling=0.89),
     ),

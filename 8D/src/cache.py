@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Remembers loudness measurements, so re-making a song skips the measuring pass.
 
 A measurement depends on the song file and on every setting that shapes the

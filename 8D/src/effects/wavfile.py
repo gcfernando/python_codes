@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Writes 32-bit float WAV files: the movement gains and the reverb's room."""
 
 import struct

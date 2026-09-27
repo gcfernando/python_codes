@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Validates source and destination paths before any audio work starts."""
 
 import os
@@ -10,12 +10,27 @@ from ..core.settings import FORMAT_EXTENSIONS
 # How the new file is named: "<song> (8D).mp3", or the original name kept
 NAME_STYLES = ("8d", "original")
 SUFFIX_8D = " (8D)"
+# Windows' long-path prefix, which paths longer than this still need
+_LONG_PREFIX = "\\\\?\\"
+_MAX_PLAIN_PATH = 259
+
+
+def _absolute(path: Path, *, strict: bool) -> Path:
+    """path.resolve(), minus the long-path prefix Windows sometimes answers with."""
+    text = str(path.expanduser().resolve(strict=strict))
+    if text.startswith(_LONG_PREFIX + "UNC\\"):
+        plain = "\\\\" + text[len(_LONG_PREFIX) + 4 :]
+    elif text.startswith(_LONG_PREFIX):
+        plain = text[len(_LONG_PREFIX) :]
+    else:
+        return Path(text)
+    return Path(plain) if len(plain) <= _MAX_PLAIN_PATH else Path(text)
 
 
 def resolve_input(path: Path) -> Path:
     """Return the absolute path of an existing, non-empty source file."""
     try:
-        resolved = path.expanduser().resolve(strict=True)
+        resolved = _absolute(path, strict=True)
     except OSError as exc:
         raise InputValidationError(
             f"Input file does not exist or cannot be accessed: {path}"
@@ -44,7 +59,7 @@ def format_for_extension(path: Path) -> str | None:
 
 def resolve_output(path: Path, *, overwrite: bool, extension: str = ".mp3") -> Path:
     """Return an absolute destination with the right extension, making its folder."""
-    output = path.expanduser().resolve(strict=False)
+    output = _absolute(path, strict=False)
 
     if output.suffix.lower() != extension:
         raise InputValidationError(f"Output file must use the {extension} extension")
@@ -74,8 +89,8 @@ def resolve_output(path: Path, *, overwrite: bool, extension: str = ".mp3") -> P
 
 def same_file(first: Path, second: Path) -> bool:
     """True when two paths name the same file (Windows ignores letter case)."""
-    return os.path.normcase(str(first.expanduser().resolve(strict=False))) == (
-        os.path.normcase(str(second.expanduser().resolve(strict=False)))
+    return os.path.normcase(str(_absolute(first, strict=False))) == (
+        os.path.normcase(str(_absolute(second, strict=False)))
     )
 
 

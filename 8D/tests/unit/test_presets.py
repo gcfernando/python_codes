@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks the ready-made styles, the loudness limits and the version number."""
 
 from pathlib import Path

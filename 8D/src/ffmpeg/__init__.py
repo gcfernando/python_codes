@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Everything that talks to the FFmpeg and FFprobe executables."""
 
 from .commands import (
@@ -20,6 +20,7 @@ from .probe import parse_probe_output, probe_audio
 from .runner import ProgressCallback, run_binary, run_capture, run_ffmpeg, run_tool
 from .toolchain import FFmpegToolchain
 
+# The names the rest of Audio8D (and your own code) import from here
 __all__ = [
     "COVER_FORMATS",
     "ENCODERS",

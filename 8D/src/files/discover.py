@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Finds the songs inside a folder for batch conversion."""
 
 import re

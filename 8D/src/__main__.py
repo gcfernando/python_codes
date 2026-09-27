@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Starts Audio8D, whether it is installed or run straight from the src folder."""
 
 import sys

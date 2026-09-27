@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Drives the real Audio8D window: start-up, adding songs, validation, converting."""
 
 # pytest hands fixtures to tests by name, which pylint sees as shadowing
@@ -6,13 +6,20 @@
 
 import gc
 import importlib.util
+import json
 import os
 import time
 from pathlib import Path
 
 import pytest
 
+from src import EffectConfig
 from src.core.locations import presets_file
+from src.core.user_presets import (
+    delete_user_preset,
+    rename_user_preset,
+    save_user_preset,
+)
 from src.ffmpeg.toolchain import FFmpegToolchain
 
 pytestmark = pytest.mark.skipif(
@@ -146,6 +153,12 @@ def _open_everything(app) -> None:
     app.pages["output"]._loudness("custom")
     app.set_name_style("custom")
     app.pages["output"].wants_folder = True
+    # A song with its own style, a saved style's buttons, and the creator's advice
+    save_user_preset("LayoutCheck", EffectConfig(), summary="x" * 110)
+    app.reload_styles()
+    if app.rows:
+        app.set_song_style(app.rows[0], "LayoutCheck")
+    app.pages["styles"]._answer(level="natural")
     app.sync_controls()
 
 
@@ -170,6 +183,9 @@ def test_no_control_ever_overlaps_or_spills_out(
     finally:
         ctk.set_widget_scaling(1.0)
         app.geometry("1280x860")
+        delete_user_preset("LayoutCheck")
+        app.pages["styles"]._music_picked("mixed")
+        app.reload_styles()
 
 
 def test_controls_show_only_what_applies(app) -> None:
@@ -219,15 +235,23 @@ def test_preview_and_compare_from_the_window(
 
 def test_saving_and_deleting_a_style(app, monkeypatch) -> None:
     styles = app.pages["styles"]
-    styles.name.set("qa-style")
+    styles.name.set("qa style")
     styles.summary.set("made by the tests")
     styles._save()
-    assert "qa-style" in app.presets and app.presets["qa-style"].custom
-    assert "qa-style" in app.pages["sound"].cards
+    # Saved in PascalCase, and straight away a card on step 2
+    assert "Qa Style" in app.presets and app.presets["Qa Style"].custom
+    assert "Qa Style" in app.pages["sound"].cards
+
+    # The same name again, in any form, is refused and nothing is replaced
+    before = presets_file().read_text(encoding="utf-8")
+    styles.name.set("QA-style")
+    styles._save()
+    assert "already have a style" in styles.name.help.cget("text")
+    assert presets_file().read_text(encoding="utf-8") == before
 
     monkeypatch.setattr("src.gui_app.Dialog.ask", lambda self: "yes")
-    styles._delete("qa-style")
-    assert "qa-style" not in app.presets
+    styles._delete("Qa Style")
+    assert "Qa Style" not in app.presets
 
 
 def test_stop_keeps_the_window_usable(app, dynamic_song: Path, tmp_path: Path) -> None:
@@ -424,3 +448,246 @@ def test_the_guide_opens_online_when_no_readme_is_beside_the_app(
     gui_app.SettingsPage._open_guide()  # pylint: disable=protected-access
 
     assert opened == [gui_app.GUIDE_URL]
+
+
+def _texts(widget) -> list[str]:
+    """Every label's text inside a widget, however deep."""
+    found = []
+    for child in widget.winfo_children():
+        try:
+            found.append(str(child.cget("text")))
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        found += _texts(child)
+    return found
+
+
+def test_built_in_style_names_are_shown_capitalised(app) -> None:
+    sound = app.pages["sound"]
+    cards = {name: _texts(card) for name, card in sound.cards.items()}
+
+    assert any(text.startswith("Studio") and "best" in text for text in cards["studio"])
+    assert "Streaming" in cards["streaming"]
+    assert sound.style_note.cget("text") == "Style: Studio"
+    choices = sound.style_choices()
+    assert choices["Same as all songs"] is None
+    assert choices["Studio"] == "studio" and choices["Streaming"] == "streaming"
+    app.show_page("review")
+    assert "Studio" in _texts(app.pages["review"].summary)
+    # The names people type stay the same everywhere else
+    assert "studio" in app.presets and app.settings.style == "studio"
+
+
+def test_one_style_for_all_songs_or_one_per_song(
+    app, stereo_tone: Path, tmp_path: Path
+) -> None:
+    from src.gui_model import items_for  # pylint: disable=import-outside-toplevel
+
+    second = tmp_path / "second.mp3"
+    second.write_bytes(stereo_tone.read_bytes())
+    app.add_paths([stereo_tone, second])
+    app.update()
+    sound = app.pages["sound"]
+    songs = [(row.song, row.folder) for row in app.rows]
+
+    # Nothing chosen: every song simply uses the style for all songs, as before
+    assert "All 2 songs use the style above." in sound.own_note.cget("text")
+    assert all(item.config is None for item in items_for(app.settings, songs))
+
+    app.set_song_style(app.rows[1], "voice")
+    app.set_song_style(app.rows[1], "lossless")  # changed again later
+    assert "1 of 2 songs has its own style" in sound.own_note.cget("text")
+    assert "1 song with own style" in app.settings_text.cget("text")
+    app.show_page("review")
+    assert any("second: Lossless" in text for text in _texts(app.pages["review"]))
+
+    app.settings.destination = str(tmp_path / "out")
+    app._show_report = lambda report: setattr(app, "report", report)
+    app.run_convert()
+    _pump(app, lambda: not app.busy and hasattr(app, "report"), 90)
+
+    assert len(app.report.converted) == 2
+    assert (tmp_path / "out" / "tone (8D).mp3").is_file()
+    assert (tmp_path / "out" / "second (8D).flac").is_file()
+
+    app.set_song_style(app.rows[1], None)
+    assert not app.settings.song_styles
+    app.set_song_style(app.rows[1], "voice")
+    app.remove_row(app.rows[1])
+    assert not app.settings.song_styles
+
+
+def test_your_styles_join_the_song_menus_and_follow_renames(
+    app, stereo_tone: Path
+) -> None:
+    styles = app.pages["styles"]
+    styles._music_picked("calm")
+    styles.new_name.set("night drive")
+    styles._new_name_typed("night drive")
+    styles._create()
+    try:
+        assert app.presets["Night Drive"].custom
+        assert app.settings.style == "Night Drive"
+        assert app.pages["sound"].style_choices()["Night Drive   (yours)"] == (
+            "Night Drive"
+        )
+
+        app.add_paths([stereo_tone])
+        app.update()
+        app.set_song_style(app.rows[0], "Night Drive")
+        new = rename_user_preset("Night Drive", "drive at night")
+        app.reload_styles(renamed=("Night Drive", new))
+        assert app.settings.song_styles[app.rows[0].song] == "Drive At Night"
+        assert app.settings.style == "Drive At Night"
+
+        delete_user_preset("Drive At Night")
+        assert app.reload_styles() == 1
+        assert not app.settings.song_styles
+    finally:
+        delete_user_preset("Night Drive")
+        delete_user_preset("Drive At Night")
+        app.reload_styles()
+
+
+def test_the_style_creator_guides_checks_and_improves(app, monkeypatch) -> None:
+    styles = app.pages["styles"]
+    styles._music_picked("talk")
+    assert styles.answers.room == "none" and styles.answers.movement == "gentle"
+    assert styles.new_name.entry.get() == "Voice Mix"
+    assert "Talking" in styles.new_summary.entry.get()
+    assert "front" in styles.result.cget("text")
+    assert "looks good" in " ".join(_texts(styles.checks))
+
+    styles._answer(level="natural")
+    assert any("quieter" in text for text in _texts(styles.checks))
+    assert styles.improve.winfo_manager()
+    styles._improve()
+    assert styles.answers.level == "apps"
+
+    # A built-in name is explained and nothing is saved
+    styles.new_name.set("studio")
+    styles._create()
+    assert "built-in" in styles.new_name.help.cget("text")
+    assert not any(preset.custom for preset in app.presets.values())
+
+    # A weak style is offered an improvement before it is saved
+    styles._answer(level="natural")
+    styles.new_name.set("Quiet Talk")
+    monkeypatch.setattr("src.gui_app.Dialog.ask", lambda self: "improve")
+    styles._create()
+    try:
+        assert app.presets["Quiet Talk"].config.loudness_target == -14.0
+    finally:
+        delete_user_preset("Quiet Talk")
+        app.reload_styles()
+        styles._music_picked("mixed")
+
+
+def test_the_name_dialog_only_accepts_a_free_valid_name(app) -> None:
+    from src.gui_widgets import NameDialog  # pylint: disable=import-outside-toplevel
+
+    save_user_preset("PartyMix", EffectConfig())
+    app.reload_styles()
+    try:
+        styles = app.pages["styles"]
+        dialog = NameDialog(app, "Name", "Pick one", "party mix", styles.check_name)
+        app.update()
+        assert str(dialog.buttons["ok"].cget("state")) == "disabled"
+        assert "already have a style" in dialog.note.cget("text")
+
+        dialog.entry.delete(0, "end")
+        dialog.entry.insert(0, "new one")
+        assert dialog.check()
+        assert str(dialog.buttons["ok"].cget("state")) == "normal"
+        assert dialog.value == "New One"
+        assert "saved as New One" in dialog.note.cget("text")
+        dialog.close("no")
+    finally:
+        delete_user_preset("PartyMix")
+        app.reload_styles()
+
+
+def test_rename_duplicate_export_and_import_in_the_window(
+    app, monkeypatch, tmp_path: Path
+) -> None:
+    save_user_preset("PartyMix", EffectConfig(intensity=0.95), summary="loud")
+    app.reload_styles()
+    styles = app.pages["styles"]
+    shared = tmp_path / "PartyMix.json"
+    shown: list[str] = []
+    monkeypatch.setattr(
+        "src.gui_app.filedialog.asksaveasfilename", lambda **_: str(shared)
+    )
+    monkeypatch.setattr(
+        "src.gui_app.filedialog.askopenfilename", lambda **_: str(shared)
+    )
+    monkeypatch.setattr(
+        "src.gui_app.Dialog.ask", lambda self: shown.append(self.title())
+    )
+    try:
+        styles._export("PartyMix")
+        assert json.loads(shared.read_text(encoding="utf-8"))["name"] == "PartyMix"
+
+        # The file's own name is taken, so the name the user chose is used
+        monkeypatch.setattr("src.gui_app.NameDialog.ask", lambda self: "PartyCopy")
+        styles._import()
+        assert app.presets["PartyCopy"].config == app.presets["PartyMix"].config
+
+        monkeypatch.setattr("src.gui_app.NameDialog.ask", lambda self: "PartyTwo")
+        styles._duplicate("PartyMix")
+        monkeypatch.setattr("src.gui_app.NameDialog.ask", lambda self: "PartyThree")
+        styles._rename("PartyTwo")
+        assert "PartyThree" in app.presets and "PartyTwo" not in app.presets
+
+        # A broken file is explained and changes nothing
+        before = presets_file().read_text(encoding="utf-8")
+        shared.write_text('{"format": "audio8d-style"}', encoding="utf-8")
+        styles._import()
+        assert shown == ["Can't import this style"]
+        assert presets_file().read_text(encoding="utf-8") == before
+    finally:
+        for name in ("PartyMix", "PartyCopy", "PartyThree"):
+            delete_user_preset(name)
+        app.reload_styles()
+
+
+def test_a_corrected_box_loses_its_red_message(app) -> None:
+    sound = app.pages["sound"]
+    field = sound.amount_curve
+    field.set("0=0.5, 1:00=1.5")
+    field.check()
+    assert "between 0 and 1" in field.help.cget("text")
+
+    field.set("")
+    field.check()
+    assert field.help.cget("text") == field.help_text
+    app.set_intensity_curve("")
+
+
+def test_step_four_warns_about_low_quality_song_files(app, stereo_tone: Path) -> None:
+    # pylint: disable-next=import-outside-toplevel
+    from src.core.types import AudioStreamInfo
+
+    app.add_paths([stereo_tone])
+    app.update()
+    app.rows[0].info = AudioStreamInfo("mp3", 2, 44100, 3.0, 96_000)
+    app.show_page("review")
+
+    notes = " ".join(_texts(app.pages["review"].notes))
+    assert "1 song is a low-quality file (tone)" in notes
+    assert "Everything is ready" in notes
+
+
+def test_scrollbars_no_longer_force_a_layout_pass(app) -> None:
+    import customtkinter as ctk  # pylint: disable=import-outside-toplevel
+
+    from src import gui_widgets  # pylint: disable=import-outside-toplevel
+
+    # Every scrolling page draws with the quicker version, and still scrolls
+    assert ctk.CTkScrollbar._draw is gui_widgets._draw_scrollbar_without_flush
+    page = app.pages["sound"]
+    app.show_page("sound")
+    page._parent_canvas.yview_moveto(0.5)
+    app.update()
+    assert page._scrollbar._canvas.update_idletasks is gui_widgets._no_flush
+    assert page._parent_canvas.yview()[0] > 0

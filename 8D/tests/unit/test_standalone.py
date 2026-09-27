@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks every way of starting Audio8D without installing it."""
 
 import subprocess

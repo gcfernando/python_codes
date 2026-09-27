@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Where the sound is at every moment: its angle, how far out, and how high."""
 
 import math

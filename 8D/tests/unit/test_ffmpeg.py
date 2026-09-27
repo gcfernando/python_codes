@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks how Audio8D finds FFmpeg, builds its command and reads song details."""
 
 import json
@@ -21,6 +21,7 @@ from src.ffmpeg.runner import _progress_value, run_ffmpeg
 from src.ffmpeg.toolchain import FFmpegToolchain, _has_audio_encoder, _has_filter
 
 
+# The exact command matters: one wrong flag changes the sound or breaks the file
 def test_encode_command_is_exact() -> None:
     command = build_encode_command(
         Path("ffmpeg"),

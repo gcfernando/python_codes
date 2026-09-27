@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """A small, natural-sounding room made from scratch and played by FFmpeg's afir.
 
 The room is an impulse response: a pre-delay, a handful of early reflections,

@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """Checks the terminal panel, the best-value markers and the heads-up warnings."""
 
 import io
@@ -11,6 +11,7 @@ from src.ffmpeg import LoudnessMeasurement
 from src.pipeline import ConversionResult, LoudnessPlan
 
 
+# Old consoles can't draw box lines, so the panel must fall back to plain ASCII
 class _AsciiConsole(io.StringIO):
     """A fake old-style console that can only show plain ASCII."""
 

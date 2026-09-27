@@ -1,4 +1,4 @@
-# Developed by Gehan Fernando
+# Developed by ::> Gehan Fernando
 """The Audio8D window: `audio8d --gui` (or the `audio8d-gui` command).
 
 The window is built with CustomTkinter (gui_app.py), with Pillow for the icons:
