@@ -1,6 +1,7 @@
 # Developed by Gehan Fernando
 """Locates FFmpeg/FFprobe and checks the build has what the effect needs."""
 
+import logging
 import os
 import re
 import shutil
@@ -9,14 +10,17 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..core.errors import DependencyError
+from ..core.locations import tools_dir
+from ..effects.graph import GRAPH_FILTERS
 from .runner import run_capture
 
-# The filters every conversion uses; loudness adds its own two on top
-REQUIRED_FILTERS = frozenset({"aformat", "aecho", "apulsator", "alimiter"})
+# The filters every conversion uses; loudness adds its meter on top
+REQUIRED_FILTERS = GRAPH_FILTERS
 REQUIRED_ENCODER = "libmp3lame"
+LOG = logging.getLogger(__name__)
 
-# Copies of ffmpeg.exe and ffprobe.exe placed in src win over whatever is on PATH
-BUNDLED_DIR = Path(__file__).resolve().parent.parent
+# The bundled ffmpeg and ffprobe in bin/executable win over anything on PATH
+BUNDLED_DIR = tools_dir()
 
 
 def _find_executable(name: str) -> str | None:
@@ -54,7 +58,7 @@ class FFmpegToolchain:
 
     @classmethod
     def discover(cls) -> "FFmpegToolchain":
-        """Find both tools (bundled first, then PATH) or explain which is missing."""
+        """Find both tools (bin/executable first, then PATH) or say which is missing."""
         ffmpeg = _find_executable("ffmpeg")
         ffprobe = _find_executable("ffprobe")
 
@@ -67,14 +71,18 @@ class FFmpegToolchain:
             raise DependencyError(
                 "Missing required executable(s): "
                 + ", ".join(missing)
-                + f". Copy them into {BUNDLED_DIR} or install FFmpeg "
+                + f". Put ffmpeg and ffprobe in {BUNDLED_DIR}, or install FFmpeg "
                 "and add it to PATH."
             )
 
-        return cls(ffmpeg=Path(ffmpeg).resolve(), ffprobe=Path(ffprobe).resolve())
+        found = cls(ffmpeg=Path(ffmpeg).resolve(), ffprobe=Path(ffprobe).resolve())
+        LOG.debug("Using %s and %s", found.ffmpeg, found.ffprobe)
+        return found
 
-    def validate_capabilities(self, extra_filters: Iterable[str] = ()) -> None:
-        """Fail early if this FFmpeg build lacks a filter or the LAME encoder."""
+    def validate_capabilities(
+        self, extra_filters: Iterable[str] = (), encoder: str = REQUIRED_ENCODER
+    ) -> None:
+        """Fail early if this FFmpeg build lacks a filter or the chosen encoder."""
         filters_output = run_capture(
             [str(self.ffmpeg), "-hide_banner", "-filters"],
             error_type=DependencyError,
@@ -95,7 +103,7 @@ class FFmpegToolchain:
                 + ", ".join(missing_filters)
             )
 
-        if not _has_audio_encoder(encoders_output, REQUIRED_ENCODER):
+        if not _has_audio_encoder(encoders_output, encoder):
             raise DependencyError(
-                "This FFmpeg build does not include the libmp3lame encoder."
+                f"This FFmpeg build does not include the {encoder} encoder."
             )

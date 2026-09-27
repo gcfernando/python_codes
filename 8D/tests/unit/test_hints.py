@@ -16,7 +16,7 @@ from src import (
 @pytest.mark.parametrize(
     ("error", "expected"),
     [
-        (DependencyError("Missing required executable(s): ffmpeg"), "src folder"),
+        (DependencyError("Missing required executable(s): ffmpeg"), "bin\\executable"),
         (
             DependencyError("Command failed with exit code 1: boom"),
             "FFmpeg would not run",
@@ -50,9 +50,9 @@ def test_every_common_error_has_a_plain_fix(error: Audio8DError, expected: str) 
         EffectConfig(intensity=2),
         EffectConfig(ambience=-1),
         EffectConfig(limiter_ceiling=2),
-        EffectConfig(mp3_quality=12),
+        EffectConfig(quality=12),
         EffectConfig(loudness_target=0),
-        EffectConfig(mp3_bitrate=999),
+        EffectConfig(bitrate=999),
     ],
 )
 def test_every_out_of_range_knob_points_to_the_best_value(bad: EffectConfig) -> None:
@@ -70,10 +70,43 @@ def test_every_out_of_range_knob_points_to_the_best_value(bad: EffectConfig) -> 
         ("argument --quality: invalid choice: '11'", "0 to 9"),
         ("argument --preset: invalid choice: 'x'", "studio"),
         ("argument --bitrate: invalid choice: 999", "320"),
-        ("argument --loudness: use a number like -14, or 'off'", "-14"),
+        ("argument --loudness: use a number like -14, 'match' or 'off'", "match"),
+        ("argument --jobs: use a whole number from 1 to 16", "1 to 16"),
         ("unrecognized arguments: Song.mp3", "quotes"),
         ("something new", "--help"),
     ],
 )
 def test_typing_mistakes_have_a_plain_fix(message: str, expected: str) -> None:
     assert expected in hints.usage_fix_for(message)
+
+
+def test_a_locked_folder_gets_a_plain_fix() -> None:
+    error = ConversionError(
+        "FFmpeg conversion failed with exit code 1: Error opening output files: "
+        "Permission denied"
+    )
+
+    assert "isn't allowed to write there" in hints.fix_for(error)
+
+
+@pytest.mark.parametrize(
+    ("log", "shown"),
+    [
+        (
+            "FFmpeg conversion failed with exit code -13: [out#0/mp3 @ 00F1] Error "
+            r"opening output C:\Music\.a.partial.mp3."
+            "\n"
+            "Error opening output files: Permission denied",
+            "FFmpeg stopped: Error opening output files: Permission denied",
+        ),
+        (
+            "Command failed with exit code 1: [mp3 @ 0x1] Failed to find two "
+            "consecutive MPEG audio frames.\n"
+            r"C:\Music\notes.mp3: Invalid data found when processing input",
+            "FFmpeg stopped: Invalid data found when processing input",
+        ),
+        (r"Input file is empty: C:\a.mp3", r"Input file is empty: C:\a.mp3"),
+    ],
+)
+def test_ffmpeg_logs_are_shortened_to_their_reason(log: str, shown: str) -> None:
+    assert hints.short_message(ConversionError(log)) == shown

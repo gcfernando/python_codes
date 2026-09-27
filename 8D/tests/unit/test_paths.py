@@ -1,12 +1,13 @@
 # Developed by Gehan Fernando
 """Checks that song and output paths are validated before any work starts."""
 
+import os
 from pathlib import Path
 
 import pytest
 
 from src import InputValidationError
-from src.files import ensure_different_files, resolve_input, resolve_output
+from src.files import resolve_input, resolve_output, same_file
 
 
 def test_missing_input_is_rejected(tmp_path: Path) -> None:
@@ -67,9 +68,11 @@ def test_output_that_is_a_folder_is_rejected(tmp_path: Path) -> None:
         resolve_output(folder, overwrite=True)
 
 
-def test_input_and_output_cannot_be_the_same_file(tmp_path: Path) -> None:
+def test_the_same_file_is_recognised_however_it_is_written(tmp_path: Path) -> None:
     file_path = tmp_path / "song.mp3"
     file_path.write_bytes(b"audio")
 
-    with pytest.raises(InputValidationError):
-        ensure_different_files(file_path.resolve(), file_path.resolve())
+    # Windows file names ignore letter case, so these are the same file
+    assert same_file(file_path, tmp_path / "SONG.MP3") == (os.name == "nt")
+    assert same_file(file_path, file_path.resolve())
+    assert not same_file(file_path, tmp_path / "song (8D).mp3")

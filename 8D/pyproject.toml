@@ -5,14 +5,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "audio8d"
-version = "1.0.0"
-description = "Production-oriented 8D-style MP3 converter powered by FFmpeg"
+version = "2.0.0"
+description = "Production-oriented 3D/8D audio converter powered by FFmpeg"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Gehan Fernando" }]
 dependencies = []
 
 [project.optional-dependencies]
+# Only the window needs these (Pillow draws its icons); the terminal app needs none
+gui = ["customtkinter>=5.2", "pillow>=9.0"]
+# Keeps the singer in the middle (--vocals center); large, as it brings PyTorch
+stems = ["demucs>=4.0"]
 dev = [
     "pylint>=3.3",
     "pytest>=8.0",
@@ -22,15 +26,26 @@ dev = [
 [project.scripts]
 audio8d = "audio8d.cli:main"
 
+[project.gui-scripts]
+# The window, without a console behind it
+audio8d-gui = "audio8d.gui:main"
+
 [tool.setuptools]
 # The src folder *is* the audio8d package, so map the import name straight onto it
 package-dir = {"audio8d" = "src"}
 # Add any new sub-folder of src here or it will be left out of installs
-packages = ["audio8d", "audio8d.core", "audio8d.effects", "audio8d.ffmpeg", "audio8d.files"]
+packages = [
+    "audio8d",
+    "audio8d.analysis",
+    "audio8d.core",
+    "audio8d.effects",
+    "audio8d.ffmpeg",
+    "audio8d.files",
+]
 
 [tool.setuptools.package-data]
-# Bundled FFmpeg binaries travel with the package when present
-audio8d = ["ffmpeg.exe", "ffprobe.exe"]
+# The window's icon; FFmpeg itself lives in bin/executable, outside the package
+audio8d = ["assets/*.ico"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
@@ -64,4 +79,4 @@ no-docstring-rgx = "^(_|test_)"
 [tool.pylint.design]
 # convert() and EffectConfig carry one value per user-facing setting
 max-args = 8
-max-attributes = 8
+max-attributes = 12

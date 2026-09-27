@@ -6,304 +6,55 @@ import dataclasses
 import logging
 import runpy
 import sys
+import threading
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import NoReturn
 
 if __name__ == "__main__" and not __package__:
     # `python cli.py` without installing: __main__.py sets up the package and runs it
     runpy.run_path(str(Path(__file__).with_name("__main__.py")), run_name="__main__")
 
 # pylint: disable=wrong-import-position
-from . import __version__, display, hints
-from .core.errors import Audio8DError
-from .core.presets import PRESETS, RECOMMENDED_PRESET
-from .core.settings import MP3_BITRATES, EffectConfig
-from .core.types import AudioStreamInfo
+from . import __version__, display, guided, hints, launcher
+from .batch import BatchItem, default_jobs, progress_tracker, run_batch
+from .core.errors import Audio8DError, InputValidationError
+from .core.presets import Preset
+from .core.settings import (
+    EffectConfig,
+)
+from .core.types import AudioStreamInfo, Trim
+from .core.user_presets import save_user_preset
 from .ffmpeg import FFmpegToolchain, probe_audio
-from .files import resolve_input
-from .pipeline import LoudnessPlan, convert
+from .files import (
+    default_output_for,
+    find_songs,
+    resolve_input,
+)
+from .logs import start_log_file
+from .opener import open_path as open_in_player
+from .options import (
+    create_parser,
+    known_presets,
+    resolve_config,
+    used_only_defaults,
+)
+from .pipeline import (
+    ConvertOptions,
+    compare,
+    compare_output_for,
+    convert,
+    preview,
+    preview_output_for,
+    stages_for,
+)
 
 # pylint: enable=wrong-import-position
 
 LOG = logging.getLogger("audio8d")
 
-# What `--loudness off` turns into, so it can switch off a preset's loudness target
-LOUDNESS_OFF = "off"
-
-_DEFAULTS = EffectConfig()
-_BEST = PRESETS[RECOMMENDED_PRESET].config
-
-
-def _columns(rows: Sequence[tuple[str, str]], width: int) -> str:
-    """Line up commands and their explanations in two neat columns for --help."""
-    return "\n".join(f"  {left:<{width}}{right}" for left, right in rows)
-
-
-_QUICK_START = "\n".join(
-    [
-        "Turn any song into an 8D song that moves around your head (use headphones!).",
-        "",
-        "QUICK START - just copy one of these:",
-        _columns(
-            [
-                (
-                    f'audio8d "My Song.mp3" --preset {RECOMMENDED_PRESET}',
-                    "best quality, same loudness as Spotify",
-                ),
-                (
-                    'audio8d "My Song.mp3"',
-                    'classic sound, new file: "My Song (8D).mp3"',
-                ),
-                ("audio8d", "step-by-step helper that asks you questions"),
-                ("audio8d --list-presets", "show every ready-made style"),
-            ],
-            width=41,
-        ),
-        "",
-        f"BEST VALUES (this is exactly what --preset {RECOMMENDED_PRESET} uses):",
-        _columns(
-            [
-                (
-                    f"--rotation-seconds {_BEST.rotation_seconds:g}",
-                    f"--intensity {_BEST.intensity:.2f}",
-                ),
-                (
-                    f"--ambience {_BEST.ambience:.2f}",
-                    f"--limiter-ceiling {_BEST.limiter_ceiling:.2f}",
-                ),
-                (
-                    f"--bitrate {_BEST.mp3_bitrate}",
-                    f"--loudness {_BEST.loudness_target:g}",
-                ),
-            ],
-            width=26,
-        ),
-    ]
-)
-
-_EXAMPLE_SONG = 'audio8d "My Song.mp3"'
-_EXAMPLES = "\n".join(
-    [
-        "MORE EXAMPLES:",
-        _columns(
-            [
-                (
-                    f"{_EXAMPLE_SONG} --preset {RECOMMENDED_PRESET} --loudness -16",
-                    "Apple Music loudness",
-                ),
-                (
-                    f"{_EXAMPLE_SONG} --preset {RECOMMENDED_PRESET} --intensity 0.95",
-                    "stronger movement",
-                ),
-                (
-                    f'{_EXAMPLE_SONG} "C:\\Music\\8D\\My Song.mp3"',
-                    "choose where to save it",
-                ),
-            ],
-            width=58,
-        ),
-        "",
-        "Developed by Gehan Fernando. Full guide: README.md",
-    ]
-)
-
-
-def _loudness_value(text: str) -> float | str:
-    """Accept a LUFS number like -14, or the word 'off'."""
-    if text.strip().lower() in {"off", "none"}:
-        return LOUDNESS_OFF
-    try:
-        return float(text)
-    except ValueError:
-        raise argparse.ArgumentTypeError("use a number like -14, or 'off'") from None
-
-
-class _ListPresetsAction(argparse.Action):
-    """Print the preset table and stop, the same way --help does."""
-
-    def __init__(
-        self, option_strings: Sequence[str], dest: str, **kwargs: object
-    ) -> None:
-        """Take no value, like --help, so `audio8d --list-presets` works on its own."""
-        super().__init__(
-            option_strings,
-            dest,
-            nargs=0,
-            default=argparse.SUPPRESS,
-            help=str(kwargs.get("help")),
-        )
-
-    def __call__(self, parser: argparse.ArgumentParser, *_: object) -> None:
-        """Show the style table, then stop before argparse asks for a song."""
-        display.show_presets(display.Painter(sys.stdout), __version__)
-        parser.exit()
-
-
-class _FriendlyParser(argparse.ArgumentParser):
-    """An argument parser that explains typing mistakes in plain words."""
-
-    def error(self, message: str) -> NoReturn:
-        """Keep argparse's usual message, then add a plain fix and a working example."""
-        painter = display.Painter(sys.stderr)
-        self.print_usage(sys.stderr)
-        painter.line(f"{self.prog}: error: {message}")
-        display.show_fix(painter, hints.usage_fix_for(message))
-        painter.line(
-            "  "
-            + painter.paint("Example:", "bold")
-            + f' audio8d "My Song.mp3" --preset {RECOMMENDED_PRESET}'
-        )
-        self.exit(2)
-
-
-def create_parser() -> argparse.ArgumentParser:
-    """Build the argument parser; kept separate so tests can poke at it."""
-    parser = _FriendlyParser(
-        prog="audio8d",
-        description=_QUICK_START,
-        epilog=_EXAMPLES,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-
-    parser.add_argument(
-        "input", type=Path, help="the song you want to change (mp3, flac, wav, ...)"
-    )
-    parser.add_argument(
-        "output",
-        type=Path,
-        nargs="?",
-        help="where to save the 8D song, ending in .mp3 (leave out: '<song> (8D).mp3')",
-    )
-    parser.add_argument(
-        "--preset",
-        choices=list(PRESETS),
-        metavar="NAME",
-        help=f"a ready-made style: {', '.join(PRESETS)}. BEST: {RECOMMENDED_PRESET}",
-    )
-    # Knobs default to None, so "not typed" differs from "typed the default value"
-    parser.add_argument(
-        "--rotation-seconds",
-        type=float,
-        metavar="2..100",
-        help="how FAST it spins: seconds for one full circle "
-        f"(normal {_DEFAULTS.rotation_seconds:g}, BEST {_BEST.rotation_seconds:g})",
-    )
-    parser.add_argument(
-        "--intensity",
-        type=float,
-        metavar="0..1",
-        help="how FAR it moves between your ears "
-        f"(normal {_DEFAULTS.intensity}, BEST {_BEST.intensity})",
-    )
-    parser.add_argument(
-        "--ambience",
-        type=float,
-        metavar="0..1",
-        help="how much ROOM sound, 0 = none "
-        f"(normal {_DEFAULTS.ambience:.2f}, BEST {_BEST.ambience})",
-    )
-    parser.add_argument(
-        "--limiter-ceiling",
-        type=float,
-        metavar="0.0625..1",
-        help="the loudest a peak may get, stops crackles "
-        f"(normal {_DEFAULTS.limiter_ceiling}, BEST {_BEST.limiter_ceiling})",
-    )
-    parser.add_argument(
-        "--quality",
-        type=int,
-        choices=range(10),
-        metavar="0..9",
-        help="MP3 quality, 0 = best, 9 = smallest "
-        f"(normal {_DEFAULTS.mp3_quality}, BEST {_BEST.mp3_quality})",
-    )
-    parser.add_argument(
-        "--bitrate",
-        type=int,
-        choices=MP3_BITRATES,
-        metavar="KBPS",
-        help="constant MP3 bitrate, 320 = the most MP3 allows; replaces --quality "
-        f"(normal off, BEST {_BEST.mp3_bitrate})",
-    )
-    parser.add_argument(
-        "--loudness",
-        type=_loudness_value,
-        metavar="LUFS",
-        help="final loudness: -14 = Spotify/YouTube, -16 = Apple Music, or off "
-        f"(normal off, BEST {_BEST.loudness_target:g})",
-    )
-    parser.add_argument(
-        "--exact-loudness",
-        action="store_const",
-        const=True,
-        help="always hit the --loudness target exactly, even if the loudest peaks "
-        "must be shaved a little (normal off)",
-    )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="allow replacing a file that already has the output name",
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="show extra technical details, useful when something goes wrong",
-    )
-    parser.add_argument(
-        "--list-presets",
-        action=_ListPresetsAction,
-        help="show every ready-made style with its exact values, then stop",
-    )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"audio8d {__version__} - developed by Gehan Fernando",
-        help="show the version number and who made it",
-    )
-
-    return parser
-
-
-def resolve_config(args: argparse.Namespace) -> EffectConfig:
-    """Start from the chosen preset (or the defaults), then apply any typed knobs."""
-    base = PRESETS[args.preset].config if args.preset else EffectConfig()
-
-    typed = {
-        "rotation_seconds": args.rotation_seconds,
-        "intensity": args.intensity,
-        "ambience": args.ambience,
-        "limiter_ceiling": args.limiter_ceiling,
-        "mp3_quality": args.quality,
-        "mp3_bitrate": args.bitrate,
-        "exact_loudness": args.exact_loudness,
-    }
-    overrides: dict[str, object] = {
-        key: value for key, value in typed.items() if value is not None
-    }
-    if args.loudness is not None:
-        overrides["loudness_target"] = (
-            None if args.loudness == LOUDNESS_OFF else args.loudness
-        )
-
-    return dataclasses.replace(base, **overrides)
-
-
-def _used_only_defaults(args: argparse.Namespace) -> bool:
-    """True when the user typed no preset and no knobs at all."""
-    knobs = (
-        args.preset,
-        args.rotation_seconds,
-        args.intensity,
-        args.ambience,
-        args.limiter_ceiling,
-        args.quality,
-        args.loudness,
-        args.bitrate,
-        args.exact_loudness,
-    )
-    return all(value is None for value in knobs)
+# The helper's path cleaner, kept under its old name for existing callers
+_clean_typed_path = guided.clean_typed_path
 
 
 def configure_logging(verbose: bool) -> None:
@@ -313,16 +64,23 @@ def configure_logging(verbose: bool) -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s"
         if verbose
         else "%(levelname)s %(name)s: %(message)s",
+        # The windowed exe has no console to print to
+        handlers=None if sys.stderr is not None else [logging.NullHandler()],
     )
-    # The settings panel already says what is happening, so hide duplicate INFO lines
-    logging.getLogger(convert.__module__).setLevel(
-        logging.NOTSET if verbose else logging.WARNING
-    )
-
-
-def default_output_for(input_path: Path) -> Path:
-    """Place the 8D copy beside the original, e.g. `song.flac` -> `song (8D).mp3`."""
-    return input_path.with_name(f"{input_path.stem} (8D).mp3")
+    if not verbose:
+        # The panel already says what the pipeline is doing; the log file still gets it
+        quiet = convert.__module__
+        for handler in logging.getLogger().handlers:
+            if not getattr(handler, "audio8d_quiet", False) and not getattr(
+                handler, "audio8d_file", False
+            ):
+                handler.addFilter(
+                    lambda record: (
+                        record.levelno >= logging.WARNING or record.name != quiet
+                    )
+                )
+                handler.audio8d_quiet = True  # type: ignore[attr-defined]
+    start_log_file()
 
 
 def _explain(painter: display.Painter, error: Audio8DError) -> None:
@@ -341,15 +99,36 @@ def _peek_source(input_path: Path) -> AudioStreamInfo | None:
         return None
 
 
-def _run_conversion(
-    input_path: Path,
-    output_path: Path,
-    config: EffectConfig,
-    overwrite: bool,
-    *,
-    preset: str | None = None,
-    show_tip: bool = False,
-    banner: bool = True,
+@dataclasses.dataclass(frozen=True, slots=True)
+class Plan:  # pylint: disable=too-many-instance-attributes
+    """Everything decided before any work starts, shared by all the run modes."""
+
+    config: EffectConfig
+    preset: str | None
+    options: ConvertOptions
+    overwrite: bool = False
+    output_dir: Path | None = None
+    name_style: str = "8d"
+    jobs: int = 1
+    recursive: bool = False
+    play: bool = False
+    show_tip: bool = False
+    presets: dict[str, Preset] = dataclasses.field(default_factory=dict)
+
+
+def _output_for(song: Path, plan: Plan, relative_to: Path | None = None) -> Path:
+    """Where one song's 8D copy is saved."""
+    return default_output_for(
+        song,
+        plan.config.extension,
+        output_dir=plan.output_dir,
+        name_style=plan.name_style,
+        relative_to=relative_to,
+    )
+
+
+def run_single(
+    input_path: Path, output_path: Path, plan: Plan, *, banner: bool = True
 ) -> int:
     """Show the settings, convert one file, and turn known problems into exit code 1."""
     painter = display.Painter(sys.stderr)
@@ -366,110 +145,345 @@ def _run_conversion(
         version=__version__,
         song_in=input_path,
         song_out=output_path,
-        preset=preset,
-        config=config,
+        preset=plan.preset,
+        config=plan.config,
         banner=banner,
         source=_peek_source(input_path),
+        trim=plan.options.trim,
+        presets=plan.presets or None,
     )
 
-    plans: list[LoudnessPlan] = []
+    progress_bar = display.ProgressBar(painter)
     started = time.perf_counter()
     try:
-        convert(
+        result = convert(
             input_path=input_path,
             output_path=output_path,
-            config=config,
-            overwrite=overwrite,
-            on_loudness=plans.append,
+            config=plan.config,
+            overwrite=plan.overwrite,
+            options=plan.options,
+            on_progress=progress_bar.update,
         )
+    except Audio8DError as exc:
+        progress_bar.finish()
+        _explain(painter, exc)
+        return 1
+    progress_bar.finish()
+
+    display.show_result(painter, result, time.perf_counter() - started)
+    if result.original_removed_to:
+        display.show_removed(painter, input_path, result.original_removed_to)
+    display.show_listen(painter)
+    if plan.show_tip:
+        display.show_tip(painter)
+    if plan.play:
+        open_in_player(result.output)
+    return 0
+
+
+def _split_existing(
+    found: list[Path], plan: Plan, folder: Path
+) -> tuple[list[BatchItem], list[Path]]:
+    """Songs still to make, and 8D copies that already exist (skipped)."""
+    items: list[BatchItem] = []
+    skipped: list[Path] = []
+    for song in found:
+        output = _output_for(song, plan, relative_to=folder)
+        replacing_itself = plan.options.replace_original and output == song
+        if output.exists() and not plan.overwrite and not replacing_itself:
+            skipped.append(output)
+        else:
+            items.append(BatchItem(song, output))
+    return items, skipped
+
+
+def _batch_display(
+    painter: display.Painter, plan: Plan, count: int
+) -> tuple[
+    display.BatchBar,
+    Callable[[int, str, float], None],
+    Callable[[int, object], None],
+]:
+    """The overall bar plus the two callbacks that keep it up to date."""
+    stages = stages_for(plan.options)
+    update, overall = progress_tracker(count, stages)
+    progress_bar = display.BatchBar(painter, count)
+    progress_bar.draw(0.0)
+
+    def on_progress(index: int, stage: str, share: float) -> None:
+        """Fold one song's progress into the overall bar."""
+        update(index, stage, share)
+        progress_bar.draw(overall())
+
+    def on_done(_index: int, outcome: object) -> None:
+        """Print the finished song's line above the bar."""
+        number = progress_bar.finished + 1
+        progress_bar.song_line(display.batch_line(painter, number, count, outcome))
+
+    return progress_bar, on_progress, on_done
+
+
+def run_folder(  # pylint: disable=too-many-locals
+    folder: Path, plan: Plan, *, banner: bool = True, songs: list[Path] | None = None
+) -> int:
+    """Convert every song in a folder, several at once, then show the totals."""
+    painter = display.Painter(sys.stderr)
+    try:
+        found = (
+            songs if songs is not None else find_songs(folder, recursive=plan.recursive)
+        )
+        if not found:
+            raise InputValidationError(f"No songs found in {folder}")
     except Audio8DError as exc:
         _explain(painter, exc)
         return 1
 
-    display.show_done(painter, output_path, time.perf_counter() - started)
-    for plan in plans:
-        display.show_loudness(painter, plan)
-    if show_tip:
-        display.show_tip(painter)
+    items, skipped = _split_existing(found, plan, folder)
+
+    display.show_settings(
+        painter,
+        version=__version__,
+        song_in=folder,
+        song_out=plan.output_dir or Path("next to each original"),
+        preset=plan.preset,
+        config=plan.config,
+        banner=banner,
+        trim=plan.options.trim,
+        presets=plan.presets or None,
+    )
+    for path in skipped:
+        painter.line(painter.paint(f"  Skipped (already made): {path.name}", "dim"))
+    if not items:
+        painter.line(
+            painter.paint(
+                "  Nothing new to convert. Add --overwrite to redo them.", "yellow"
+            )
+        )
+        return 0
+    display.show_batch_plan(
+        painter, len(items), plan.jobs, plan.output_dir, plan.options.replace_original
+    )
+
+    progress_bar, on_progress, on_done = _batch_display(painter, plan, len(items))
+    cancel = threading.Event()
+    try:
+        report = run_batch(
+            items,
+            plan.config,
+            options=plan.options,
+            overwrite=plan.overwrite,
+            jobs=plan.jobs,
+            on_progress=on_progress,
+            on_done=on_done,
+            cancel=cancel,
+        )
+    except KeyboardInterrupt:
+        cancel.set()
+        progress_bar.close()
+        painter.line(
+            painter.paint("  Stopped. Songs already finished are kept.", "yellow")
+        )
+        return 1
+    progress_bar.close()
+    display.show_batch_summary(painter, report)
+    for outcome in report.failed:
+        assert outcome.error is not None
+        fix = hints.fix_for(outcome.error)
+        if fix:
+            painter.line(painter.paint(f"  {outcome.item.source.name}: ", "dim") + fix)
+    if report.converted:
+        display.show_listen(painter)
+    if plan.play and report.converted:
+        open_in_player(report.converted[0].result.output)  # type: ignore[union-attr]
+    return 1 if report.failed else 0
+
+
+def run_preview(
+    input_path: Path, plan: Plan, seconds: float, output: Path | None
+) -> int:
+    """Make a short sample from the loudest part, so you can try a style quickly."""
+    painter = display.Painter(sys.stderr)
+    target = output or preview_output_for(input_path, plan.config.extension)
+    progress_bar = display.ProgressBar(painter)
+    try:
+        resolve_input(input_path)
+        display.show_settings(
+            painter,
+            version=__version__,
+            song_in=input_path,
+            song_out=target,
+            preset=plan.preset,
+            config=plan.config,
+            source=_peek_source(input_path),
+            presets=plan.presets or None,
+        )
+        painter.line(
+            painter.paint(f"  Preview: {seconds:g} s from the loudest part.", "cyan")
+        )
+        started = time.perf_counter()
+        result = preview(
+            input_path,
+            target,
+            plan.config,
+            seconds=seconds,
+            on_progress=progress_bar.update,
+        )
+    except Audio8DError as exc:
+        progress_bar.finish()
+        _explain(painter, exc)
+        return 1
+    progress_bar.finish()
+    display.show_result(painter, result, time.perf_counter() - started)
+    display.show_listen(painter)
+    if plan.play:
+        open_in_player(result.output)
     return 0
 
 
-def _clean_typed_path(answer: str) -> str:
-    """Strip the quotes, spaces and '& ' that drag-and-drop or 'Copy as path' add."""
-    cleaned = answer.strip()
-    if cleaned.startswith("& "):
-        cleaned = cleaned[2:]
-    return cleaned.strip().strip("\"'").strip()
-
-
-def _ask_for_song(painter: display.Painter) -> Path | None:
-    """Keep asking until we get a real file, or the user presses Enter to stop."""
-    display.show_step(
-        painter, 1, "Which song?", "Drag your song into this window, then press Enter."
-    )
-    while True:
-        answer = _clean_typed_path(input("  Song: "))
-        if not answer:
-            return None
-        song = Path(answer).expanduser()
-        if song.is_file():
-            return song
-        if song.is_dir():
-            display.show_problem(
-                painter, "That is a folder. Please drag in one song file."
-            )
-        else:
-            display.show_problem(
-                painter,
-                "I can't find that file. Try dragging it in (or press Enter to stop).",
-            )
-
-
-def _ask_for_style(painter: display.Painter) -> str:
-    """Numbered style menu; pressing Enter picks the best one."""
-    painter.line()
-    display.show_step(
-        painter,
-        2,
-        "Which style?",
-        f"Just press Enter for the BEST one ({RECOMMENDED_PRESET}).",
-    )
-    names = display.show_style_menu(painter)
-    while True:
-        answer = input("  Style [1]: ").strip().lower()
-        if not answer:
-            return names[0]
-        if answer.isdigit() and 1 <= int(answer) <= len(names):
-            return names[int(answer) - 1]
-        if answer in names:
-            return answer
-        display.show_problem(
-            painter, f"Please type a number from 1 to {len(names)}, or press Enter."
+def run_compare(input_path: Path, plan: Plan, output: Path | None) -> int:
+    """Make the A/B file: the original, a short pause, then the 8D version."""
+    painter = display.Painter(sys.stderr)
+    target = output or compare_output_for(input_path)
+    progress_bar = display.ProgressBar(painter)
+    try:
+        resolve_input(input_path)
+        display.show_settings(
+            painter,
+            version=__version__,
+            song_in=input_path,
+            song_out=target,
+            preset=plan.preset,
+            config=plan.config,
+            source=_peek_source(input_path),
+            presets=plan.presets or None,
         )
+        started = time.perf_counter()
+        made = compare(input_path, target, plan.config, on_progress=progress_bar.update)
+    except Audio8DError as exc:
+        progress_bar.finish()
+        _explain(painter, exc)
+        return 1
+    progress_bar.finish()
+    display.show_done(painter, made, time.perf_counter() - started)
+    painter.line(
+        painter.paint(
+            "  First 15 s: the ORIGINAL (A). A short pause. Then the 8D version (B).",
+            "green",
+        )
+    )
+    painter.line(
+        painter.paint(
+            "  Both are the same loudness, so only the 8D effect differs.", "dim"
+        )
+    )
+    if plan.play:
+        open_in_player(made)
+    return 0
+
+
+def _save_preset(args: argparse.Namespace, config: EffectConfig) -> int:
+    """Save the typed settings as a named style and say where."""
+    painter = display.Painter(sys.stderr)
+    try:
+        where = save_user_preset(
+            args.save_preset,
+            config,
+            based_on=args.preset or "classic",
+            summary=f"your style, based on {args.preset or 'classic'}",
+        )
+    except Audio8DError as exc:
+        _explain(painter, exc)
+        return 1
+    painter.line(
+        "  "
+        + painter.paint(f"Saved your style '{args.save_preset}'", "bold", "green")
+        + painter.paint(f" in {where}", "green")
+    )
+    painter.line(f'  Use it with: audio8d "My Song.mp3" --preset {args.save_preset}')
+    return 0
+
+
+def plan_from_args(args: argparse.Namespace) -> Plan:
+    """Turn the parsed command line into a Plan (may raise InputValidationError)."""
+    presets = known_presets()
+    config = resolve_config(args, presets)
+    config.validate()
+    only_defaults = used_only_defaults(args)
+    replace = bool(args.replace)
+    # Replacing usually means "put the 8D song where the old one was"
+    name_style = args.name or ("original" if replace else "8d")
+    trim = (
+        Trim(args.start, args.end)
+        if args.start is not None or args.end is not None
+        else None
+    )
+    if (
+        trim
+        and trim.start is not None
+        and trim.end is not None
+        and trim.end <= trim.start
+    ):
+        raise InputValidationError("The chosen start and end leave no sound to convert")
+    return Plan(
+        config=config,
+        # Typing nothing is the same as choosing the classic style, so say so
+        preset="classic" if only_defaults else args.preset,
+        options=ConvertOptions(
+            trim=trim,
+            keep_cover=not args.no_cover,
+            tag_title=not args.keep_title,
+            check=not args.no_check,
+            replace_original=replace,
+        ),
+        overwrite=args.overwrite,
+        output_dir=args.output_dir,
+        name_style=name_style,
+        jobs=args.jobs or default_jobs(),
+        recursive=args.recursive,
+        play=args.play,
+        show_tip=only_defaults,
+        presets=presets,
+    )
 
 
 def _run_interactive() -> int:
-    """Walk a first-time user through two questions, e.g. after double-clicking."""
+    """Walk a first-time user through four questions, e.g. after double-clicking."""
     configure_logging(verbose=False)
     painter = display.Painter(sys.stdout)
     display.show_welcome(painter, __version__)
+    presets = known_presets()
 
     try:
-        song = _ask_for_song(painter)
-        if song is None:
-            painter.line("  No song given, nothing to do.")
+        chosen = guided.ask_for_music(painter)
+        if chosen is None:
+            painter.line("  Nothing given, nothing to do.")
             code = 2
         else:
-            style = _ask_for_style(painter)
-            painter.line()
-            code = _run_conversion(
-                song,
-                default_output_for(song),
-                PRESETS[style].config,
-                overwrite=False,
-                preset=style,
-                banner=False,
+            songs = (
+                guided.ask_which_songs(painter, chosen) if chosen.is_dir() else [chosen]
             )
+            if not songs:
+                code = 2
+            else:
+                style = guided.ask_for_style(painter, presets)
+                destination = guided.ask_for_destination(painter)
+                replace, name_style = guided.ask_about_originals(painter)
+                painter.line()
+                plan = Plan(
+                    config=presets[style].config,
+                    preset=style,
+                    options=ConvertOptions(replace_original=replace),
+                    output_dir=destination,
+                    name_style=name_style,
+                    jobs=default_jobs(),
+                    presets=presets,
+                )
+                if chosen.is_dir():
+                    code = run_folder(chosen, plan, banner=False, songs=songs)
+                else:
+                    code = run_single(
+                        chosen, _output_for(chosen, plan), plan, banner=False
+                    )
         # Keep a double-clicked window open long enough to read the result
         input("\nPress Enter to close...")
     except (EOFError, KeyboardInterrupt):
@@ -489,23 +503,61 @@ def _should_ask_interactively(argv: Sequence[str] | None) -> bool:
     )
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    """Parse arguments, run one conversion, and return the process exit code."""
+def _parse(
+    parser: argparse.ArgumentParser, argv: Sequence[str] | None
+) -> tuple[argparse.Namespace, list[Path]]:
+    """The typed options, plus every song given when opening the window."""
+    # The window takes any number of songs (e.g. several dropped on Audio8D.pyw)
+    args, extra = parser.parse_known_args(argv)
+    if not args.gui or any(word.startswith("-") for word in extra):
+        return parser.parse_args(argv), []
+    given = [args.input, args.output, *map(Path, extra)]
+    return args, [song for song in given if song is not None]
+
+
+def main(argv: Sequence[str] | None = None) -> int:  # pylint: disable=too-many-return-statements
+    """Parse arguments, run the chosen mode, and return the process exit code."""
+    # A double-clicked window opens in the old console; move to Windows Terminal
+    if argv is None and launcher.relaunch_in_windows_terminal(sys.argv[1:]):
+        return 0
     if _should_ask_interactively(argv):
         return _run_interactive()
 
-    args = create_parser().parse_args(argv)
+    parser = create_parser()
+    args, songs = _parse(parser, argv)
     configure_logging(args.verbose)
 
-    output = args.output if args.output is not None else default_output_for(args.input)
-    only_defaults = _used_only_defaults(args)
+    if args.gui:
+        from .gui import run_gui  # pylint: disable=import-outside-toplevel
 
-    return _run_conversion(
-        args.input,
-        output,
-        resolve_config(args),
-        args.overwrite,
-        # Typing nothing is the same as choosing the classic style, so say so
-        preset="classic" if only_defaults else args.preset,
-        show_tip=only_defaults,
-    )
+        return run_gui(songs)
+
+    painter = display.Painter(sys.stderr)
+    try:
+        plan = plan_from_args(args)
+    except Audio8DError as exc:
+        _explain(painter, exc)
+        return 1
+
+    if args.save_preset:
+        code = _save_preset(args, plan.config)
+        if code or args.input is None:
+            return code
+    if args.input is None:
+        parser.error("the following arguments are required: input")
+
+    if args.input.is_dir():
+        if args.output is not None:
+            parser.error("with a folder, choose where to save with --output-dir")
+        if args.preview is not None or args.compare:
+            parser.error("--preview and --compare work on one song, not a folder")
+        return run_folder(args.input, plan)
+    if args.compare:
+        return run_compare(args.input, plan, args.output)
+    if args.preview is not None:
+        return run_preview(args.input, plan, args.preview, args.output)
+    output = args.output if args.output is not None else _output_for(args.input, plan)
+    return run_single(args.input, output, plan)
+
+
+__all__ = ["create_parser", "default_output_for", "main", "resolve_config"]

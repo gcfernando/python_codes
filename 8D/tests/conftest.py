@@ -1,6 +1,9 @@
 # Developed by Gehan Fernando
 """Shared pytest fixtures."""
 
+# Fixtures that use other fixtures name them as arguments; that is how pytest works
+# pylint: disable=redefined-outer-name
+
 import subprocess
 from pathlib import Path
 
@@ -8,6 +11,18 @@ import pytest
 
 from src import DependencyError
 from src.ffmpeg import FFmpegToolchain
+
+
+@pytest.fixture(autouse=True)
+def _private_home(
+    monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory
+) -> Path:
+    """Keep saved styles and the cache away from the real user folders."""
+    home = tmp_path_factory.mktemp("audio8d-home")
+    monkeypatch.setenv("AUDIO8D_HOME", str(home))
+    # Never open Windows Terminal windows while testing
+    monkeypatch.setenv("AUDIO8D_NO_WT", "1")
+    return home
 
 
 def find_toolchain() -> FFmpegToolchain | None:
@@ -47,6 +62,32 @@ def stereo_tone(tmp_path: Path) -> Path:
         "-filter_complex", "[0][1]amerge=inputs=2",
         "-metadata", "title=Test Tone",
         "-c:a", "libmp3lame", "-q:a", "2",
+    )  # fmt: skip
+
+
+@pytest.fixture
+def tone_with_cover(tmp_path: Path, stereo_tone: Path) -> Path:
+    """The stereo tone with a small red album-art picture attached."""
+    picture = _synthesize(
+        tmp_path / "cover.png",
+        "-f", "lavfi", "-i", "color=c=red:s=64x64:d=1", "-frames:v", "1",
+    )  # fmt: skip
+    return _synthesize(
+        tmp_path / "covered.mp3",
+        "-i", str(stereo_tone), "-i", str(picture),
+        "-map", "0:a", "-map", "1:v", "-c:a", "copy", "-c:v", "mjpeg",
+        "-disposition:v", "attached_pic", "-id3v2_version", "3",
+    )  # fmt: skip
+
+
+@pytest.fixture
+def click_track(tmp_path: Path) -> Path:
+    """Twenty seconds of a kick drum at exactly 120 BPM."""
+    return _synthesize(
+        tmp_path / "clicks.wav",
+        "-f", "lavfi", "-i",
+        "aevalsrc='0.8*sin(2*PI*60*t)*exp(-30*mod(t,0.5))':s=44100:d=20",
+        "-ac", "2",
     )  # fmt: skip
 
 

@@ -12,8 +12,12 @@ venv/
 .pytest_cache/
 .ruff_cache/
 
-# Audio produced while trying the tool out
-*.partial.mp3
+# Hidden, half-made files from a conversion that was stopped
+.*.partial.*
 
 # Songs you convert here stay on your PC and are never uploaded
 *.mp3
+*.flac
+*.wav
+*.m4a
+*.opus
