@@ -1,6 +1,6 @@
 # Developed by Gehan Fernando
 
-# Builds the standalone dist\Audio8D folder and its zip (usage: see README part 21)
+# Builds the standalone dist\Audio8D folder and its zip (usage: see README part 26)
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
@@ -35,16 +35,13 @@ Write-Host "Building Audio8D.exe and audio8d-cli.exe"
     (Join-Path $root "packaging\audio8d.spec")
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed; see the messages above." }
 
-# Everything the app finds next to itself: tools, guide, pictures and licences
+# Everything the app finds next to itself: tools and licences (the guide stays online, in the one 8D\README.md)
 New-Item -ItemType Directory -Force (Join-Path $app "bin\executable") | Out-Null
 Copy-Item (Join-Path $tools "*.exe") (Join-Path $app "bin\executable") -Force
-Copy-Item (Join-Path $root "README.md") $app -Force
 # FFmpeg is GPL: its licence and the other notices must travel with every copy
 Copy-Item (Join-Path $root "THIRD-PARTY-NOTICES.md") $app -Force
 New-Item -ItemType Directory -Force (Join-Path $app "licenses") | Out-Null
 Copy-Item (Join-Path $root "licenses\*.txt") (Join-Path $app "licenses") -Force
-New-Item -ItemType Directory -Force (Join-Path $app "docs\images") | Out-Null
-Copy-Item (Join-Path $root "docs\images\*.png") (Join-Path $app "docs\images") -Force
 
 # A quick self-test of the finished build before it is zipped
 $version = & (Join-Path $app "audio8d-cli.exe") --version

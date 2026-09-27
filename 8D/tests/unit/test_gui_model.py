@@ -160,6 +160,14 @@ def test_gui_words_replace_command_line_flags() -> None:
     assert "--" not in gui_words("add --overwrite to replace it")
 
 
+def test_a_curve_out_of_range_names_its_box() -> None:
+    settings = GuiSettings(intensity_curve_text="0=0.5, 1:00=1.5")
+
+    found = problems(settings, [(Path("a.mp3"), None)])
+
+    assert found == [("sound", "Movement over time values must be between 0 and 1")]
+
+
 def test_review_and_status_describe_everything_in_words() -> None:
     settings = _settings()
     labels = [label for label, _ in review(settings)]

@@ -76,6 +76,9 @@ _GUI_WORDS = (
         r"type audio8d alone, press Enter, drag the song in",
         "drag the song onto the window",
     ),
+    # The curve checks name their settings the programmer's way
+    (r"\bspeed_curve\b", "Speed over time"),
+    (r"\bintensity_curve\b", "Movement over time"),
 )
 
 

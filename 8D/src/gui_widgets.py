@@ -634,6 +634,8 @@ class Dialog(ctk.CTkToplevel):
         super().__init__(master)
         self.title(title)
         use_app_icon(self)
+        # CustomTkinter puts its own icon on new windows after 200 ms; ours goes back on
+        self.after(250, lambda: use_app_icon(self))
         self.result: str | None = None
         self.resizable(False, False)
         self.transient(master)

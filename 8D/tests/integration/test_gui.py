@@ -393,3 +393,34 @@ def test_long_lists_show_a_page_at_a_time_but_convert_everything(
     assert review.rest == [0, 5, 5]
     assert len(review.run_list.winfo_children()) == SONGS_PER_PAGE + 5 + 1
     assert "0 made, 5 failed" in review.rest_line.cget("text")
+
+
+def test_message_windows_keep_the_audio8d_icon(app, monkeypatch) -> None:
+    from src.gui_widgets import Dialog  # pylint: disable=import-outside-toplevel
+
+    opened = time.perf_counter()
+    applied: list[float] = []
+    monkeypatch.setattr(
+        "src.gui_widgets.use_app_icon",
+        lambda _window: applied.append(time.perf_counter() - opened),
+    )
+    dialog = Dialog(app, "Test", "A message", [("OK", "ok")])
+    # CustomTkinter puts its own icon on new windows after 200 ms
+    _pump(app, lambda: False, 0.5)
+
+    assert any(when >= 0.2 for when in applied)
+    dialog.close("ok")
+
+
+def test_the_guide_opens_online_when_no_readme_is_beside_the_app(
+    monkeypatch, tmp_path: Path
+) -> None:
+    from src import gui_app  # pylint: disable=import-outside-toplevel
+
+    opened: list[str] = []
+    monkeypatch.setattr(gui_app, "guide_file", lambda: tmp_path / "README.md")
+    monkeypatch.setattr(gui_app.webbrowser, "open", opened.append)
+
+    gui_app.SettingsPage._open_guide()  # pylint: disable=protected-access
+
+    assert opened == [gui_app.GUIDE_URL]

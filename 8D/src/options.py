@@ -12,6 +12,7 @@ from typing import NoReturn
 from . import __version__, display, hints
 from .batch import MAX_JOBS, default_jobs
 from .core.errors import Audio8DError, InputValidationError
+from .core.locations import GUIDE_URL
 from .core.parsing import parse_keyframes, parse_time
 from .core.presets import PRESETS, RECOMMENDED_PRESET, Preset
 from .core.settings import (
@@ -116,7 +117,7 @@ _EXAMPLES = "\n".join(
             width=52,
         ),
         "",
-        "Developed by Gehan Fernando. Full guide: README.md",
+        "Developed by Gehan Fernando. Full guide: README.md, or " + GUIDE_URL,
     ]
 )
 

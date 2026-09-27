@@ -3,7 +3,7 @@
 
 A guided workflow in four steps - 1 Add songs, 2 Sound, 3 Output,
 4 Review & convert - plus Your styles and Settings. Every command-line option
-has a control here (see the checklist in README part 17). All decisions live
+has a control here (see README part 25, "Every option"). All decisions live
 in gui_model.GuiSettings; conversions run through the same pipeline and batch
 code as the command line, on a helper thread, reporting back through a queue.
 """
@@ -20,6 +20,7 @@ import queue
 import threading
 import time
 import tkinter as tk
+import webbrowser
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from tkinter import filedialog
@@ -32,6 +33,7 @@ from .analysis import demucs_available, demucs_hint
 from .batch import BatchOutcome, progress_tracker, run_batch
 from .core.errors import Audio8DError
 from .core.locations import (
+    GUIDE_URL,
     cache_dir,
     guide_file,
     is_packaged,
@@ -1816,18 +1818,23 @@ class SettingsPage(Page):
             "Everything here can also be done from a terminal: run  "
             f"{HELP_COMMAND}  to see how.",
         ).grid(row=1, column=0, sticky="w", pady=(2, 10))
-        guide = guide_file()
-        guide_button = button(
+        button(
             about.body,
             "guide",
             "Open the full guide",
-            lambda: open_path(guide),
+            self._open_guide,
             kind="primary",
             width=220,
-        )
-        guide_button.grid(row=2, column=0, sticky="w")
-        if not guide.exists():
-            guide_button.configure(state="disabled")
+        ).grid(row=2, column=0, sticky="w")
+
+    @staticmethod
+    def _open_guide() -> None:
+        """Show the README beside the app, or the online copy when there isn't one."""
+        guide = guide_file()
+        if guide.exists():
+            open_path(guide)
+        else:
+            webbrowser.open(GUIDE_URL)
 
     def _open_logs(self) -> None:
         """Show the folder with the technical log."""

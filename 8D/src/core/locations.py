@@ -26,8 +26,12 @@ def tools_dir() -> Path:
     return app_dir() / "bin" / "executable"
 
 
+# The one and only guide, online, for copies of the app that have no README beside them
+GUIDE_URL = "https://github.com/gcfernando/python_codes/blob/main/8D/README.md"
+
+
 def guide_file() -> Path:
-    """The README that 'Open the full guide' shows."""
+    """The README that 'Open the full guide' shows when it sits next to the app."""
     return app_dir() / "README.md"
 
 
