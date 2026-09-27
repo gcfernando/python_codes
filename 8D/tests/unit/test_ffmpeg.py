@@ -7,34 +7,87 @@ from pathlib import Path
 
 import pytest
 
-from src import ConversionError, DependencyError, InputValidationError
+from src import ConversionError, DependencyError, EffectConfig, InputValidationError
+from src.core.types import Trim
 from src.ffmpeg import (
+    InputFile,
     build_encode_command,
     parse_ebur128_summary,
     parse_probe_output,
     toolchain,
 )
+from src.ffmpeg.commands import encoder_arguments
+from src.ffmpeg.runner import _progress_value, run_ffmpeg
 from src.ffmpeg.toolchain import FFmpegToolchain, _has_audio_encoder, _has_filter
 
 
 def test_encode_command_is_exact() -> None:
     command = build_encode_command(
         Path("ffmpeg"),
-        Path("in.wav"),
+        [InputFile(Path("in.wav")), InputFile(Path("gains.wav"))],
         Path("out.mp3"),
-        filter_chain="anull",
-        mp3_quality=2,
+        filter_graph="[0:a]anull[out]",
+        config=EffectConfig(quality=2),
+        sample_rate=44100,
     )
 
     assert command == [
         "ffmpeg", "-hide_banner", "-nostdin", "-loglevel", "error",
-        "-i", "in.wav",
-        "-map", "0:a:0", "-map_metadata", "0", "-vn",
-        "-af", "anull",
-        "-c:a", "libmp3lame", "-q:a", "2", "-ac", "2",
+        "-i", "in.wav", "-i", "gains.wav",
+        "-filter_complex", "[0:a]anull[out]", "-map", "[out]",
+        "-map_metadata", "0",
+        "-c:a", "libmp3lame", "-q:a", "2",
         "-id3v2_version", "3", "-write_id3v1", "1",
+        "-ar", "44100", "-ac", "2",
         "-n", "out.mp3",
     ]  # fmt: skip
+
+
+def test_cover_title_and_trim_are_added() -> None:
+    command = build_encode_command(
+        Path("ffmpeg"),
+        [InputFile(Path("in.flac"), Trim(60.0, 90.0))],
+        Path("out.flac"),
+        filter_graph="x",
+        config=EffectConfig(output_format="flac"),
+        sample_rate=96000,
+        cover_art=True,
+        title="Song (8D)",
+    )
+    text = " ".join(command)
+
+    assert "-ss 60.000 -t 30.000 -i in.flac" in text
+    assert "-map 0:v:0 -c:v copy -disposition:v:0 attached_pic" in text
+    assert "-metadata title=Song (8D)" in text
+    assert "-c:a flac" in text and "-bits_per_raw_sample 24" in text
+
+
+@pytest.mark.parametrize(
+    ("fmt", "expected"),
+    [
+        ("m4a", ["-c:a", "aac", "-b:a", "256k"]),
+        ("opus", ["-c:a", "libopus", "-b:a", "192k"]),
+        ("wav", ["-c:a", "pcm_s24le"]),
+    ],
+)
+def test_each_format_gets_its_encoder(fmt: str, expected: list[str]) -> None:
+    arguments = encoder_arguments(EffectConfig(output_format=fmt))
+
+    assert arguments[: len(expected)] == expected
+
+
+def test_opus_and_wav_never_get_album_art() -> None:
+    for fmt in ("opus", "wav"):
+        command = build_encode_command(
+            Path("ffmpeg"),
+            [InputFile(Path("in.mp3"))],
+            Path(f"out.{fmt}"),
+            filter_graph="x",
+            config=EffectConfig(output_format=fmt),
+            sample_rate=48000,
+            cover_art=True,
+        )
+        assert "0:v:0" not in command
 
 
 def test_probe_parses_a_normal_stream() -> None:
@@ -120,26 +173,13 @@ def test_discover_explains_what_is_missing(
         FFmpegToolchain.discover()
 
 
-def test_top_quality_encodes_use_lames_most_careful_mode() -> None:
-    cbr = build_encode_command(
-        Path("ffmpeg"),
-        Path("in.wav"),
-        Path("out.mp3"),
-        filter_chain="anull",
-        mp3_quality=0,
-        mp3_bitrate=320,
-    )
-    vbr = build_encode_command(
-        Path("ffmpeg"),
-        Path("in.wav"),
-        Path("out.mp3"),
-        filter_chain="anull",
-        mp3_quality=0,
-    )
+def test_top_quality_encodes_use_lames_careful_mode() -> None:
+    cbr = encoder_arguments(EffectConfig(quality=0, bitrate=320))
+    vbr = encoder_arguments(EffectConfig(quality=0))
 
     assert cbr[cbr.index("-b:a") + 1] == "320k"
     assert "-q:a" not in cbr
-    assert cbr[cbr.index("-compression_level") + 1] == "0"
+    assert cbr[cbr.index("-compression_level") + 1] == "2"
     assert vbr[vbr.index("-q:a") + 1] == "0"
     assert "-compression_level" in vbr
 
@@ -203,3 +243,38 @@ def test_probe_falls_back_to_the_file_bitrate() -> None:
 
     assert info.bit_rate == 1411000
     assert info.is_lossless is True
+
+
+def test_probe_finds_album_art_and_the_title() -> None:
+    info = parse_probe_output(
+        json.dumps(
+            {
+                "streams": [
+                    {"codec_type": "audio", "codec_name": "mp3", "channels": 2,
+                     "sample_rate": "44100"},
+                    {"codec_type": "video", "codec_name": "mjpeg",
+                     "disposition": {"attached_pic": 1}},
+                ],
+                "format": {"duration": "10.0", "tags": {"TITLE": "My Song"}},
+            }
+        )
+    )  # fmt: skip
+
+    assert info.has_cover_art is True
+    assert info.title == "My Song"
+
+
+def test_progress_lines_become_shares() -> None:
+    assert _progress_value("out_time_us=5000000", 10.0) == 0.5
+    assert _progress_value("out_time_ms=20000000", 10.0) == 1.0
+    assert _progress_value("progress=continue", 10.0) is None
+    assert _progress_value("out_time_us=N/A", 10.0) is None
+
+
+def test_a_tool_that_cannot_start_gives_a_plain_error(tmp_path: Path) -> None:
+    missing = tmp_path / "ffmpeg.exe"
+
+    with pytest.raises(ConversionError, match="Failed to start"):
+        run_ffmpeg(
+            [str(missing), "-version"], duration=1.0, on_progress=lambda _s: None
+        )

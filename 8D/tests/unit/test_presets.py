@@ -22,7 +22,7 @@ def test_studio_preset_is_the_best_of_best() -> None:
     studio = PRESETS[RECOMMENDED_PRESET].config
 
     assert RECOMMENDED_PRESET == "studio"
-    assert studio.mp3_bitrate == 320
+    assert studio.bitrate == 320
     assert studio.loudness_target == -14.0
     assert studio.exact_loudness is False
     # 0.84 is about -1.5 dBFS, the headroom mastering engineers leave for lossy formats
@@ -34,19 +34,19 @@ def test_streaming_preset_is_studio_with_exact_loudness() -> None:
     streaming = PRESETS["streaming"].config
 
     assert streaming.exact_loudness is True
-    assert streaming.mp3_bitrate == studio.mp3_bitrate
+    assert streaming.bitrate == studio.bitrate
     assert streaming.limiter_ceiling == studio.limiter_ceiling
 
 
 @pytest.mark.parametrize("bitrate", [128, 192, 320, None])
 def test_standard_bitrates_are_accepted(bitrate: int | None) -> None:
-    EffectConfig(mp3_bitrate=bitrate).validate()
+    EffectConfig(bitrate=bitrate).validate()
 
 
 @pytest.mark.parametrize("bitrate", [64, 300, 400])
 def test_odd_bitrates_are_rejected(bitrate: int) -> None:
     with pytest.raises(InputValidationError):
-        EffectConfig(mp3_bitrate=bitrate).validate()
+        EffectConfig(bitrate=bitrate).validate()
 
 
 @pytest.mark.parametrize("target", [-30.0, -14.0, -5.0, None])

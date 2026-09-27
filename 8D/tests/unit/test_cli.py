@@ -1,18 +1,44 @@
 # Developed by Gehan Fernando
-"""Checks the audio8d command: options, styles, messages and the guided mode."""
+"""Checks the audio8d command: options, styles, folders, messages and guided mode."""
 
 from pathlib import Path
 
 import pytest
 
-from src import PRESETS, ConversionError, EffectConfig, InputValidationError, cli
+from src import (
+    PRESETS,
+    AudioStreamInfo,
+    ConversionError,
+    EffectConfig,
+    InputValidationError,
+    cli,
+)
+from src.batch import BatchOutcome, BatchReport
 from src.files import resolve_input as real_resolve_input
+from src.pipeline import ConversionResult
+
+_SOURCE = AudioStreamInfo("mp3", 2, 44100, 180.0)
 
 
 @pytest.fixture(autouse=True)
 def _pretend_songs_exist(monkeypatch: pytest.MonkeyPatch) -> None:
     """Let tests use made-up song names without real files on disk."""
     monkeypatch.setattr(cli, "resolve_input", lambda path: path)
+    monkeypatch.setattr(cli, "_peek_source", lambda path: None)
+
+
+def _recorder(seen: dict[str, object]):
+    """A stand-in for convert() that remembers its arguments and 'succeeds'."""
+
+    def fake_convert(**kwargs: object) -> ConversionResult:
+        seen.update(kwargs)
+        return ConversionResult(
+            source=_SOURCE,
+            output=Path(str(kwargs["output_path"])),
+            config=kwargs["config"],
+        )
+
+    return fake_convert
 
 
 def test_no_knobs_means_the_classic_defaults() -> None:
@@ -29,12 +55,7 @@ def test_quality_outside_range_is_a_usage_error() -> None:
 
 def test_main_passes_options_through(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: dict[str, object] = {}
-
-    def fake_convert(**kwargs: object) -> None:
-        """Remember what the command asked for instead of converting."""
-        seen.update(kwargs)
-
-    monkeypatch.setattr(cli, "convert", fake_convert)
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
     code = cli.main(
         ["a.wav", "b.mp3", "--intensity", "0.5", "--quality", "0", "--overwrite"]
     )
@@ -42,7 +63,7 @@ def test_main_passes_options_through(monkeypatch: pytest.MonkeyPatch) -> None:
     assert code == 0
     assert seen["input_path"] == Path("a.wav")
     assert seen["overwrite"] is True
-    assert seen["config"] == EffectConfig(intensity=0.5, mp3_quality=0)
+    assert seen["config"] == EffectConfig(intensity=0.5, quality=0)
 
 
 def test_main_returns_1_on_known_errors(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -63,10 +84,110 @@ def test_default_output_sits_next_to_the_input() -> None:
 
 def test_output_name_is_optional(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: dict[str, object] = {}
-    monkeypatch.setattr(cli, "convert", lambda **kwargs: seen.update(kwargs))
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
 
     assert cli.main(["song.wav"]) == 0
     assert seen["output_path"] == Path("song (8D).mp3")
+
+
+def test_format_changes_the_extension(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
+
+    assert cli.main(["song.wav", "--format", "flac"]) == 0
+    assert seen["output_path"] == Path("song (8D).flac")
+
+
+def test_output_extension_picks_the_format() -> None:
+    args = cli.create_parser().parse_args(["in.mp3", "out.m4a"])
+
+    assert cli.resolve_config(args).output_format == "m4a"
+
+
+def test_output_dir_and_original_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
+
+    assert cli.main(["music/a.mp3", "--output-dir", "out", "--name", "original"]) == 0
+    assert seen["output_path"] == Path("out/a.mp3")
+
+
+def test_replace_keeps_the_original_name_and_asks_to_remove_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
+
+    assert cli.main(["music/a.mp3", "--replace"]) == 0
+    assert seen["output_path"] == Path("music/a.mp3")
+    assert seen["options"].replace_original is True
+
+
+def test_replace_can_keep_the_8d_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
+
+    assert cli.main(["music/a.mp3", "--replace", "--name", "8d"]) == 0
+    assert seen["output_path"] == Path("music/a (8D).mp3")
+
+
+def test_trim_and_file_switches_reach_the_options(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
+
+    cli.main(
+        ["a.mp3", "--start", "1:00", "--end", "1:30", "--no-cover", "--keep-title"]
+    )
+    options = seen["options"]
+    assert options.trim.start == 60 and options.trim.end == 90
+    assert options.keep_cover is False
+    assert options.tag_title is False
+
+
+def test_end_before_start_is_explained(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(["a.mp3", "--start", "2:00", "--end", "1:00"]) == 1
+    assert "What to do:" in capsys.readouterr().err
+
+
+def test_new_sound_knobs_are_applied() -> None:
+    args = cli.create_parser().parse_args(
+        [
+            "a.mp3",
+            "--path", "figure8",
+            "--direction", "counterclockwise",
+            "--bass", "off",
+            "--elevation", "0.5",
+            "--fade", "0",
+            "--speed-curve", "0=10, 1:00=6",
+            "--bpm", "128",
+            "--engine", "pan",
+        ]
+    )  # fmt: skip
+    config = cli.resolve_config(args)
+
+    assert config.path == "figure8"
+    assert config.direction == "counterclockwise"
+    assert config.bass_hz == 0
+    assert config.elevation == 0.5
+    assert config.fade_seconds == 0
+    assert config.speed_curve == ((0.0, 10.0), (60.0, 6.0))
+    assert config.bpm == 128
+    assert config.engine == "pan"
+
+
+def test_speakers_makes_any_style_speaker_safe() -> None:
+    args = cli.create_parser().parse_args(["a.mp3", "--preset", "strong", "--speakers"])
+    config = cli.resolve_config(args)
+
+    assert config.engine == "pan"
+    assert config.intensity <= 0.6
+
+
+def test_bad_curve_is_a_usage_error() -> None:
+    with pytest.raises(SystemExit):
+        cli.create_parser().parse_args(["a.mp3", "--speed-curve", "fast"])
 
 
 @pytest.mark.parametrize(
@@ -82,6 +203,95 @@ def test_output_name_is_optional(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_dragged_or_pasted_paths_are_cleaned(typed: str) -> None:
     # pylint: disable-next=protected-access
     assert cli._clean_typed_path(typed) == r"C:\Music\My Song.mp3"
+
+
+# ------------------------------------------------------------------ folders
+
+
+def _music_folder(tmp_path: Path) -> Path:
+    """A folder with three songs, one in a sub-folder, and an old 8D copy."""
+    folder = tmp_path / "Music"
+    (folder / "Rock").mkdir(parents=True)
+    for name in ("a.mp3", "b.flac", "Rock/c.wav", "a (8D).mp3", "notes.txt"):
+        (folder / name).write_bytes(b"audio")
+    return folder
+
+
+def _fake_batch(seen: dict[str, object]):
+    """A stand-in for run_batch that 'converts' every item."""
+
+    def fake_run_batch(items, config, **kwargs):
+        seen["items"] = items
+        seen["config"] = config
+        seen.update(kwargs)
+        report = BatchReport()
+        for item in items:
+            report.outcomes.append(
+                BatchOutcome(item, ConversionResult(_SOURCE, item.output, config))
+            )
+        return report
+
+    return fake_run_batch
+
+
+def test_a_folder_converts_every_song(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli, "run_batch", _fake_batch(seen))
+    folder = _music_folder(tmp_path)
+
+    assert cli.main([str(folder), "--jobs", "2"]) == 0
+    items = seen["items"]
+    # a (8D).mp3 is skipped as already made; its own 8D copy is never re-converted
+    assert [item.source.name for item in items] == ["b.flac"]
+    assert seen["jobs"] == 2
+    assert "Skipped (already made): a (8D).mp3" in capsys.readouterr().err
+
+
+def test_recursive_folder_with_output_dir_mirrors_sub_folders(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli, "run_batch", _fake_batch(seen))
+    folder = _music_folder(tmp_path)
+    out = tmp_path / "8D"
+
+    assert cli.main([str(folder), "--recursive", "--output-dir", str(out)]) == 0
+    outputs = {item.output for item in seen["items"]}
+    assert outputs == {
+        out / "Rock" / "c (8D).mp3",
+        out / "a (8D).mp3",
+        out / "b (8D).mp3",
+    }
+
+
+def test_folder_replace_takes_the_original_names(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli, "run_batch", _fake_batch(seen))
+    folder = _music_folder(tmp_path)
+
+    assert cli.main([str(folder), "--replace"]) == 0
+    pairs = {item.source.name: item.output.name for item in seen["items"]}
+    assert pairs == {"a.mp3": "a.mp3", "b.flac": "b.mp3"}
+    assert seen["options"].replace_original is True
+
+
+def test_empty_folder_is_explained(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert cli.main([str(tmp_path)]) == 1
+    assert "What to do:" in capsys.readouterr().err
+
+
+def test_folder_with_output_file_is_a_usage_error(tmp_path: Path) -> None:
+    with pytest.raises(SystemExit):
+        cli.main([str(_music_folder(tmp_path)), "out.mp3"])
+
+
+# -------------------------------------------------------------- the guided mode
 
 
 def _pretend_double_click(monkeypatch: pytest.MonkeyPatch, answers: list[str]) -> None:
@@ -100,47 +310,76 @@ def _song(tmp_path: Path) -> Path:
     return song
 
 
-def test_double_click_asks_for_a_song_and_converts_it(
+def test_double_click_asks_four_questions_and_converts(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     seen: dict[str, object] = {}
-    monkeypatch.setattr(cli, "convert", lambda **kwargs: seen.update(kwargs))
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
     song = _song(tmp_path)
-    # Dragged-in path, Enter for the best style, Enter to close
-    _pretend_double_click(monkeypatch, [f'"{song}"', "", ""])
+    # Dragged-in path, then Enter for style, destination, originals, and to close
+    _pretend_double_click(monkeypatch, [f'"{song}"', "", "", "", ""])
 
     assert cli.main() == 0
     assert seen["input_path"] == song
     assert seen["output_path"] == tmp_path / "song (8D).mp3"
     assert seen["config"] == PRESETS["studio"].config
+    assert seen["options"].replace_original is False
+
+
+def test_guided_mode_can_save_elsewhere_and_replace(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
+    song = _song(tmp_path)
+    out = tmp_path / "8D songs"
+    _pretend_double_click(monkeypatch, [str(song), "", str(out), "2", ""])
+
+    assert cli.main() == 0
+    assert seen["output_path"] == out / "song.mp3"
+    assert seen["options"].replace_original is True
 
 
 def test_guided_mode_asks_again_for_a_missing_song(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     seen: dict[str, object] = {}
-    monkeypatch.setattr(cli, "convert", lambda **kwargs: seen.update(kwargs))
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
     song = _song(tmp_path)
     _pretend_double_click(
-        monkeypatch, [str(tmp_path / "nope.mp3"), str(tmp_path), str(song), "", ""]
+        monkeypatch, [str(tmp_path / "nope.mp3"), str(song), "", "", "", ""]
     )
 
     assert cli.main() == 0
-    shown = capsys.readouterr().out
-    assert "I can't find that file" in shown
-    assert "That is a folder" in shown
+    assert "I can't find that" in capsys.readouterr().out
     assert seen["input_path"] == song
 
 
+def test_guided_mode_with_a_folder_lets_you_pick_songs(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli, "run_batch", _fake_batch(seen))
+    folder = _music_folder(tmp_path)
+    # Songs are listed a.mp3, b.flac; "9" is refused, then "2" picks b.flac
+    _pretend_double_click(monkeypatch, [str(folder), "9", "2", "", "", "", ""])
+
+    assert cli.main() == 0
+    shown = capsys.readouterr().out
+    assert "Found 2 songs" in shown
+    assert "is outside 1 to 2" in shown
+    assert [item.source.name for item in seen["items"]] == ["b.flac"]
+
+
 @pytest.mark.parametrize(
-    ("answer", "style"), [("", "studio"), ("4", "smooth"), ("voice", "voice")]
+    ("answer", "style"), [("", "studio"), ("7", "smooth"), ("voice", "voice")]
 )
 def test_guided_mode_style_menu(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, answer: str, style: str
 ) -> None:
     seen: dict[str, object] = {}
-    monkeypatch.setattr(cli, "convert", lambda **kwargs: seen.update(kwargs))
-    _pretend_double_click(monkeypatch, [str(_song(tmp_path)), answer, ""])
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
+    _pretend_double_click(monkeypatch, [str(_song(tmp_path)), answer, "", "", ""])
 
     assert cli.main() == 0
     assert seen["config"] == PRESETS[style].config
@@ -149,11 +388,11 @@ def test_guided_mode_style_menu(
 def test_guided_mode_explains_a_bad_style_answer(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(cli, "convert", lambda **_: None)
-    _pretend_double_click(monkeypatch, [str(_song(tmp_path)), "99", "", ""])
+    monkeypatch.setattr(cli, "convert", _recorder({}))
+    _pretend_double_click(monkeypatch, [str(_song(tmp_path)), "99", "", "", "", ""])
 
     assert cli.main() == 0
-    assert "Please type a number from 1 to 8" in capsys.readouterr().out
+    assert f"Please type a number from 1 to {len(PRESETS)}" in capsys.readouterr().out
 
 
 def test_double_click_with_no_answer_does_nothing(
@@ -176,6 +415,9 @@ def test_scripts_without_arguments_still_get_a_usage_error(
     assert exit_info.value.code == 2
 
 
+# ------------------------------------------------------------------ styles
+
+
 def test_preset_supplies_every_value() -> None:
     args = cli.create_parser().parse_args(["in.mp3", "--preset", "studio"])
 
@@ -190,7 +432,7 @@ def test_typed_knobs_override_the_preset() -> None:
 
     assert config.intensity == 0.6
     assert config.loudness_target is None
-    assert config.mp3_quality == PRESETS["studio"].config.mp3_quality
+    assert config.quality == PRESETS["studio"].config.quality
 
 
 def test_loudness_accepts_numbers_and_rejects_words() -> None:
@@ -205,6 +447,24 @@ def test_loudness_accepts_numbers_and_rejects_words() -> None:
 def test_unknown_preset_is_a_usage_error() -> None:
     with pytest.raises(SystemExit):
         cli.create_parser().parse_args(["a.mp3", "--preset", "banana"])
+
+
+def test_saved_style_can_be_used_by_name(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert (
+        cli.main(["--preset", "studio", "--intensity", "0.9", "--save-preset", "mine"])
+        == 0
+    )
+    assert "Saved your style 'mine'" in capsys.readouterr().err
+
+    args = cli.create_parser().parse_args(["a.mp3", "--preset", "mine"])
+    config = cli.resolve_config(args)
+    assert config.intensity == 0.9
+    assert config.bitrate == PRESETS["studio"].config.bitrate
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(cli, "convert", _recorder(seen))
+    assert cli.main(["a.mp3", "--preset", "mine"]) == 0
 
 
 def test_list_presets_prints_every_style_without_a_song(
@@ -230,7 +490,7 @@ def test_version_names_the_author(capsys: pytest.CaptureFixture[str]) -> None:
 def test_settings_panel_and_tip_are_shown(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(cli, "convert", lambda **_: None)
+    monkeypatch.setattr(cli, "convert", _recorder({}))
 
     assert cli.main(["song.wav"]) == 0
     shown = capsys.readouterr().err
@@ -243,7 +503,7 @@ def test_settings_panel_and_tip_are_shown(
 def test_tip_is_hidden_once_a_preset_is_chosen(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(cli, "convert", lambda **_: None)
+    monkeypatch.setattr(cli, "convert", _recorder({}))
 
     cli.main(["song.wav", "--preset", "smooth"])
     assert "Tip:" not in capsys.readouterr().err
@@ -285,6 +545,7 @@ def test_help_shows_the_best_values(capsys: pytest.CaptureFixture[str]) -> None:
     assert "QUICK START" in shown
     assert "BEST VALUES" in shown
     assert "--quality 0" in shown
+    assert "--output-dir" in shown
     assert "Gehan Fernando" in shown
 
 
@@ -310,10 +571,75 @@ def test_bitrate_and_exact_loudness_can_be_typed() -> None:
     )
     config = cli.resolve_config(args)
 
-    assert config.mp3_bitrate == 320
+    assert config.bitrate == 320
     assert config.exact_loudness is True
 
 
 def test_unknown_bitrate_is_a_usage_error() -> None:
     with pytest.raises(SystemExit):
         cli.create_parser().parse_args(["a.mp3", "--bitrate", "999"])
+
+
+def test_preview_and_compare_modes_call_their_helpers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: dict[str, object] = {}
+
+    def fake_preview(song, output, config, **kwargs):
+        seen["preview"] = (song, output, kwargs["seconds"])
+        return ConversionResult(_SOURCE, output, config)
+
+    def fake_compare(song, output, _config, **_):
+        seen["compare"] = (song, output)
+        return output
+
+    monkeypatch.setattr(cli, "preview", fake_preview)
+    monkeypatch.setattr(cli, "compare", fake_compare)
+
+    assert cli.main(["a.mp3", "--preview", "20"]) == 0
+    assert seen["preview"] == (Path("a.mp3"), Path("a (8D preview).mp3"), 20.0)
+    assert cli.main(["a.mp3", "--compare"]) == 0
+    assert seen["compare"] == (Path("a.mp3"), Path("a (A-B compare).mp3"))
+
+
+def test_loudness_can_match_the_original() -> None:
+    args = cli.create_parser().parse_args(
+        ["a.mp3", "--preset", "studio", "--loudness", "match"]
+    )
+    config = cli.resolve_config(args)
+
+    assert config.match_loudness is True
+    assert config.loudness_target is None
+    args = cli.create_parser().parse_args(
+        ["a.mp3", "--preset", "hifi", "--loudness", "-14"]
+    )
+    config = cli.resolve_config(args)
+    assert config.match_loudness is False
+    assert config.loudness_target == -14
+
+
+def test_the_window_opens_with_every_song_it_was_given(monkeypatch) -> None:
+    opened: list[list[Path]] = []
+    monkeypatch.setattr("src.gui.run_gui", lambda songs: opened.append(songs) or 0)
+
+    # Several songs dropped onto Audio8D.pyw arrive as plain arguments
+    assert cli.main(["--gui", "a.mp3", "b.flac", "c.wav"]) == 0
+    assert cli.main(["--gui"]) == 0
+    assert opened == [[Path("a.mp3"), Path("b.flac"), Path("c.wav")], []]
+    with pytest.raises(SystemExit):
+        cli.main(["--gui", "a.mp3", "--no-such-option"])
+
+
+def test_bitrate_auto_hands_mp3_back_to_its_quality() -> None:
+    args = cli.create_parser().parse_args(
+        ["a.mp3", "--preset", "studio", "--bitrate", "auto", "--quality", "0"]
+    )
+
+    config = cli.resolve_config(args)
+    assert config.bitrate is None and config.quality == 0
+
+
+@pytest.mark.parametrize("jobs", ["0", "17", "two"])
+def test_songs_at_once_has_the_same_limits_as_the_window(jobs: str) -> None:
+    with pytest.raises(SystemExit):
+        cli.create_parser().parse_args(["music", "--jobs", jobs])

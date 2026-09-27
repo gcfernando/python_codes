@@ -13,6 +13,8 @@ class Preset:
     name: str
     summary: str
     config: EffectConfig
+    # True for styles the user saved with --save-preset
+    custom: bool = False
 
 
 # Best of best: top MP3 bitrate, MP3-safe peak headroom, loudness without squashing
@@ -21,16 +23,16 @@ _STUDIO = EffectConfig(
     intensity=0.80,
     ambience=0.25,
     limiter_ceiling=0.84,
-    mp3_quality=0,
+    quality=0,
     loudness_target=-14.0,
-    mp3_bitrate=320,
+    bitrate=320,
 )
 
 # Shown in this order by --list-presets; studio first because it is the one to pick
 _ALL_PRESETS = (
     Preset(
         name="studio",
-        summary="Best of best: 320 kbps, -14 LUFS goal, dynamics untouched",
+        summary="Best of best: 3D sound, 320 kbps, -14 LUFS goal, dynamics untouched",
         config=_STUDIO,
     ),
     Preset(
@@ -39,9 +41,34 @@ _ALL_PRESETS = (
         config=replace(_STUDIO, exact_loudness=True),
     ),
     Preset(
+        name="lossless",
+        summary="Like studio, saved as FLAC: nothing lost at all",
+        # FLAC has no encoder overshoot, so the roof can sit at -1 dBFS
+        config=replace(_STUDIO, output_format="flac", limiter_ceiling=0.89),
+    ),
+    Preset(
+        name="hifi",
+        summary="Most faithful: FLAC, the original's own loudness, gentle 3D",
+        # Lossless, same rate and loudness as the song, a little less movement and room
+        config=replace(
+            _STUDIO,
+            output_format="flac",
+            limiter_ceiling=0.89,
+            loudness_target=None,
+            match_loudness=True,
+            intensity=0.75,
+            ambience=0.20,
+        ),
+    ),
+    Preset(
         name="classic",
-        summary="The original default sound (used if you pick nothing)",
+        summary="The everyday default (used if you pick nothing)",
         config=EffectConfig(),
+    ),
+    Preset(
+        name="groove",
+        summary="Loops round each ear in time with the beat: dance, pop, hip-hop",
+        config=replace(_STUDIO, path="figure8", intensity=0.90, beat_sync=True),
     ),
     Preset(
         name="smooth",
@@ -59,14 +86,37 @@ _ALL_PRESETS = (
         config=EffectConfig(rotation_seconds=10.0, intensity=0.82, ambience=0.50),
     ),
     Preset(
+        name="sky",
+        summary="Drifts up over your head and back: chill, ambient",
+        config=EffectConfig(
+            rotation_seconds=12.0,
+            intensity=0.80,
+            ambience=0.45,
+            elevation=0.7,
+            path="wander",
+        ),
+    ),
+    Preset(
         name="voice",
         summary="Gentle and dry: podcasts, audiobooks, meditation",
-        config=EffectConfig(rotation_seconds=16.0, intensity=0.60, ambience=0.0),
+        config=EffectConfig(
+            rotation_seconds=16.0, intensity=0.60, ambience=0.0, path="arc"
+        ),
     ),
     Preset(
         name="whirlwind",
         summary="Very fast spin: short clips and ringtones",
         config=EffectConfig(rotation_seconds=3.0, intensity=1.0, ambience=0.30),
+    ),
+    Preset(
+        name="speakers",
+        summary="Safe for speakers and car stereos, not just headphones",
+        config=EffectConfig(engine="pan", intensity=0.55, ambience=0.20),
+    ),
+    Preset(
+        name="retro",
+        summary="The old left-right ping-pong sound of Audio8D 1.0",
+        config=EffectConfig(engine="pan", bass_hz=0.0, fade_seconds=0.0),
     ),
 )
 

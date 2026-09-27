@@ -23,8 +23,8 @@ def test_default_config_is_valid() -> None:
         ("ambience", 1.0),
         ("limiter_ceiling", 0.0625),
         ("limiter_ceiling", 1.0),
-        ("mp3_quality", 0),
-        ("mp3_quality", 9),
+        ("quality", 0),
+        ("quality", 9),
     ],
 )
 def test_boundary_values_are_accepted(field: str, value: float) -> None:
@@ -42,8 +42,8 @@ def test_boundary_values_are_accepted(field: str, value: float) -> None:
         ("ambience", 1.1),
         ("limiter_ceiling", 0.01),
         ("limiter_ceiling", 1.1),
-        ("mp3_quality", -1),
-        ("mp3_quality", 10),
+        ("quality", -1),
+        ("quality", 10),
     ],
 )
 def test_out_of_range_values_are_rejected(field: str, value: float) -> None:

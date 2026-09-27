@@ -9,12 +9,12 @@ from .core.errors import (
 )
 from .core.presets import PRESETS, RECOMMENDED_PRESET, Preset
 from .core.settings import EffectConfig
-from .core.types import AudioStreamInfo
-from .pipeline import convert
+from .core.types import AudioStreamInfo, Trim
+from .pipeline import ConversionResult, ConvertOptions, compare, convert, preview
 
 __author__ = "Gehan Fernando"
 # Must match `version` in pyproject.toml; test_presets.py checks that they agree
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 
 __all__ = [
     "PRESETS",
@@ -22,9 +22,14 @@ __all__ = [
     "Audio8DError",
     "AudioStreamInfo",
     "ConversionError",
+    "ConversionResult",
+    "ConvertOptions",
     "DependencyError",
     "EffectConfig",
     "InputValidationError",
     "Preset",
+    "Trim",
+    "compare",
     "convert",
+    "preview",
 ]

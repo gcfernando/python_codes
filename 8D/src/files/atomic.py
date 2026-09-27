@@ -1,5 +1,5 @@
 # Developed by Gehan Fernando
-"""Write-then-publish helpers so a half-encoded MP3 is never visible."""
+"""Write-then-publish helpers so a half-encoded file is never visible."""
 
 import os
 import uuid
@@ -10,8 +10,10 @@ from ..core.errors import ConversionError, InputValidationError
 
 def create_temporary_output(output_file: Path) -> Path:
     """Pick a hidden, unique scratch name in the same folder as the destination."""
-    # Same folder means same filesystem, which keeps the final rename atomic
-    return output_file.with_name(f".{output_file.stem}.{uuid.uuid4().hex}.partial.mp3")
+    # Same folder keeps the rename atomic; the real extension picks the container
+    return output_file.with_name(
+        f".{output_file.stem}.{uuid.uuid4().hex}.partial{output_file.suffix}"
+    )
 
 
 def _publish_without_overwrite(temporary_file: Path, output_file: Path) -> None:

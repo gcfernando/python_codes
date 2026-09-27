@@ -4,9 +4,11 @@
 import io
 from pathlib import Path
 
-from src import PRESETS, AudioStreamInfo, EffectConfig, display
+from src import PRESETS, AudioStreamInfo, ConversionError, EffectConfig, display
+from src.analysis import QualityReport
+from src.batch import BatchItem, BatchOutcome, BatchReport
 from src.ffmpeg import LoudnessMeasurement
-from src.pipeline import LoudnessPlan
+from src.pipeline import ConversionResult, LoudnessPlan
 
 
 class _AsciiConsole(io.StringIO):
@@ -99,7 +101,8 @@ def _panel(preset: str | None, config: EffectConfig) -> str:
 def test_studio_values_are_all_marked_best() -> None:
     shown = _panel("studio", PRESETS["studio"].config)
 
-    assert shown.count("(best)") == 7
+    # Style, sound, spin, movement, bass, room, roof, quality and loudness
+    assert shown.count("(best)") == 9
     assert "Heads-up" not in shown
 
 
@@ -118,8 +121,9 @@ def test_risky_values_get_a_heads_up_with_a_fix() -> None:
             intensity=1.0,
             ambience=0.9,
             limiter_ceiling=1.0,
-            mp3_quality=9,
+            quality=9,
             loudness_target=-6,
+            engine="pan",
         )
     )
     joined = " ".join(notes)
@@ -155,11 +159,11 @@ _HI_RES_FLAC = AudioStreamInfo("flac", 2, 96000, 200.0, 2_900_000)
 def test_sources_are_described_in_plain_words() -> None:
     assert (
         display.describe_source(_MP3)
-        == "MP3, 320 kbps, 48 kHz, stereo  (already compressed)"
+        == "MP3, 320 kbps, 48 kHz, stereo, 4:52  (already compressed)"
     )
     assert (
         display.describe_source(_HI_RES_FLAC)
-        == "FLAC, 96 kHz, stereo  (lossless, perfect source)"
+        == "FLAC, 96 kHz, stereo, 3:20  (lossless, perfect source)"
     )
 
 
@@ -215,3 +219,75 @@ def test_panel_shows_the_source_and_good_to_know_facts() -> None:
     assert "Source" in shown and "already compressed" in shown
     assert "Good to know" in shown
     assert "320 kbps CBR" in shown
+
+
+def test_new_rows_describe_the_3d_sound() -> None:
+    shown = _panel(
+        None,
+        EffectConfig(path="figure8", elevation=0.5, bass_hz=0, output_format="flac"),
+    )
+
+    assert "3D, loops round each ear, clockwise" in shown
+    assert "moves with everything else" in shown
+    assert "rises overhead" in shown
+    assert "FLAC 24-bit" in shown
+    assert "--bass 120" in shown
+
+
+def test_lossless_output_is_marked_best_quality() -> None:
+    quality_row = _panel(None, EffectConfig(output_format="wav")).split("Quality")[1]
+
+    assert "(best)" in quality_row.splitlines()[0]
+
+
+def test_progress_bar_prints_stage_lines_when_not_a_terminal() -> None:
+    stream = io.StringIO()
+    meter = display.ProgressBar(display.Painter(stream))
+    for share in (0.0, 0.5, 1.0):
+        meter.update("Making your 8D song", share)
+    meter.finish()
+
+    assert stream.getvalue().count("Making your 8D song") == 1
+
+
+def test_quality_report_flags_problems() -> None:
+    stream = io.StringIO()
+    report = QualityReport(
+        integrated_lufs=-14.0, true_peak_db=0.0, range_lu=6.0, correlation=-0.2
+    )
+    display.show_quality(display.Painter(stream), report)
+    shown = stream.getvalue()
+
+    assert "weak in mono" in shown
+    assert "--speakers" in shown
+    assert "--limiter-ceiling" in shown
+
+
+def test_batch_summary_counts_songs() -> None:
+    stream = io.StringIO()
+    painter = display.Painter(stream)
+    item = BatchItem(Path("a.mp3"), Path("a (8D).mp3"))
+    done = ConversionResult(
+        _MP3, Path("a (8D).mp3"), EffectConfig(), original_removed_to="Recycle Bin"
+    )
+    report = BatchReport(
+        outcomes=[
+            BatchOutcome(item, done),
+            BatchOutcome(item, error=ConversionError("boom")),
+        ],
+        seconds=12.0,
+    )
+    display.show_batch_summary(painter, report)
+    shown = stream.getvalue()
+
+    assert "Done: 1 converted, 1 failed" in shown
+    assert "1 original moved to the Recycle Bin." in shown
+    assert "boom" in display.batch_line(painter, 2, 2, report.outcomes[1])
+
+
+def test_every_style_can_be_shown_and_advised() -> None:
+    for name, preset in PRESETS.items():
+        shown = _panel(name, preset.config)
+        assert "Loudness" in shown
+        display.advice(preset.config)
+    assert "same as the original" in _panel("hifi", PRESETS["hifi"].config)
