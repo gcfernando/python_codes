@@ -86,3 +86,35 @@ def parse_selection(text: str, count: int) -> list[int]:
             raise InputValidationError(f"'{item}' is outside 1 to {count}")
         chosen.update(range(start - 1, end))
     return sorted(chosen)
+
+
+def typed_number(text: str, what: str, low: float, high: float) -> float | None:
+    """A typed number in a range, or None when the box is empty."""
+    if not text.strip():
+        return None
+    try:
+        value = float(text.strip().replace(",", "."))
+    except ValueError:
+        raise InputValidationError(f"{what} must be a number") from None
+    if not low <= value <= high:
+        raise InputValidationError(f"{what} must be between {low:g} and {high:g}")
+    return value
+
+
+def typed_loudness(text: str) -> float:
+    """A typed loudness level in LUFS, from -30 to -5 (raises with the fix)."""
+    target = typed_number(text, "The loudness", -30, -5)
+    if target is None:
+        raise InputValidationError("Type a loudness between -30 and -5, e.g. -14")
+    return target
+
+
+def typed_time_problem(text: str) -> str | None:
+    """Why a typed 'only part' time can't be used, or None (empty means none)."""
+    if not text.strip():
+        return None
+    try:
+        parse_time(text)
+    except InputValidationError:
+        return "Write a time like 90 (seconds) or 1:30 (minutes:seconds)."
+    return None

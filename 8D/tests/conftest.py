@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from src import DependencyError
+from src import DependencyError, addons
 from src.ffmpeg import FFmpegToolchain
 
 
@@ -23,6 +23,13 @@ def _private_home(
     # Never open Windows Terminal windows while testing
     monkeypatch.setenv("AUDIO8D_NO_WT", "1")
     return home
+
+
+@pytest.fixture(autouse=True)
+def _fresh_addon_state() -> None:
+    """Every test starts without a chosen Python or a remembered add-on check."""
+    addons.set_preferred_python(None)
+    addons.forget_status()
 
 
 def find_toolchain() -> FFmpegToolchain | None:
@@ -50,6 +57,19 @@ def _synthesize(path: Path, *lavfi_args: str) -> Path:
         check=True,
     )
     return path
+
+
+@pytest.fixture
+def bass_heavy_song(tmp_path: Path) -> Path:
+    """Ten seconds of a hot 50 Hz bass line over quieter noise, peaking near 0 dBFS."""
+    return _synthesize(
+        tmp_path / "bass.wav",
+        "-f", "lavfi", "-i", "sine=frequency=50:duration=10:sample_rate=44100",
+        "-f", "lavfi", "-i", "anoisesrc=color=pink:duration=10:amplitude=0.2:seed=3",
+        "-filter_complex",
+        "[0]volume=0.8[b];[b][1]amix=inputs=2:normalize=0,"
+        "aformat=channel_layouts=stereo",
+    )  # fmt: skip
 
 
 @pytest.fixture
@@ -104,6 +124,6 @@ def dynamic_song(tmp_path: Path) -> Path:
     """Twenty seconds of pink noise that swells and fades, so it has real dynamics."""
     return _synthesize(
         tmp_path / "dynamic.wav",
-        "-f", "lavfi", "-i", "anoisesrc=color=pink:duration=20:amplitude=0.3",
+        "-f", "lavfi", "-i", "anoisesrc=color=pink:duration=20:amplitude=0.3:seed=8",
         "-af", "volume='0.3+0.7*abs(sin(2*PI*t/10))':eval=frame", "-ac", "2",
     )  # fmt: skip

@@ -16,7 +16,7 @@ if __name__ == "__main__" and not __package__:
     runpy.run_path(str(Path(__file__).with_name("__main__.py")), run_name="__main__")
 
 # pylint: disable=wrong-import-position
-from . import __version__, display, guided, hints, launcher
+from . import __version__, addons, display, guided, hints, launcher
 from .batch import (
     BatchItem,
     BatchOutcome,
@@ -24,20 +24,23 @@ from .batch import (
     progress_tracker,
     run_batch,
 )
-from .core.errors import Audio8DError, InputValidationError
+from .core.errors import Audio8DError, DependencyError, InputValidationError
 from .core.locations import presets_file
-from .core.presets import Preset
+from .core.preferences import load_preferences
+from .core.presets import LEGACY_STYLES, RECOMMENDED_PRESET, Preset
 from .core.settings import (
     EffectConfig,
 )
 from .core.types import AudioStreamInfo, Trim
 from .core.user_presets import save_user_preset
-from .ffmpeg import FFmpegToolchain, probe_audio
+from .display_health import show_addon, show_health
+from .ffmpeg import FFmpegToolchain, probe_audio, set_preferred_paths
 from .files import (
     default_output_for,
     find_songs,
     resolve_input,
 )
+from .health import check_environment
 from .logs import start_log_file
 from .opener import open_path as open_in_player
 from .options import (
@@ -46,15 +49,17 @@ from .options import (
     resolve_config,
     used_only_defaults,
 )
+from .per_song import SongRule, merged, read_rules, rules_for
 from .pipeline import (
     ConvertOptions,
     compare,
-    compare_output_for,
     convert,
     preview,
-    preview_output_for,
     stages_for,
 )
+from .player import PLAYING, Player, PlayerError
+from .previews import make_preview, temporary_folder
+from .song_settings import needs_singer, song_convert_options, song_effect
 
 # pylint: enable=wrong-import-position
 
@@ -98,6 +103,23 @@ def _explain(painter: display.Painter, error: Audio8DError) -> None:
         display.show_fix(painter, fix)
 
 
+def use_saved_tools() -> None:
+    """Use the FFmpeg, FFprobe and Python chosen in the window's Settings, if any."""
+    preferences, _problem = load_preferences()
+    set_preferred_paths(*preferences.tools())
+    addons.set_preferred_python(preferences.python())
+
+
+def use_typed_tools(args: argparse.Namespace) -> None:
+    """--ffmpeg, --ffprobe and --python win over Settings, for this run only."""
+    if args.ffmpeg is not None or args.ffprobe is not None:
+        preferences, _problem = load_preferences()
+        saved = preferences.tools()
+        set_preferred_paths(args.ffmpeg or saved[0], args.ffprobe or saved[1])
+    if args.python is not None:
+        addons.set_preferred_python(args.python)
+
+
 def _peek_source(input_path: Path) -> AudioStreamInfo | None:
     """Read the song's details for the panel; convert() reports any problem later."""
     try:
@@ -121,16 +143,71 @@ class Plan:  # pylint: disable=too-many-instance-attributes
     play: bool = False
     show_tip: bool = False
     presets: dict[str, Preset] = dataclasses.field(default_factory=dict)
+    # The default before 'Safe for speakers too', and whether that is on
+    default: EffectConfig | None = None
+    speakers: bool = False
+    # Lines of the --per-song file
+    rules: tuple[SongRule, ...] = ()
 
 
-def _output_for(song: Path, plan: Plan, relative_to: Path | None = None) -> Path:
-    """Where one song's 8D copy is saved."""
+def song_setup(song: Path, plan: Plan) -> tuple[EffectConfig, ConvertOptions]:
+    """One song's settings: the run's, plus its own lines from --per-song."""
+    matching = rules_for(song, list(plan.rules))
+    if not matching:
+        return plan.config, plan.options
+    style, changes = merged(matching)
+    if style in LEGACY_STYLES:
+        # An older style name brings its old file settings; the line's own still win
+        style, extra = LEGACY_STYLES[style]
+        changes = {**extra, **changes}
+    lines = ", ".join(str(rule.line) for rule in matching)
+    try:
+        config = song_effect(
+            plan.default or plan.config,
+            default_speakers=plan.speakers,
+            style=plan.presets[style].config if style else None,
+            changes=changes,
+        )
+        options = song_convert_options(plan.options, changes) or plan.options
+    except Audio8DError as exc:
+        raise InputValidationError(
+            f"The per-song settings for {song.name} (line {lines}) can't be used: {exc}"
+        ) from None
+    return config, options
+
+
+def _output_for(
+    song: Path,
+    plan: Plan,
+    relative_to: Path | None = None,
+    config: EffectConfig | None = None,
+) -> Path:
+    """Where one song's 8D copy is saved (its own file type decides the ending)."""
     return default_output_for(
         song,
-        plan.config.extension,
+        (config or plan.config).extension,
         output_dir=plan.output_dir,
         name_style=plan.name_style,
         relative_to=relative_to,
+    )
+
+
+def check_singer(configs: Sequence[tuple[str, EffectConfig]]) -> None:
+    """Refuse to start when songs need the singer add-on and it isn't ready.
+
+    Audio8D never quietly makes those songs without it: that would sound different
+    from what was asked for.
+    """
+    wanted = [name for name, config in configs if needs_singer(config)]
+    if not wanted:
+        return
+    status = addons.singer_status()
+    if status.ready:
+        return
+    names = ", ".join(wanted[:3]) + (" and others" if len(wanted) > 3 else "")
+    raise DependencyError(
+        f"Keeping the singer in the middle needs the singer add-on (for {names}). "
+        f"{status.summary()} {status.fix()}"
     )
 
 
@@ -143,6 +220,8 @@ def run_single(
     # A missing or empty song is the most common slip, so say so before the whole panel
     try:
         resolve_input(input_path)
+        config, options = song_setup(input_path, plan)
+        check_singer([(input_path.name, config)])
     except Audio8DError as exc:
         _explain(painter, exc)
         return 1
@@ -153,12 +232,16 @@ def run_single(
         song_in=input_path,
         song_out=output_path,
         preset=plan.preset,
-        config=plan.config,
+        config=config,
         banner=banner,
         source=_peek_source(input_path),
-        trim=plan.options.trim,
+        trim=options.trim,
         presets=plan.presets or None,
     )
+    if config != plan.config or options != plan.options:
+        painter.line(
+            painter.paint("  This song has settings of its own (--per-song).", "cyan")
+        )
 
     progress_bar = display.ProgressBar(painter)
     started = time.perf_counter()
@@ -166,9 +249,9 @@ def run_single(
         result = convert(
             input_path=input_path,
             output_path=output_path,
-            config=plan.config,
+            config=config,
             overwrite=plan.overwrite,
-            options=plan.options,
+            options=options,
             on_progress=progress_bar.update,
         )
     except Audio8DError as exc:
@@ -195,12 +278,20 @@ def _split_existing(
     items: list[BatchItem] = []
     skipped: list[Path] = []
     for song in found:
-        output = _output_for(song, plan, relative_to=folder)
+        config, options = song_setup(song, plan)
+        output = _output_for(song, plan, relative_to=folder, config=config)
         replacing_itself = plan.options.replace_original and output == song
         if output.exists() and not plan.overwrite and not replacing_itself:
             skipped.append(output)
         else:
-            items.append(BatchItem(song, output))
+            items.append(
+                BatchItem(
+                    song,
+                    output,
+                    config if config != plan.config else None,
+                    options if options != plan.options else None,
+                )
+            )
     return items, skipped
 
 
@@ -241,11 +332,11 @@ def run_folder(  # pylint: disable=too-many-locals
         )
         if not found:
             raise InputValidationError(f"No songs found in {folder}")
+        items, skipped = _split_existing(found, plan, folder)
+        check_singer([(item.source.name, item.config or plan.config) for item in items])
     except Audio8DError as exc:
         _explain(painter, exc)
         return 1
-
-    items, skipped = _split_existing(found, plan, folder)
 
     display.show_settings(
         painter,
@@ -258,12 +349,29 @@ def run_folder(  # pylint: disable=too-many-locals
         trim=plan.options.trim,
         presets=plan.presets or None,
     )
+    own = sum(1 for item in items if item.config or item.options)
+    if own:
+        painter.line(
+            painter.paint(
+                f"  {own} song{' uses' if own == 1 else 's use'} settings of their "
+                "own from the per-song file.",
+                "cyan",
+            )
+        )
+    for rule in plan.rules:
+        if not any(rule.matches(song) for song in found):
+            painter.line(
+                painter.paint(
+                    f"  Per-song line {rule.line} ('{rule.pattern}') matched no song.",
+                    "yellow",
+                )
+            )
     for path in skipped:
         painter.line(painter.paint(f"  Skipped (already made): {path.name}", "dim"))
     if not items:
         painter.line(
             painter.paint(
-                "  Nothing new to convert. Add --overwrite to redo them.", "yellow"
+                "  Nothing new to create. Add --overwrite to make them again.", "yellow"
             )
         )
         return 0
@@ -305,86 +413,123 @@ def run_folder(  # pylint: disable=too-many-locals
     return 1 if report.failed else 0
 
 
+def _listen(painter: display.Painter, file: Path, seconds: float) -> None:
+    """Play a temporary sample and wait until it ends, Enter is pressed or Ctrl+C."""
+    player = Player()
+    try:
+        player.load(file)
+        player.play(from_start=True)
+    except PlayerError as exc:
+        LOG.warning("Could not play %s: %s", file.name, exc)
+        return
+    if not player.built_in:
+        # Another program is playing it; give it the sample's length to finish
+        painter.line(painter.paint("  Playing in your music player...", "cyan"))
+        _wait(lambda: False, seconds + 5)
+        return
+    painter.line(painter.paint("  Playing... press Enter (or Ctrl+C) to stop.", "cyan"))
+    try:
+        _wait(lambda: player.state() != PLAYING, seconds + 5)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        player.close()
+
+
+def _wait(done: Callable[[], bool], longest: float) -> None:
+    """Wait until done() is true, Enter is pressed, or longest seconds have gone."""
+    pressed = threading.Event()
+    if sys.stdin is not None and sys.stdin.isatty():
+
+        def read() -> None:
+            try:
+                sys.stdin.readline()
+            except (OSError, ValueError):
+                return
+            pressed.set()
+
+        threading.Thread(target=read, name="wait-enter", daemon=True).start()
+    ends = time.monotonic() + longest
+    # A short grace period lets the player report that it has started
+    time.sleep(0.3)
+    while not pressed.is_set() and not done() and time.monotonic() < ends:
+        time.sleep(0.2)
+
+
 def run_preview(
-    input_path: Path, plan: Plan, seconds: float, output: Path | None
+    input_path: Path, plan: Plan, seconds: float, output: Path | None, kind: str
 ) -> int:
-    """Make a short sample from the loudest part, so you can try a style quickly."""
+    """Listen to a short sample (or A/B file); it is kept only when OUTPUT is given.
+
+    Without an OUTPUT the sample is made in a private temporary folder, played,
+    and deleted afterwards whatever happens; nothing is written near your music.
+    """
     painter = display.Painter(sys.stderr)
-    target = output or preview_output_for(input_path, plan.config.extension)
     progress_bar = display.ProgressBar(painter)
     try:
         resolve_input(input_path)
+        config, _options = song_setup(input_path, plan)
+        check_singer([(input_path.name, config)])
         display.show_settings(
             painter,
             version=__version__,
             song_in=input_path,
-            song_out=target,
+            song_out=output or Path("a temporary file, deleted afterwards"),
             preset=plan.preset,
-            config=plan.config,
+            config=config,
             source=_peek_source(input_path),
             presets=plan.presets or None,
         )
+        what = (
+            "the ORIGINAL (A), a short pause, then the 8D version (B), same loudness"
+            if kind == "compare"
+            else f"{seconds:g} s from the loudest part"
+        )
+        painter.line(painter.paint(f"  Preview: {what}.", "cyan"))
+        started = time.perf_counter()
+        if output is not None:
+            # An OUTPUT file was asked for, so this sample is kept on purpose
+            if kind == "compare":
+                compare(input_path, output, config, on_progress=progress_bar.update)
+            else:
+                preview(
+                    input_path,
+                    output,
+                    config,
+                    seconds=seconds,
+                    on_progress=progress_bar.update,
+                )
+            progress_bar.finish()
+            display.show_done(painter, output, time.perf_counter() - started)
+            if plan.play:
+                open_in_player(output)
+            return 0
+        with temporary_folder() as folder:
+            file = make_preview(
+                input_path,
+                folder,
+                config,
+                seconds=seconds,
+                kind=kind,
+                on_progress=progress_bar.update,
+            )
+            progress_bar.finish()
+            _listen(painter, file, seconds if kind == "preview" else 40.0)
         painter.line(
-            painter.paint(f"  Preview: {seconds:g} s from the loudest part.", "cyan")
-        )
-        started = time.perf_counter()
-        result = preview(
-            input_path,
-            target,
-            plan.config,
-            seconds=seconds,
-            on_progress=progress_bar.update,
+            painter.paint(
+                "  Done. The preview was deleted; run without --preview to create "
+                "the song.",
+                "dim",
+            )
         )
     except Audio8DError as exc:
         progress_bar.finish()
         _explain(painter, exc)
         return 1
-    progress_bar.finish()
-    display.show_result(painter, result, time.perf_counter() - started)
-    display.show_listen(painter)
-    if plan.play:
-        open_in_player(result.output)
-    return 0
-
-
-def run_compare(input_path: Path, plan: Plan, output: Path | None) -> int:
-    """Make the A/B file: the original, a short pause, then the 8D version."""
-    painter = display.Painter(sys.stderr)
-    target = output or compare_output_for(input_path)
-    progress_bar = display.ProgressBar(painter)
-    try:
-        resolve_input(input_path)
-        display.show_settings(
-            painter,
-            version=__version__,
-            song_in=input_path,
-            song_out=target,
-            preset=plan.preset,
-            config=plan.config,
-            source=_peek_source(input_path),
-            presets=plan.presets or None,
-        )
-        started = time.perf_counter()
-        made = compare(input_path, target, plan.config, on_progress=progress_bar.update)
-    except Audio8DError as exc:
+    except KeyboardInterrupt:
         progress_bar.finish()
-        _explain(painter, exc)
+        painter.line(painter.paint("  Stopped. Nothing was kept.", "yellow"))
         return 1
-    progress_bar.finish()
-    display.show_done(painter, made, time.perf_counter() - started)
-    painter.line(
-        painter.paint(
-            "  First 15 s: the ORIGINAL (A). A short pause. Then the 8D version (B).",
-            "green",
-        )
-    )
-    painter.line(
-        painter.paint(
-            "  Both are the same loudness, so only the 8D effect differs.", "dim"
-        )
-    )
-    if plan.play:
-        open_in_player(made)
     return 0
 
 
@@ -396,8 +541,8 @@ def _save_preset(args: argparse.Namespace, config: EffectConfig) -> int:
         name = save_user_preset(
             args.save_preset,
             config,
-            based_on=args.preset or "classic",
-            summary=f"your style, based on {args.preset or 'classic'}",
+            based_on=args.preset or RECOMMENDED_PRESET,
+            summary=f"your style, based on {args.preset or RECOMMENDED_PRESET}",
         )
     except Audio8DError as exc:
         _explain(painter, exc)
@@ -407,7 +552,7 @@ def _save_preset(args: argparse.Namespace, config: EffectConfig) -> int:
         + painter.paint(f"Saved your style '{name}'", "bold", "green")
         + painter.paint(f" in {presets_file()}", "green")
     )
-    painter.line(f'  Use it with: audio8d "My Song.mp3" --preset {name}')
+    painter.line(f'  Use it with: audio8d "My Song.mp3" --style "{name}"')
     return 0
 
 
@@ -416,6 +561,7 @@ def plan_from_args(args: argparse.Namespace) -> Plan:
     presets = known_presets()
     config = resolve_config(args, presets)
     config.validate()
+    rules = tuple(read_rules(args.per_song)) if args.per_song is not None else ()
     only_defaults = used_only_defaults(args)
     replace = bool(args.replace)
     # Replacing usually means "put the 8D song where the old one was"
@@ -434,8 +580,8 @@ def plan_from_args(args: argparse.Namespace) -> Plan:
         raise InputValidationError("The chosen start and end leave no sound to convert")
     return Plan(
         config=config,
-        # Typing nothing is the same as choosing the classic style, so say so
-        preset="classic" if only_defaults else args.preset,
+        # Typing no style is the same as choosing the recommended one, so say so
+        preset=args.preset or RECOMMENDED_PRESET,
         options=ConvertOptions(
             trim=trim,
             keep_cover=not args.no_cover,
@@ -449,9 +595,143 @@ def plan_from_args(args: argparse.Namespace) -> Plan:
         jobs=args.jobs or default_jobs(),
         recursive=args.recursive,
         play=args.play,
-        show_tip=only_defaults,
+        show_tip=only_defaults and not rules,
         presets=presets,
+        default=resolve_config(args, presets, with_speakers=False),
+        speakers=bool(args.speakers),
+        rules=rules,
     )
+
+
+def run_check(verbose: bool) -> int:
+    """--check: run every dependency and say what is ready and what to fix."""
+    painter = display.Painter(sys.stdout)
+    painter.line(painter.paint("  Checking... (each tool is run once)", "dim"))
+    report = check_environment()
+    show_health(painter, report, verbose)
+    return 0 if report.ok else 1
+
+
+def run_addon_status() -> int:
+    """--addon-status: is the singer add-on installed? (exit code 0 = installed)."""
+    painter = display.Painter(sys.stdout)
+    painter.line(painter.paint("  Checking the singer add-on...", "dim"))
+    status = addons.singer_status(refresh=True)
+    show_addon(painter, status)
+    return 0 if status.ready else 1
+
+
+def _addon_python(painter: display.Painter) -> Path | None:
+    """The Python that builds the add-on's folder, or None after saying why not."""
+    found = addons.find_python(addons.preferred_python())
+    if found.ok and found.path is not None:
+        return found.path
+    painter.line(painter.paint(f"  {found.problem}", "red"))
+    display.show_fix(painter, addons.AddonStatus(found).fix())
+    return None
+
+
+def _addon_progress(
+    painter: display.Painter,
+) -> Callable[[addons.AddonProgress], None]:
+    """Print add-on progress as it changes: every 5%, or when the stage changes."""
+    # The last stage printed and its 5% step (-1 while unmeasured)
+    shown: list[tuple[str, int]] = [("", -1)]
+    lock = threading.Lock()
+
+    def show(progress: addons.AddonProgress) -> None:
+        """Print one report, unless it only moves a little within the same stage."""
+        percent = progress.percent
+        step = -1 if percent is None else percent // 5
+        with lock:
+            stage, before = shown[0]
+            if stage == progress.stage and step <= before and not progress.finished:
+                return
+            shown[0] = (progress.stage, step)
+        detail = f"  {progress.detail}" if progress.detail else ""
+        colour = "red" if progress.failed else "green" if progress.finished else "cyan"
+        painter.line("  " + painter.paint(progress.words(), colour) + detail)
+
+    return show
+
+
+def run_install_addon(repair: bool = False) -> int:
+    """--install-addon / --repair-addon: set up the add-on's folder, then check it."""
+    painter = display.Painter(sys.stdout)
+    status = addons.singer_status(refresh=True)
+    if status.ready and not repair:
+        painter.line(
+            painter.paint("  The add-on is already installed; nothing to do.", "green")
+        )
+        show_addon(painter, status)
+        return 0
+    python = _addon_python(painter)
+    if python is None:
+        return 1
+    painter.line(
+        "  "
+        + painter.paint(
+            "Repairing the singer add-on" if repair else "Installing the singer add-on",
+            "bold",
+            "cyan",
+        )
+        + f" into {addons.addon_dir()}"
+    )
+    painter.line(
+        painter.paint(
+            "  About 1 GB is downloaded; this takes a few minutes. Ctrl+C stops it.",
+            "dim",
+        )
+    )
+    cancel = threading.Event()
+    job = addons.repair_addon if repair else addons.install_addon
+    try:
+        worked, tail = job(
+            python,
+            lambda line: painter.line(painter.paint(f"    {line}", "dim")),
+            cancel,
+            on_progress=_addon_progress(painter),
+        )
+    except KeyboardInterrupt:
+        cancel.set()
+        painter.line(painter.paint("  Stopped. Nothing half-made was kept.", "yellow"))
+        return 1
+    # A finished install has just checked the add-on, so that answer is reused
+    status = addons.singer_status()
+    if worked and status.ready:
+        show_addon(painter, status)
+        return 0
+    painter.line(painter.paint("  The add-on is not ready: " + status.summary(), "red"))
+    if not worked:
+        painter.line(painter.paint("  What happened:", "dim"))
+        for line in tail.splitlines()[-8:]:
+            painter.line(painter.paint(f"    {line}", "dim"))
+    display.show_fix(painter, status.fix())
+    return 1
+
+
+def run_uninstall_addon() -> int:
+    """--uninstall-addon: delete the add-on's own folder (Audio8D keeps working)."""
+    painter = display.Painter(sys.stdout)
+    worked, message = addons.uninstall_addon(on_progress=_addon_progress(painter))
+    painter.line(painter.paint(f"  {message}", "green" if worked else "red"))
+    if worked:
+        painter.line(
+            "  Audio8D works as before; only 'Keep the singer in the middle' "
+            "(--vocals center) needs the add-on."
+        )
+    return 0 if worked else 1
+
+
+def _run_addon(args: argparse.Namespace) -> int | None:
+    """--addon-status, --install-addon, --repair-addon or --uninstall-addon."""
+    if args.addon_status:
+        return run_addon_status()
+    if args.install_addon or args.repair_addon:
+        return run_install_addon(repair=args.repair_addon)
+    if args.uninstall_addon:
+        return run_uninstall_addon()
+    return None
 
 
 def _run_interactive() -> int:
@@ -523,37 +803,20 @@ def _parse(
     return args, [song for song in given if song is not None]
 
 
-def main(argv: Sequence[str] | None = None) -> int:  # pylint: disable=too-many-return-statements
-    """Parse arguments, run the chosen mode, and return the process exit code."""
-    # A double-clicked window opens in the old console; move to Windows Terminal
-    if argv is None and launcher.relaunch_in_windows_terminal(sys.argv[1:]):
-        return 0
-    if _should_ask_interactively(argv):
-        return _run_interactive()
-
-    parser = create_parser()
-    args, songs = _parse(parser, argv)
-    configure_logging(args.verbose)
-
-    if args.gui:
-        from .gui import run_gui  # pylint: disable=import-outside-toplevel
-
-        return run_gui(songs)
-
+def _convert(parser: argparse.ArgumentParser, args: argparse.Namespace) -> int:
+    """Convert (or preview, or compare) the song or folder on the command line."""
     painter = display.Painter(sys.stderr)
     try:
         plan = plan_from_args(args)
     except Audio8DError as exc:
         _explain(painter, exc)
         return 1
-
     if args.save_preset:
         code = _save_preset(args, plan.config)
         if code or args.input is None:
             return code
     if args.input is None:
         parser.error("the following arguments are required: input")
-
     if args.input.is_dir():
         if args.output is not None:
             parser.error("with a folder, choose where to save with --output-dir")
@@ -561,11 +824,36 @@ def main(argv: Sequence[str] | None = None) -> int:  # pylint: disable=too-many-
             parser.error("--preview and --compare work on one song, not a folder")
         return run_folder(args.input, plan)
     if args.compare:
-        return run_compare(args.input, plan, args.output)
+        return run_preview(args.input, plan, 15.0, args.output, "compare")
     if args.preview is not None:
-        return run_preview(args.input, plan, args.preview, args.output)
+        return run_preview(args.input, plan, args.preview, args.output, "preview")
     output = args.output if args.output is not None else _output_for(args.input, plan)
     return run_single(args.input, output, plan)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Parse arguments, run the chosen mode, and return the process exit code."""
+    # A double-clicked window opens in the old console; move to Windows Terminal
+    if argv is None and launcher.relaunch_in_windows_terminal(sys.argv[1:]):
+        return 0
+    use_saved_tools()
+    if _should_ask_interactively(argv):
+        return _run_interactive()
+
+    parser = create_parser()
+    args, songs = _parse(parser, argv)
+    configure_logging(args.verbose)
+    use_typed_tools(args)
+    addon = _run_addon(args)
+    if addon is not None:
+        return addon
+    if args.check:
+        return run_check(args.verbose)
+    if args.gui:
+        from .gui import run_gui  # pylint: disable=import-outside-toplevel
+
+        return run_gui(songs)
+    return _convert(parser, args)
 
 
 __all__ = ["create_parser", "default_output_for", "main", "resolve_config"]

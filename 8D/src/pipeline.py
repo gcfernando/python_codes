@@ -18,12 +18,12 @@ from .analysis import (
     QualityReport,
     check_output,
     detect_bpm,
-    find_loudest_section,
+    loudest_section,
     rotation_for_tempo,
     separate_vocals,
 )
 from .core.errors import ConversionError, InputValidationError
-from .core.settings import EffectConfig
+from .core.settings import LOSSLESS_FORMATS, EffectConfig
 from .core.types import AudioStreamInfo, Trim
 from .effects import (
     GraphInputs,
@@ -46,6 +46,7 @@ from .ffmpeg import (
     build_mix_command,
     measure_loudness,
     parse_ebur128_summary,
+    preferred_key,
     probe_audio,
     run_capture,
     run_ffmpeg,
@@ -122,6 +123,12 @@ class ConvertOptions:
     check: bool = True
     # Move the original aside (Recycle Bin, or renamed) once the new one is saved
     replace_original: bool = False
+    # Song time (after the song's own trim) this render starts at: a preview of
+    # the chorus moves exactly as the finished song does at that moment
+    timeline_start: float = 0.0
+    # The format whose sound this render copies (sample rate, lossy peak margin)
+    # while being saved as another; a WAV preview of an MP3 song, say
+    render_as: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,8 +147,13 @@ class ConversionResult:  # pylint: disable=too-many-instance-attributes
 
 
 @functools.lru_cache(maxsize=16)
-def _checked_toolchain(extra: frozenset[str], encoder: str) -> FFmpegToolchain:
-    """Find FFmpeg and check its abilities once per run, not once per song."""
+def _checked_toolchain(
+    extra: frozenset[str], encoder: str, _tools: tuple[str, str]
+) -> FFmpegToolchain:
+    """Find FFmpeg and check its abilities once per run, not once per song.
+
+    _tools is the paths chosen in Settings, so choosing others checks again.
+    """
     toolchain = FFmpegToolchain.discover()
     toolchain.validate_capabilities(extra_filters=extra, encoder=encoder)
     return toolchain
@@ -157,18 +169,21 @@ def toolchain_for(config: EffectConfig, *, validate: bool = True) -> FFmpegToolc
     if not validate:
         return FFmpegToolchain.discover()
     extra = frozenset({"ebur128"} if config.wants_loudness else set())
-    return _checked_toolchain(extra, ENCODERS[config.output_format])
+    return _checked_toolchain(extra, ENCODERS[config.output_format], preferred_key())
 
 
 _TIME = re.compile(r"time=(\d+):(\d+):(\d+(?:\.\d+)?)")
 
 
-def _decoded_duration(toolchain: FFmpegToolchain, song: Path) -> float:
+def _decoded_duration(
+    toolchain: FFmpegToolchain, song: Path, cancel: threading.Event | None = None
+) -> float:
     """Play the file into nothing to learn its length when the file won't say."""
     result = run_capture(
         [str(toolchain.ffmpeg), "-hide_banner", "-nostdin", "-i", str(song),
          "-map", "0:a:0", "-f", "null", "-"],
         error_type=InputValidationError,
+        cancel=cancel,
     )  # fmt: skip
     matches = _TIME.findall(result.stderr)
     if not matches:
@@ -180,12 +195,16 @@ def _decoded_duration(toolchain: FFmpegToolchain, song: Path) -> float:
 
 
 def _song_length(
-    toolchain: FFmpegToolchain, song: Path, info: AudioStreamInfo, trim: Trim | None
+    toolchain: FFmpegToolchain,
+    song: Path,
+    info: AudioStreamInfo,
+    trim: Trim | None,
+    cancel: threading.Event | None = None,
 ) -> float:
     """Seconds of audio that will be converted, after any trim."""
     total = info.duration_seconds
     if total is None:
-        total = _decoded_duration(toolchain, song)
+        total = _decoded_duration(toolchain, song, cancel)
     length = trim.length(total) if trim else total
     if length is None or length <= 0.05:
         raise InputValidationError("The chosen start and end leave no sound to convert")
@@ -193,12 +212,18 @@ def _song_length(
 
 
 def _sync_to_beat(
-    toolchain: FFmpegToolchain, song: Path, info: AudioStreamInfo, config: EffectConfig
+    toolchain: FFmpegToolchain,
+    song: Path,
+    info: AudioStreamInfo,
+    config: EffectConfig,
+    cancel: threading.Event | None = None,
 ) -> tuple[EffectConfig, float | None, int]:
     """Snap the spin to whole bars of the song's tempo, if beat sync is on."""
     if not config.beat_sync and config.bpm is None:
         return config, None, 0
-    bpm = config.bpm or detect_bpm(toolchain, song, info.duration_seconds)
+    bpm = config.bpm or detect_bpm(
+        toolchain, song, info.duration_seconds, cancel=cancel
+    )
     if bpm is None:
         # The panel and the window say this in plain words; the log keeps a record
         LOG.info("No clear beat found, so the spin keeps its own speed")
@@ -236,14 +261,15 @@ class _Job:  # pylint: disable=too-many-instance-attributes
         self.toolchain = toolchain
         self.progress = progress
         self.cancel = cancel
-        self.info = probe_audio(toolchain, song)
-        self.length = _song_length(toolchain, song, self.info, options.trim)
+        self.info = probe_audio(toolchain, song, cancel=cancel)
+        self.length = _song_length(toolchain, song, self.info, options.trim, cancel)
         self.config, self.bpm, self.beats = _sync_to_beat(
-            toolchain, song, self.info, config
+            toolchain, song, self.info, config, cancel
         )
-        self.sample_rate = output_sample_rate(
-            self.config.output_format, self.info.sample_rate
-        )
+        # A preview saved as WAV still sounds like the format it stands in for
+        sound_format = options.render_as or self.config.output_format
+        self.lossless = sound_format in LOSSLESS_FORMATS
+        self.sample_rate = output_sample_rate(sound_format, self.info.sample_rate)
         self.inputs: list[InputFile] = [InputFile(song, options.trim)]
         self.graph_inputs = GraphInputs(sources=())
 
@@ -252,7 +278,9 @@ class _Job:  # pylint: disable=too-many-instance-attributes
         sources: list[tuple[int, float]] = []
         if self.config.vocals == "center":
             self.progress(STAGE_STEMS, 0.0)
-            vocals, music = separate_vocals(self.toolchain, self.song)
+            vocals, music = separate_vocals(
+                self.toolchain, self.song, cancel=self.cancel
+            )
             self.progress(STAGE_STEMS, 1.0)
             for stem, scale in ((vocals, VOCAL_MOVEMENT), (music, 1.0)):
                 self.inputs.append(InputFile(stem, self.options.trim))
@@ -263,7 +291,12 @@ class _Job:  # pylint: disable=too-many-instance-attributes
         graph_sources = []
         for number, (audio_input, scale) in enumerate(sources):
             controls = write_controls(
-                scratch, f"s{number}", self.config, self.length, intensity_scale=scale
+                scratch,
+                f"s{number}",
+                self.config,
+                self.length,
+                intensity_scale=scale,
+                start=self.options.timeline_start,
             )
             first = len(self.inputs)
             self.inputs += [InputFile(path) for path in controls]
@@ -401,6 +434,7 @@ class _Job:  # pylint: disable=too-many-instance-attributes
             source_rate=self.info.sample_rate,
             gain_db=plan.gain_db if plan else None,
             peak_margin=margin,
+            lossless=self.lossless,
         )
 
     def _render_mix(self, graph: str, mix_file: Path) -> LoudnessMeasurement:
@@ -421,7 +455,12 @@ class _Job:  # pylint: disable=too-many-instance-attributes
         # Input 0 stays the original song, only for its tags and album picture
         inputs = [InputFile(self.song, self.options.trim), InputFile(mix_file)]
         graph = build_finish_graph(
-            self.config, 1, plan.gain_db, margin, sample_rate=self.sample_rate
+            self.config,
+            1,
+            plan.gain_db,
+            margin,
+            sample_rate=self.sample_rate,
+            lossless=self.lossless,
         )
         self._encode(temporary_file, graph, self.length, inputs, STAGE_SAVE)
 
@@ -600,7 +639,28 @@ def compare_output_for(input_path: Path) -> Path:
     return input_path.with_name(f"{input_path.stem} (A-B compare).mp3")
 
 
-def preview(  # pylint: disable=too-many-arguments
+def _preview_window(trim: Trim | None, seconds: float, start: float) -> Trim:
+    """The preview's stretch: seconds from start, kept inside the song's own trim."""
+    end = start + seconds
+    if trim is not None and trim.end is not None:
+        end = min(end, trim.end)
+    return Trim(start, max(end, start + 0.1))
+
+
+def _preview_target(config: EffectConfig, lift_db: float | None) -> EffectConfig:
+    """Aim the preview as loud as that stretch will be in the finished song.
+
+    A fixed target is met by the whole song, so its loudest part lands above it;
+    the preview goes up by that same lift. 'Same as the original' already
+    follows the section, and no target means no change.
+    """
+    if lift_db is None or config.loudness_target is None or config.match_loudness:
+        return config
+    target = max(-30.0, min(-5.0, config.loudness_target + lift_db))
+    return dataclasses.replace(config, loudness_target=round(target, 2))
+
+
+def preview(  # pylint: disable=too-many-arguments,too-many-locals
     input_path: Path,
     output_path: Path,
     config: EffectConfig,
@@ -610,25 +670,46 @@ def preview(  # pylint: disable=too-many-arguments
     overwrite: bool = True,
     on_progress: StageProgress | None = None,
     cancel: threading.Event | None = None,
+    trim: Trim | None = None,
+    render_as: str | None = None,
 ) -> ConversionResult:
-    """Render a short 8D sample from the loudest part of the song (the chorus)."""
+    """Render a short 8D sample from the loudest part of the song (the chorus).
+
+    It is made exactly like the finished song at that moment: trim is the
+    song's own start and end (the chorus is looked for only inside it), and
+    render_as is the real output format when the sample is saved as WAV. Only
+    the length, the shorter ease-in and the file type differ.
+    """
     config.validate()
     toolchain = toolchain_for(config)
     song = resolve_input(input_path)
+    lift = None
     if start is None:
-        info = probe_audio(toolchain, song)
-        start = find_loudest_section(toolchain, song, seconds, info.duration_seconds)
+        # A cancelled preview stops here too, not after scanning the whole song
+        info = probe_audio(toolchain, song, cancel=cancel)
+        found = loudest_section(
+            toolchain,
+            song,
+            seconds,
+            info.duration_seconds,
+            window=trim,
+            cancel=cancel,
+        )
+        start, lift = found.start, found.lift_db
     # A short sample needs a short fade, or it would never reach full movement
     short = dataclasses.replace(config, fade_seconds=min(config.fade_seconds, 1.5))
+    song_start = (trim.start if trim else None) or 0.0
     return convert(
         song,
         output_path,
-        short,
+        _preview_target(short, lift),
         overwrite=overwrite,
         options=ConvertOptions(
-            trim=Trim(start, start + seconds),
+            trim=_preview_window(trim, seconds, start),
             title_suffix=" (8D preview)",
             check=False,
+            timeline_start=max(0.0, start - song_start),
+            render_as=render_as,
         ),
         on_progress=on_progress,
         cancel=cancel,
@@ -644,16 +725,20 @@ def compare(  # pylint: disable=too-many-arguments,too-many-locals
     overwrite: bool = True,
     on_progress: StageProgress | None = None,
     cancel: threading.Event | None = None,
+    trim: Trim | None = None,
 ) -> Path:
     """One file that plays the original (A), a short pause, then the 8D version (B).
 
-    Both halves come from the same loudest part and are matched to the same
-    loudness, so the only difference you hear is the 8D effect itself.
+    Both halves come from the same loudest part (inside the song's own trim,
+    if given) and are matched to the same loudness, so the only difference you
+    hear is the 8D effect itself.
     """
     toolchain = toolchain_for(dataclasses.replace(config, output_format="wav"))
     song = resolve_input(input_path)
-    info = probe_audio(toolchain, song)
-    start = find_loudest_section(toolchain, song, seconds, info.duration_seconds)
+    info = probe_audio(toolchain, song, cancel=cancel)
+    start = loudest_section(
+        toolchain, song, seconds, info.duration_seconds, window=trim, cancel=cancel
+    ).start
     output = resolve_output(output_path, overwrite=overwrite, extension=".mp3")
     scratch = Path(tempfile.mkdtemp(prefix="audio8d-ab-"))
     # Written under a hidden name first, so a stopped compare leaves nothing behind
@@ -671,6 +756,7 @@ def compare(  # pylint: disable=too-many-arguments,too-many-locals
             start=start,
             on_progress=on_progress,
             cancel=cancel,
+            trim=trim,
         )
         original = measure_loudness(
             build_measure_command(
@@ -707,7 +793,11 @@ def compare(  # pylint: disable=too-many-arguments,too-many-locals
         commit_output(temporary, output, overwrite=True)
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
-        temporary.unlink(missing_ok=True)
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            # A file still held open elsewhere must not hide the real outcome
+            LOG.warning("Could not remove temporary file: %s", temporary)
     return output
 
 

@@ -3,8 +3,12 @@
 __pycache__/
 *.py[cod]
 build/
-dist/
 *.egg-info/
+
+# bin holds the built programs (made by packaging/build.ps1); only FFmpeg is kept in git
+bin/*
+!bin/ffmpeg.exe
+!bin/ffprobe.exe
 
 # Local environments and tool caches
 .venv/

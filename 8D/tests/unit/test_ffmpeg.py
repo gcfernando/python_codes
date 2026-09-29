@@ -168,6 +168,7 @@ def test_discover_explains_what_is_missing(
 ) -> None:
     monkeypatch.setattr(toolchain, "BUNDLED_DIR", tmp_path)
     monkeypatch.setattr(toolchain.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(toolchain, "_common_folders", list)
     _fake_binary(tmp_path, "ffmpeg")
 
     with pytest.raises(DependencyError, match="ffprobe"):

@@ -45,7 +45,7 @@ _ANSI = {
 _PATH_WORDS = {
     "circle": "circles your head",
     "arc": "swings left-right in front",
-    "figure8": "loops round each ear",
+    "figure8": "loops around each ear",
     "wander": "drifts freely around you",
 }
 
@@ -116,27 +116,25 @@ class Painter:
 
 
 def describe_movement(intensity: float) -> str:
-    """Plain-word label for --intensity."""
+    """Plain-word label for --intensity, in the same words as --movement."""
     if intensity == 0:
         return "off, stays in the middle"
-    if intensity < 0.5:
+    if intensity < 0.72:
         return "gentle"
-    if intensity < 0.8:
-        return "medium"
-    if intensity < 0.95:
-        return "strong"
-    return "maximum"
+    if intensity < 0.88:
+        return "balanced"
+    return "strong"
 
 
 def describe_room(ambience: float) -> str:
-    """Plain-word label for --ambience."""
+    """Plain-word label for --ambience, in the same words as --space."""
     if ambience == 0:
-        return "off, completely dry"
-    if ambience <= 0.35:
-        return "subtle room"
-    if ambience <= 0.6:
-        return "large room"
-    return "huge hall"
+        return "no room sound at all"
+    if ambience < 0.18:
+        return "dry"
+    if ambience < 0.35:
+        return "natural"
+    return "spacious"
 
 
 def describe_quality(
@@ -150,7 +148,9 @@ def describe_quality(
     if output_format in {"m4a", "opus"}:
         name = "AAC (M4A)" if output_format == "m4a" else "Opus"
         default = 256 if output_format == "m4a" else 192
-        return f"{name} {bitrate or default} kbps  (transparent)"
+        return (
+            f"{name} {bitrate or default} kbps  (sounds like the original to most ears)"
+        )
     if bitrate:
         kind = "the maximum MP3 allows" if bitrate == 320 else "constant"
         return f"{bitrate} kbps CBR  ({kind})"
@@ -175,9 +175,9 @@ def describe_loudness(target: float | None) -> str:
     if target is None:
         return "off  (natural level, usually quieter than the original)"
     if round(target) == -14:
-        return f"{target:g} LUFS  (Spotify / YouTube / Tidal standard)"
+        return f"{target:g} LUFS  (Match music apps: Spotify, YouTube and Tidal use it)"
     if round(target) == -16:
-        return f"{target:g} LUFS  (Apple Music standard)"
+        return f"{target:g} LUFS  (what Apple Music uses)"
     return f"{target:g} LUFS"
 
 
@@ -243,7 +243,8 @@ def advice_items(config: EffectConfig) -> list[Advice]:  # pylint: disable=too-m
     elif not config.speed_curve and config.rotation_seconds > 20:
         add("A spin this slow is hard to notice. Most people like 6 to 10 s.",
             rotation_seconds=8.0)  # fmt: skip
-    if 0 < config.intensity < 0.5:
+    # Front's gentle 0.40 sway is on purpose; only far weaker movement is advised
+    if 0 < config.intensity < 0.35:
         add("The movement is gentle and may be hard to hear. Try --intensity 0.8",
             intensity=0.8, intensity_curve=())  # fmt: skip
     elif config.intensity > 0.95 and config.engine == "pan":
@@ -318,8 +319,7 @@ def source_notes(info: AudioStreamInfo, config: EffectConfig) -> list[str]:
         notes.append("Already compressed, so a little detail is gone for good.")
         if config.output_format == "mp3" and config.bitrate != 320:
             notes.append(
-                "For this kind of file, --bitrate 320 (or --preset studio) "
-                "matters most."
+                "For this kind of file, --bitrate 320 (or --style studio) matters most."
             )
     if info.sample_rate and info.sample_rate > 48000 and not config.is_lossless:
         notes.append(
@@ -369,18 +369,16 @@ def _banner(painter: Painter, version: str) -> None:
 
 
 def _loudness_setting(config: EffectConfig) -> str:
-    """The loudness row of the settings panel, e.g. '-14 LUFS goal, dynamics kept'."""
+    """The loudness row of the settings panel, e.g. 'Match music apps (-14 LUFS)'."""
     if config.match_loudness:
         how = "exactly" if config.exact_loudness else "dynamics kept"
-        return f"same as the original, {how}"
+        return f"Keep original loudness ({how})"
     if config.loudness_target is None:
-        return "off"
-    how = (
-        "exactly, light peak limiting"
-        if config.exact_loudness
-        else "goal, dynamics kept"
-    )
-    return f"{config.loudness_target:g} LUFS {how}"
+        return "off (no change)"
+    how = "exactly" if config.exact_loudness else "dynamics kept"
+    if config.loudness_target == -14.0:
+        return f"Match music apps (-14 LUFS, {how})"
+    return f"{config.loudness_target:g} LUFS ({how})"
 
 
 def _best_note(painter: Painter, is_best: bool, best_text: str) -> str:
@@ -442,7 +440,7 @@ def show_settings(  # pylint: disable=too-many-locals,too-many-arguments
         _best_note(painter, config.engine == "3d", "3D"),
     )
     row(
-        "Spin",
+        "Speed",
         describe_spin(config),
         _best_note(
             painter,
@@ -463,12 +461,12 @@ def show_settings(  # pylint: disable=too-many-locals,too-many-arguments
         _best_note(painter, config.bass_hz == BEST.bass_hz, f"{BEST.bass_hz:g} Hz"),
     )
     row(
-        "Room",
+        "Space",
         f"{config.ambience:.2f}  ({describe_room(config.ambience)})",
         _best_note(painter, config.ambience == BEST.ambience, f"{BEST.ambience:.2f}"),
     )
     row(
-        "Peak roof",
+        "Peak limit",
         describe_ceiling(config.limiter_ceiling),
         _best_note(
             painter,
@@ -488,7 +486,7 @@ def show_settings(  # pylint: disable=too-many-locals,too-many-arguments
             painter,
             (config.loudness_target == BEST.loudness_target or config.match_loudness)
             and config.exact_loudness == BEST.exact_loudness,
-            "-14 LUFS goal",
+            "match music apps",
         ),
     )
     more = extras(config, trim)
@@ -623,7 +621,7 @@ def show_done(painter: Painter, song_out: Path, seconds: float) -> None:
     """Celebrate a finished conversion with the time taken and the file size."""
     painter.line(
         "  "
-        + painter.paint(f"Conversion completed in {seconds:.1f} s", "bold", "green")
+        + painter.paint(f"Created in {seconds:.1f} s", "bold", "green")
         + painter.paint(f"  ->  {song_out}  ({_size_of(song_out)})", "green")
     )
 
@@ -733,15 +731,17 @@ def show_result(painter: Painter, result: ConversionResult, seconds: float) -> N
         show_quality(painter, result.quality)
 
 
-def show_tip(painter: Painter) -> None:
-    """Nudge first-time users towards the best-sounding preset."""
+def show_tip(painter: Painter, style: str = RECOMMENDED_PRESET) -> None:
+    """Point first-time users at the other styles and the preview."""
     painter.line()
     painter.line(
         "  "
         + painter.paint("Tip:", "bold", "yellow")
-        + " for world-standard quality add "
-        + painter.paint(f"--preset {RECOMMENDED_PRESET}", "bold", "pink")
-        + painter.paint("   (see every style: --list-presets)", "dim")
+        + " this used the "
+        + painter.paint(style, "bold", "pink")
+        + " style. Listen first with "
+        + painter.paint("--preview", "bold")
+        + painter.paint("   (every style: --list-styles)", "dim")
     )
 
 
@@ -806,7 +806,7 @@ def show_batch_summary(painter: Painter, report: BatchReport) -> None:
     painter.line()
     painter.line(
         "  "
-        + painter.paint(f"Done: {len(converted)} converted", "bold", "green")
+        + painter.paint(f"Done: {len(converted)} created", "bold", "green")
         + (painter.paint(f", {len(failed)} failed", "bold", "red") if failed else "")
         + painter.paint(f" in {format_time(seconds)} ({seconds:.1f} s).", "green")
     )
@@ -825,30 +825,15 @@ def show_presets(
     _banner(painter, version)
     painter.line(
         painter.paint(
-            "  Sound styles - use one with:  audio8d song.mp3 --preset NAME", "bold"
+            "  Sound styles - use one with:  audio8d song.mp3 --style NAME", "bold"
         )
     )
     painter.line()
-    header = (
-        f"  {'NAME':<12}{'SPIN':>6}{'MOVE':>6}{'ROOM':>6}  {'SOUND':<9}"
-        f"{'QUALITY':<8}{'LOUDNESS':<10}WHAT IT IS FOR"
-    )
+    header = f"  {'NAME':<12}{'SPEED':>6}{'MOVE':>6}{'SPACE':>6}  {'ENGINE':<9}GOOD FOR"
     painter.line(painter.paint(header, "dim"))
     for name, preset in (presets or PRESETS).items():
         cfg = preset.config
         label = f"{name} *" if name == RECOMMENDED_PRESET else name
-        if cfg.output_format != "mp3":
-            quality = cfg.output_format.upper()
-        else:
-            quality = f"{cfg.bitrate}k" if cfg.bitrate else f"V{cfg.quality}"
-        if cfg.match_loudness:
-            loud = "original"
-        elif cfg.loudness_target is None:
-            loud = "off"
-        else:
-            loud = f"{cfg.loudness_target:g} " + (
-                "exact" if cfg.exact_loudness else "LUFS"
-            )
         sound = ("3D " if cfg.engine == "3d" else "pan ") + {
             "circle": "O",
             "arc": "(",
@@ -856,10 +841,7 @@ def show_presets(
             "wander": "~",
         }[cfg.path]
         spin = "beat" if cfg.beat_sync else f"{cfg.rotation_seconds:g}s"
-        numbers = (
-            f"{spin:>6}{cfg.intensity:>6.2f}{cfg.ambience:>6.2f}  {sound:<9}"
-            f"{quality:<8}{loud:<10}"
-        )
+        numbers = f"{spin:>6}{cfg.intensity:>6.2f}{cfg.ambience:>6.2f}  {sound:<9}"
         color = "pink" if name == RECOMMENDED_PRESET else "cyan"
         summary = preset.summary + ("  (yours)" if preset.custom else "")
         painter.line(
@@ -868,15 +850,22 @@ def show_presets(
     painter.line()
     painter.line(
         painter.paint(
-            "  * recommended. Any knob you add (e.g. --intensity 0.9) "
-            "overrides the style.",
+            "  * recommended. A style is only the sound: every style is saved as MP3 "
+            "320 kbps at music-app loudness unless you add --format or --loudness.",
+            "dim",
+        )
+    )
+    painter.line(
+        painter.paint(
+            "  Any setting you add (e.g. --movement strong) changes the style. Older "
+            "names lossless, streaming and hifi still work and also set the output.",
             "dim",
         )
     )
     painter.line(
         painter.paint(
             "  Paths: O circle, ( front arc, 8 figure-8, ~ wander. "
-            "Save your own with --save-preset NAME.",
+            "Save your own with --save-style NAME.",
             "dim",
         )
     )

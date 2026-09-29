@@ -2,6 +2,7 @@
 """Reads source-stream metadata through FFprobe's JSON output."""
 
 import json
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +10,11 @@ from ..core.errors import InputValidationError
 from ..core.types import AudioStreamInfo
 from .runner import run_capture
 from .toolchain import FFmpegToolchain
+
+# The tags worth reading: the title for the new file, the rest to suggest a style
+_TAGS = "title,genre,artist,album_artist,album"
+# Reading a file's details takes well under a second; a stuck network drive doesn't
+PROBE_TIMEOUT = 60.0
 
 
 def _tag(tags: dict[str, Any], name: str) -> str | None:
@@ -76,10 +82,18 @@ def parse_probe_output(raw_json: str) -> AudioStreamInfo:
         bit_rate=bit_rate,
         title=_tag(tags, "title"),
         has_cover_art=cover,
+        genre=_tag(tags, "genre"),
+        artist=_tag(tags, "artist") or _tag(tags, "album_artist"),
+        album=_tag(tags, "album"),
     )
 
 
-def probe_audio(toolchain: FFmpegToolchain, input_file: Path) -> AudioStreamInfo:
+def probe_audio(
+    toolchain: FFmpegToolchain,
+    input_file: Path,
+    *,
+    cancel: threading.Event | None = None,
+) -> AudioStreamInfo:
     """Inspect the first audio stream of input_file, and whether it has album art."""
     result = run_capture(
         [
@@ -88,12 +102,14 @@ def probe_audio(toolchain: FFmpegToolchain, input_file: Path) -> AudioStreamInfo
             "error",
             "-show_entries",
             "stream=codec_type,codec_name,channels,sample_rate,bit_rate"
-            ":stream_disposition=attached_pic:stream_tags=title"
-            ":format=duration,bit_rate:format_tags=title",
+            ":stream_disposition=attached_pic"
+            f":stream_tags={_TAGS}:format=duration,bit_rate:format_tags={_TAGS}",
             "-of",
             "json",
             str(input_file),
         ],
         error_type=InputValidationError,
+        timeout=PROBE_TIMEOUT,
+        cancel=cancel,
     )
     return parse_probe_output(result.stdout)

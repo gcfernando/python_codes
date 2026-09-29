@@ -1,6 +1,7 @@
 # Developed by ::> Gehan Fernando
 """Checks the audio8d command: options, styles, folders, messages and guided mode."""
 
+import dataclasses
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +11,6 @@ from src import (
     PRESETS,
     AudioStreamInfo,
     ConversionError,
-    EffectConfig,
     InputValidationError,
     cli,
 )
@@ -42,10 +42,11 @@ def _recorder(seen: dict[str, Any]):
     return fake_convert
 
 
-def test_no_knobs_means_the_classic_defaults() -> None:
+def test_no_knobs_means_the_studio_style_saved_the_standard_way() -> None:
     args = cli.create_parser().parse_args(["in.mp3", "out.mp3"])
 
-    assert cli.resolve_config(args) == EffectConfig()
+    # The same default as the window: Studio, MP3 High quality, music-app loudness
+    assert cli.resolve_config(args) == PRESETS["studio"].config
     assert args.overwrite is False
 
 
@@ -64,7 +65,9 @@ def test_main_passes_options_through(monkeypatch: pytest.MonkeyPatch) -> None:
     assert code == 0
     assert seen["input_path"] == Path("a.wav")
     assert seen["overwrite"] is True
-    assert seen["config"] == EffectConfig(intensity=0.5, quality=0)
+    assert seen["config"] == dataclasses.replace(
+        PRESETS["studio"].config, intensity=0.5, quality=0
+    )
 
 
 def test_main_returns_1_on_known_errors(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -373,7 +376,7 @@ def test_guided_mode_with_a_folder_lets_you_pick_songs(
 
 
 @pytest.mark.parametrize(
-    ("answer", "style"), [("", "studio"), ("7", "smooth"), ("voice", "voice")]
+    ("answer", "style"), [("", "studio"), ("6", "smooth"), ("voice", "voice")]
 )
 def test_guided_mode_style_menu(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, answer: str, style: str
@@ -508,9 +511,9 @@ def test_settings_panel_and_tip_are_shown(
     assert cli.main(["song.wav"]) == 0
     shown = capsys.readouterr().err
     assert "8 s per full circle" in shown
-    assert "classic" in shown
-    assert "Conversion completed" in shown
-    assert "--preset studio" in shown
+    assert "studio" in shown
+    assert "Created in" in shown
+    assert "--preview" in shown
 
 
 def test_tip_is_hidden_once_a_preset_is_chosen(
@@ -556,8 +559,10 @@ def test_help_shows_the_best_values(capsys: pytest.CaptureFixture[str]) -> None:
 
     shown = capsys.readouterr().out
     assert "QUICK START" in shown
-    assert "BEST VALUES" in shown
-    assert "--quality 0" in shown
+    assert "DEFAULTS" in shown
+    assert "--style studio" in shown
+    # Older names still work but are left out of the help
+    assert "--preset" not in shown and "--list-presets" not in shown
     assert "--output-dir" in shown
     assert "Gehan Fernando" in shown
 
@@ -575,7 +580,7 @@ def test_missing_song_is_explained_before_the_settings_panel(
     shown = capsys.readouterr().err
     assert "Input file does not exist" in caplog.text
     assert "What to do:" in shown
-    assert "Spin" not in shown
+    assert "Speed" not in shown
 
 
 def test_bitrate_and_exact_loudness_can_be_typed() -> None:
@@ -609,10 +614,11 @@ def test_preview_and_compare_modes_call_their_helpers(
     monkeypatch.setattr(cli, "preview", fake_preview)
     monkeypatch.setattr(cli, "compare", fake_compare)
 
-    assert cli.main(["a.mp3", "--preview", "20"]) == 0
-    assert seen["preview"] == (Path("a.mp3"), Path("a (8D preview).mp3"), 20.0)
-    assert cli.main(["a.mp3", "--compare"]) == 0
-    assert seen["compare"] == (Path("a.mp3"), Path("a (A-B compare).mp3"))
+    # An OUTPUT given on purpose keeps the sample there
+    assert cli.main(["a.mp3", "keep.wav", "--preview", "20"]) == 0
+    assert seen["preview"] == (Path("a.mp3"), Path("keep.wav"), 20.0)
+    assert cli.main(["a.mp3", "ab.mp3", "--compare"]) == 0
+    assert seen["compare"] == (Path("a.mp3"), Path("ab.mp3"))
 
 
 def test_loudness_can_match_the_original() -> None:
@@ -656,3 +662,130 @@ def test_bitrate_auto_hands_mp3_back_to_its_quality() -> None:
 def test_songs_at_once_has_the_same_limits_as_the_window(jobs: str) -> None:
     with pytest.raises(SystemExit):
         cli.create_parser().parse_args(["music", "--jobs", jobs])
+
+
+# ------------------------------------------------------------ checks and per song
+
+
+def _ready_report(ok: bool = True):
+    """A made-up system check: everything ready, or FFmpeg missing."""
+    # pylint: disable-next=import-outside-toplevel
+    from src.health import MISSING, READY, Dependency, HealthReport
+
+    return HealthReport(
+        (
+            Dependency(
+                "ffmpeg",
+                "FFmpeg",
+                True,
+                READY if ok else MISSING,
+                "Working." if ok else "ffmpeg was not found.",
+                "make every 8D song",
+                fix="" if ok else "Choose it with --ffmpeg PATH.",
+            ),
+            Dependency("singer", "Singer add-on", False, READY, "Ready.", "sing"),
+        )
+    )
+
+
+def test_check_says_what_is_ready_and_what_to_fix(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(cli, "check_environment", _ready_report)
+    assert cli.main(["--check"]) == 0
+    out = capsys.readouterr().out
+    assert "Required" in out and "Optional" in out and "Everything required" in out
+
+    monkeypatch.setattr(cli, "check_environment", lambda: _ready_report(False))
+    assert cli.main(["--check"]) == 1
+    out = capsys.readouterr().out
+    assert "Missing" in out and "--ffmpeg PATH" in out
+    assert "can't create songs yet" in out
+
+
+def test_typed_tool_paths_are_used_for_this_run(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    chosen: list[object] = []
+    monkeypatch.setattr(cli, "set_preferred_paths", lambda *paths: chosen.extend(paths))
+    monkeypatch.setattr(cli, "check_environment", _ready_report)
+    python = tmp_path / "python.exe"
+
+    assert (
+        cli.main(["--check", "--ffmpeg", "C:/ff/ffmpeg.exe", "--python", str(python)])
+        == 0
+    )
+    assert chosen[-2] == Path("C:/ff/ffmpeg.exe")
+    assert cli.addons.preferred_python() == python
+
+
+def test_install_addon_needs_a_working_python(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # pylint: disable-next=import-outside-toplevel
+    from src.addons import PythonCheck
+
+    monkeypatch.setattr(
+        cli.addons,
+        "find_python",
+        lambda _p=None: PythonCheck(None, False, problem="No Python was found."),
+    )
+    assert cli.main(["--install-addon"]) == 1
+    assert "python.org" in capsys.readouterr().out
+
+
+def test_songs_get_their_own_settings_from_a_per_song_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    seen: dict[str, Any] = {}
+    monkeypatch.setattr(cli, "run_batch", _fake_batch(seen))
+    folder = _music_folder(tmp_path)
+    rules = tmp_path / "songs.txt"
+    rules.write_text(
+        '"b.flac"  --preset smooth --format flac --loudness match\n'
+        "*.wav     --intensity 0.5 --start 0:10\n",
+        encoding="utf-8",
+    )
+
+    code = cli.main(
+        [str(folder), "--recursive", "--per-song", str(rules), "--output-dir", "o"]
+    )
+    assert code == 0
+    items = {item.source.name: item for item in seen["items"]}
+    flac = items["b.flac"]
+    assert flac.output.suffix == ".flac"
+    assert flac.config is not None and flac.config.match_loudness
+    assert flac.config.intensity == PRESETS["smooth"].config.intensity
+    wav = items["c.wav"]
+    assert wav.config is not None and wav.config.intensity == 0.5
+    assert wav.options is not None and wav.options.trim.start == 10.0
+    # A song without a line keeps the run's own settings
+    assert items["a.mp3"].config is None and items["a.mp3"].options is None
+
+
+def test_songs_needing_the_singer_add_on_never_quietly_skip_it(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    # pylint: disable-next=import-outside-toplevel
+    from src.addons import AddonStatus, PythonCheck
+
+    monkeypatch.setattr(
+        cli.addons,
+        "singer_status",
+        lambda refresh=False: AddonStatus(
+            PythonCheck(None, False, problem="No Python was found.")
+        ),
+    )
+    ran: dict[str, Any] = {}
+    monkeypatch.setattr(cli, "convert", _recorder(ran))
+    rules = tmp_path / "songs.txt"
+    rules.write_text("song.wav --vocals center\n", encoding="utf-8")
+
+    assert cli.main(["song.wav", "--per-song", str(rules)]) == 1
+    assert not ran
+    assert "needs the singer add-on (for song.wav)" in caplog.text
+    assert "--install-addon" in capsys.readouterr().err
+    assert cli.main(["other.wav", "--per-song", str(rules)]) == 0

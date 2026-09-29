@@ -17,7 +17,7 @@ from src import (
 @pytest.mark.parametrize(
     ("error", "expected"),
     [
-        (DependencyError("Missing required executable(s): ffmpeg"), "bin\\executable"),
+        (DependencyError("Missing required executable(s): ffmpeg"), "bin folder"),
         (
             DependencyError("Command failed with exit code 1: boom"),
             "FFmpeg would not run",
@@ -113,3 +113,20 @@ def test_a_locked_folder_gets_a_plain_fix() -> None:
 )
 def test_ffmpeg_logs_are_shortened_to_their_reason(log: str, shown: str) -> None:
     assert hints.short_message(ConversionError(log)) == shown
+
+
+@pytest.mark.parametrize(
+    ("error", "expected"),
+    [
+        (ConversionError("FFmpeg conversion failed with exit code 1: boom"),
+         "FFmpeg couldn't process this song."),
+        (DependencyError("Missing required executable(s): ffmpeg"),
+         "A program Audio8D needs isn't working."),
+        (RuntimeError("a surprise"), "Something unexpected went wrong."),
+    ],
+)  # fmt: skip
+def test_people_see_a_plain_headline_first(error: BaseException, expected: str) -> None:
+    shown = hints.headline(error)
+
+    assert shown.startswith(expected)
+    assert "exit code" not in shown and "Traceback" not in shown

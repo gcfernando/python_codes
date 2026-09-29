@@ -7,6 +7,7 @@ import pytest
 
 import src
 from src import PRESETS, RECOMMENDED_PRESET, EffectConfig, InputValidationError
+from src.core.presets import STANDARD_OUTPUT, legacy_config, with_standard_output
 
 
 @pytest.mark.parametrize("name", list(PRESETS))
@@ -14,8 +15,15 @@ def test_every_preset_is_valid(name: str) -> None:
     PRESETS[name].config.validate()
 
 
-def test_classic_preset_is_the_default_sound() -> None:
-    assert PRESETS["classic"].config == EffectConfig()
+def test_classic_is_the_original_sound_saved_the_standard_way() -> None:
+    assert PRESETS["classic"].config == with_standard_output(EffectConfig())
+
+
+@pytest.mark.parametrize("name", list(PRESETS))
+def test_every_style_is_saved_the_same_way(name: str) -> None:
+    # A style is only the sound: every one starts from the same output settings
+    config = PRESETS[name].config
+    assert {key: getattr(config, key) for key in STANDARD_OUTPUT} == STANDARD_OUTPUT
 
 
 def test_studio_preset_is_the_best_of_best() -> None:
@@ -29,10 +37,13 @@ def test_studio_preset_is_the_best_of_best() -> None:
     assert studio.limiter_ceiling == 0.84
 
 
-def test_streaming_preset_is_studio_with_exact_loudness() -> None:
+def test_older_names_keep_their_old_way_of_saving() -> None:
     studio = PRESETS["studio"].config
-    streaming = PRESETS["streaming"].config
+    streaming = legacy_config("streaming")
 
+    assert "streaming" not in PRESETS
+    assert legacy_config("lossless").output_format == "flac"
+    assert legacy_config("hifi").match_loudness is True
     assert streaming.exact_loudness is True
     assert streaming.bitrate == studio.bitrate
     assert streaming.limiter_ceiling == studio.limiter_ceiling

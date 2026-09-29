@@ -34,6 +34,10 @@ class AudioStreamInfo:  # pylint: disable=too-many-instance-attributes
     title: str | None = None
     # True when the file carries album art (an attached picture)
     has_cover_art: bool = False
+    # The file's own tags, used to suggest a style (None when the file has none)
+    genre: str | None = None
+    artist: str | None = None
+    album: str | None = None
 
     @property
     def is_lossless(self) -> bool:

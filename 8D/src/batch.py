@@ -22,6 +22,8 @@ class BatchItem:
     output: Path
     # None: the song uses the settings every other song uses
     config: EffectConfig | None = None
+    # None: the song's file is treated like every other song's (art, title, trim)
+    options: ConvertOptions | None = None
 
 
 @dataclass(slots=True)
@@ -85,11 +87,13 @@ def run_batch(  # pylint: disable=too-many-arguments,too-many-locals
     report = BatchReport(outcomes=[BatchOutcome(item) for item in items])
     started = time.perf_counter()
     lock = threading.Lock()
+    # Ctrl+C needs a switch to flip even when the caller didn't pass one
+    stop = cancel if cancel is not None else threading.Event()
 
     def work(index: int) -> BatchOutcome:
         """Convert one song and record how it went."""
         outcome = report.outcomes[index]
-        if cancel is not None and cancel.is_set():
+        if stop.is_set():
             return outcome
 
         def progress(stage: str, share: float) -> None:
@@ -105,22 +109,31 @@ def run_batch(  # pylint: disable=too-many-arguments,too-many-locals
                 outcome.item.output,
                 outcome.item.config or config,
                 overwrite=overwrite,
-                options=options,
+                options=outcome.item.options or options,
                 on_progress=progress,
-                cancel=cancel,
+                cancel=stop,
             )
         except Audio8DError as exc:
             outcome.error = exc
         outcome.seconds = time.perf_counter() - begin
         return outcome
 
-    with ThreadPoolExecutor(max_workers=max(1, jobs)) as pool:
+    pool = ThreadPoolExecutor(  # pylint: disable=consider-using-with
+        max_workers=max(1, jobs)
+    )
+    try:
         futures = {pool.submit(work, index): index for index in range(len(items))}
         for future in as_completed(futures):
             outcome = future.result()
             if on_done is not None and (outcome.result or outcome.error):
                 with lock:
                     on_done(futures[future], outcome)
+    except BaseException:
+        # Ctrl+C or a failure here: stop the running songs and skip the waiting ones
+        stop.set()
+        pool.shutdown(wait=True, cancel_futures=True)
+        raise
+    pool.shutdown(wait=True)
 
     report.seconds = time.perf_counter() - started
     return report

@@ -5,7 +5,7 @@ import argparse
 import dataclasses
 import logging
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import NoReturn
 
@@ -14,7 +14,15 @@ from .batch import MAX_JOBS, default_jobs
 from .core.errors import Audio8DError, InputValidationError
 from .core.locations import GUIDE_URL
 from .core.parsing import parse_keyframes, parse_time
-from .core.presets import PRESETS, RECOMMENDED_PRESET, Preset
+from .core.presets import (
+    LEGACY_STYLES,
+    PRESETS,
+    RECOMMENDED_PRESET,
+    Preset,
+    legacy_config,
+    with_format,
+    with_standard_output,
+)
 from .core.settings import (
     BITRATES,
     DIRECTIONS,
@@ -25,6 +33,7 @@ from .core.settings import (
     EffectConfig,
     speaker_safe,
 )
+from .core.sound_levels import LEVELS, MOVEMENT, SPACE, SPEED, SoundLevel
 from .core.user_presets import all_presets, find_style
 from .files import NAME_STYLES, format_for_extension
 
@@ -37,12 +46,13 @@ LOUDNESS_MATCH = "match"
 # --bitrate auto: no constant bitrate, so MP3 uses its variable --quality
 BITRATE_AUTO = "auto"
 
-_DEFAULTS = EffectConfig()
 _BEST = PRESETS[RECOMMENDED_PRESET].config
 
 
 def _columns(rows: Sequence[tuple[str, str]], width: int) -> str:
     """Line up commands and their explanations in two neat columns for --help."""
+    # A long command widens its column rather than running into its explanation
+    width = max(width, *(len(left) + 2 for left, _right in rows))
     return "\n".join(f"  {left:<{width}}{right}" for left, right in rows)
 
 
@@ -55,38 +65,28 @@ _QUICK_START = "\n".join(
         "QUICK START - just copy one of these:",
         _columns(
             [
-                (
-                    f'audio8d "My Song.mp3" --preset {RECOMMENDED_PRESET}',
-                    "best quality, same loudness as Spotify",
-                ),
-                ('audio8d "My Song.mp3"', 'new file: "My Song (8D).mp3"'),
+                ('audio8d "My Song.mp3"', 'makes "My Song (8D).mp3" (Studio style)'),
+                ('audio8d "My Song.mp3" --preview', "listen first; nothing is kept"),
+                ('audio8d "My Song.mp3" --style smooth', "choose another style"),
                 (r'audio8d "C:\Music"', "every song in the folder"),
-                ('audio8d "My Song.mp3" --preview', "hear a 30 s sample first"),
                 ("audio8d", "step-by-step helper that asks you questions"),
                 ("audio8d --gui", "a window with buttons instead of typing"),
-                ("audio8d --list-presets", "show every ready-made style"),
+                ("audio8d --list-styles", "show every style"),
             ],
             width=41,
         ),
         "",
-        f"BEST VALUES (this is exactly what --preset {RECOMMENDED_PRESET} uses):",
+        "DEFAULTS (used when you type nothing else):",
         _columns(
             [
+                (f"--style {RECOMMENDED_PRESET}", "balanced movement for most music"),
+                ("--format mp3 --bitrate 320", "MP3 at the highest quality"),
                 (
-                    f"--rotation-seconds {_BEST.rotation_seconds:g}",
-                    f"--intensity {_BEST.intensity:.2f}",
-                ),
-                (
-                    f"--ambience {_BEST.ambience:.2f}",
-                    f"--limiter-ceiling {_BEST.limiter_ceiling:.2f}",
-                ),
-                (f"--bitrate {_BEST.bitrate}", f"--loudness {_BEST.loudness_target:g}"),
-                (
-                    f"--quality {_BEST.quality}",
-                    f"--bass {_BEST.bass_hz:g}  --engine 3d",
+                    f"--loudness {_BEST.loudness_target:g}",
+                    "as loud as music apps (Spotify, YouTube)",
                 ),
             ],
-            width=26,
+            width=28,
         ),
     ]
 )
@@ -97,8 +97,12 @@ _EXAMPLES = "\n".join(
         "MORE EXAMPLES:",
         _columns(
             [
-                (f"{_EXAMPLE_SONG} --preset lossless", "FLAC, nothing lost"),
-                (f"{_EXAMPLE_SONG} --preset groove", "moves in time with the beat"),
+                (f"{_EXAMPLE_SONG} --format flac", "FLAC, nothing lost"),
+                (f"{_EXAMPLE_SONG} --style groove", "moves in time with the beat"),
+                (
+                    f"{_EXAMPLE_SONG} --movement gentle --speed slow",
+                    "softer, slower movement",
+                ),
                 (f"{_EXAMPLE_SONG} --path figure8 --elevation 0.5", "loops and rises"),
                 (f"{_EXAMPLE_SONG} --compare --play", "hear original, then 8D"),
                 (
@@ -113,11 +117,18 @@ _EXAMPLES = "\n".join(
                     f'{_EXAMPLE_SONG} --speed-curve "0=10, 1:00=6, 2:30=10"',
                     "faster in the chorus",
                 ),
+                (
+                    r'audio8d "C:\Music" --per-song songs.txt',
+                    "some songs with settings of their own",
+                ),
+                ("audio8d --check", "is everything installed and working?"),
+                ("audio8d --addon-status", "is the optional singer add-on installed?"),
+                ("audio8d --install-addon", "install it; --uninstall-addon removes it"),
             ],
             width=52,
         ),
         "",
-        "Developed by Gehan Fernando. Full guide: README.md, or " + GUIDE_URL,
+        "Developed by Gehan Fernando. Full guide: " + GUIDE_URL,
     ]
 )
 
@@ -181,10 +192,13 @@ def _curve_value(text: str) -> tuple[tuple[float, float], ...]:
 
 
 def _preset_name(text: str) -> str:
-    """A style that exists: built-in, or saved with --save-preset."""
+    """A style that exists: built-in, or saved with --save-style."""
     known = known_presets()
     # Letter case doesn't matter: studio, Studio and STUDIO are the same style
     name = find_style(text, known)
+    if name is None and text.strip().lower() in LEGACY_STYLES:
+        # Older names (lossless, streaming, hifi) keep working exactly as before
+        name = text.strip().lower()
     if name is None:
         raise argparse.ArgumentTypeError(
             f"invalid choice: '{text}' (choose from {', '.join(known)})"
@@ -227,8 +241,13 @@ class _ListPresetsAction(argparse.Action):
 class _FriendlyParser(argparse.ArgumentParser):
     """An argument parser that explains typing mistakes in plain words."""
 
+    # A per-song file line is parsed too; its mistakes are raised, not printed
+    raise_errors = False
+
     def error(self, message: str) -> NoReturn:
         """Keep argparse's usual message, then add a plain fix and a working example."""
+        if self.raise_errors:
+            raise InputValidationError(message)
         painter = display.Painter(sys.stderr)
         # The full usage lists every option; one short line keeps the fix visible
         painter.line(
@@ -240,53 +259,69 @@ class _FriendlyParser(argparse.ArgumentParser):
         painter.line(
             "  "
             + painter.paint("Example:", "bold")
-            + f' audio8d "My Song.mp3" --preset {RECOMMENDED_PRESET}'
+            + f' audio8d "My Song.mp3" --style {RECOMMENDED_PRESET}'
         )
         self.exit(2)
 
 
 def _add_sound_options(parser: argparse.ArgumentParser) -> None:
-    """--preset and every knob that changes how the song sounds."""
+    """--style and every knob that changes how the song sounds."""
     group = parser.add_argument_group("how it sounds")
     group.add_argument(
-        "--preset",
+        "--style",
+        dest="preset",
         type=_preset_name,
         metavar="NAME",
-        help="a ready-made style (see --list-presets), or one you saved. "
-        f"BEST: {RECOMMENDED_PRESET}",
+        help="how it sounds: a style from --list-styles, or one you saved "
+        f"(default {RECOMMENDED_PRESET})",
     )
+    # The older name keeps working in scripts, without cluttering --help
+    group.add_argument(
+        "--preset", dest="preset", type=_preset_name, help=argparse.SUPPRESS
+    )
+    for level in LEVELS:
+        words = "|".join(word.lower() for word in level.choices)
+        group.add_argument(
+            f"--{level.key}",
+            type=_level_value(level),
+            metavar=words,
+            help=level.help[:1].lower()
+            + level.help[1:].rstrip(".")
+            + ": "
+            + ", ".join(f"{w.lower()} = {v:g}" for w, v in level.choices.items())
+            + f" (exact value: --{_EXACT[level.key]})",
+        )
     # Knobs default to None, so "not typed" differs from "typed the default value"
     group.add_argument(
         "--rotation-seconds",
         type=float,
         metavar="2..100",
-        help="how FAST it spins: seconds for one full circle "
-        f"(normal {_DEFAULTS.rotation_seconds:g}, BEST {_BEST.rotation_seconds:g})",
+        help="exact speed: seconds for one full circle "
+        f"(default {_BEST.rotation_seconds:g})",
     )
     group.add_argument(
         "--intensity",
         type=float,
         metavar="0..1",
-        help="how FAR it moves around your head "
-        f"(normal {_DEFAULTS.intensity}, BEST {_BEST.intensity})",
+        help="exact movement: how far it moves around your head "
+        f"(default {_BEST.intensity})",
     )
     group.add_argument(
         "--ambience",
         type=float,
         metavar="0..1",
-        help="how much ROOM sound (reverb), 0 = none "
-        f"(normal {_DEFAULTS.ambience:.2f}, BEST {_BEST.ambience})",
+        help=f"exact space: how much room sound, 0 = none (default {_BEST.ambience})",
     )
     group.add_argument(
         "--engine",
         choices=ENGINES,
-        help="3d = real 3D around your head (BEST); pan = simple left-right",
+        help="3d = real 3D around your head (recommended); pan = simple left-right",
     )
     group.add_argument(
         "--path",
         choices=PATHS,
         help="the route it takes: circle (normal), arc (front only), "
-        "figure8 (round each ear), wander",
+        "figure8 (around each ear), wander",
     )
     group.add_argument("--direction", choices=DIRECTIONS, help="which way it turns")
     group.add_argument(
@@ -294,7 +329,7 @@ def _add_sound_options(parser: argparse.ArgumentParser) -> None:
         type=_bass_value,
         metavar="HZ",
         help="keep everything below this in the MIDDLE; off lets the bass move "
-        f"(BEST {_BEST.bass_hz:g})",
+        f"(default {_BEST.bass_hz:g})",
     )
     group.add_argument(
         "--elevation",
@@ -307,7 +342,7 @@ def _add_sound_options(parser: argparse.ArgumentParser) -> None:
         type=float,
         metavar="SECONDS",
         help="ease the movement in at the start and out at the end "
-        f"(normal {_DEFAULTS.fade_seconds:g})",
+        f"(default {_BEST.fade_seconds:g})",
     )
     group.add_argument(
         "--speed-curve",
@@ -336,7 +371,8 @@ def _add_sound_options(parser: argparse.ArgumentParser) -> None:
     group.add_argument(
         "--vocals",
         choices=VOCAL_MODES,
-        help="center keeps the SINGER in the middle (needs: pip install demucs)",
+        help="center keeps the SINGER in the middle (needs the optional singer "
+        "add-on: see --addon-status and --install-addon)",
     )
     group.add_argument(
         "--speakers",
@@ -347,34 +383,34 @@ def _add_sound_options(parser: argparse.ArgumentParser) -> None:
 
 def _add_output_options(parser: argparse.ArgumentParser) -> None:
     """Format, quality, loudness, and where the new files go."""
-    group = parser.add_argument_group("the new file")
+    group = parser.add_argument_group("output (how the file is saved)")
     group.add_argument(
         "--format",
         choices=list(FORMAT_EXTENSIONS),
-        help="mp3 (normal), flac or wav (lossless), m4a (Apple), opus (small)",
+        help="mp3 (default, works everywhere), flac (lossless), wav (uncompressed), "
+        "m4a (small, good quality), opus (efficient modern format)",
     )
     group.add_argument(
         "--quality",
         type=int,
         choices=range(10),
         metavar="0..9",
-        help="MP3 quality, 0 = best, 9 = smallest "
-        f"(normal {_DEFAULTS.quality}, BEST {_BEST.quality})",
+        help="MP3 size-based quality when --bitrate auto: 0 = best, 9 = smallest "
+        f"(default {_BEST.quality})",
     )
     group.add_argument(
         "--bitrate",
         type=_bitrate_value,
         metavar="KBPS",
-        help="constant bitrate for mp3/m4a/opus, 320 = the most MP3 allows; "
-        f"'auto' uses --quality instead (BEST {_BEST.bitrate})",
+        help="exact quality of mp3/m4a/opus in kbps (128, 160, 192, 224, 256, 320) "
+        "or 'auto'; normally High is used: MP3 320, M4A 256, Opus 192",
     )
     group.add_argument(
         "--loudness",
         type=_loudness_value,
-        metavar="LUFS",
-        help="final loudness: -14 = Spotify/YouTube, -16 = Apple Music, "
-        "match = the same as the original song, or off "
-        f"(normal off, BEST {_BEST.loudness_target:g})",
+        metavar="LEVEL",
+        help="how loud: -14 = Match music apps (default), match = Keep original "
+        "loudness, off = no change; also -16 = Apple Music, -23 = TV and radio",
     )
     group.add_argument(
         "--exact-loudness",
@@ -387,7 +423,7 @@ def _add_output_options(parser: argparse.ArgumentParser) -> None:
         type=float,
         metavar="0.0625..1",
         help="the loudest a peak may get, stops crackles "
-        f"(normal {_DEFAULTS.limiter_ceiling}, BEST {_BEST.limiter_ceiling})",
+        f"(default {_BEST.limiter_ceiling})",
     )
     group.add_argument(
         "--output-dir",
@@ -453,21 +489,25 @@ def _add_extra_options(parser: argparse.ArgumentParser) -> None:
         nargs="?",
         const=30.0,
         metavar="SECONDS",
-        help="only make a short sample from the loudest part (normal 30 s)",
+        help="listen to a short sample from the loudest part (default 30 s); it is "
+        "played and then deleted, unless you give an OUTPUT file to keep it",
     )
     group.add_argument(
         "--compare",
         action="store_true",
-        help="make one file: original (A), then 8D (B), same loudness",
+        help="listen to the original (A), then 8D (B), at the same loudness; "
+        "deleted afterwards unless you give an OUTPUT file",
     )
     group.add_argument(
         "--play", action="store_true", help="open the new file in your music player"
     )
     group.add_argument(
-        "--save-preset",
+        "--save-style",
+        dest="save_preset",
         metavar="NAME",
-        help="save these settings as your own style (use it with --preset NAME)",
+        help="save these sound settings as your own style (use it with --style NAME)",
     )
+    group.add_argument("--save-preset", dest="save_preset", help=argparse.SUPPRESS)
     group.add_argument(
         "--gui", action="store_true", help="open the Audio8D window instead"
     )
@@ -477,15 +517,83 @@ def _add_extra_options(parser: argparse.ArgumentParser) -> None:
         help="show extra technical details, useful when something goes wrong",
     )
     group.add_argument(
-        "--list-presets",
+        "--list-styles",
         action=_ListPresetsAction,
-        help="show every ready-made style with its exact values, then stop",
+        help="show every style with its exact values, then stop",
+    )
+    group.add_argument(
+        "--list-presets", action=_ListPresetsAction, help=argparse.SUPPRESS
     )
     group.add_argument(
         "--version",
         action="version",
         version=f"audio8d {__version__} - developed by Gehan Fernando",
         help="show the version number and who made it",
+    )
+
+
+def _add_setup_options(parser: argparse.ArgumentParser) -> None:
+    """Checking and choosing the tools, and the optional singer add-on."""
+    group = parser.add_argument_group("setup and checks")
+    group.add_argument(
+        "--check",
+        action="store_true",
+        help="check FFmpeg, FFprobe, Python and the singer add-on (each is run, "
+        "not just looked for), say what to fix, then stop",
+    )
+    group.add_argument(
+        "--ffmpeg",
+        type=Path,
+        metavar="PATH",
+        help="use this ffmpeg for this run (normal: the one chosen in the window's "
+        "Settings, or found automatically)",
+    )
+    group.add_argument(
+        "--ffprobe",
+        type=Path,
+        metavar="PATH",
+        help="use this ffprobe for this run",
+    )
+    group.add_argument(
+        "--python",
+        type=Path,
+        metavar="PATH",
+        help="the Python that runs the singer add-on (normal: the one chosen in "
+        "Settings, or found automatically)",
+    )
+    group.add_argument(
+        "--addon-status",
+        action="store_true",
+        help="say whether the optional singer add-on is installed, then stop",
+    )
+    group.add_argument(
+        "--install-addon",
+        action="store_true",
+        help="install the singer add-on (Demucs, about 1 GB) into Audio8D's own "
+        "add-on folder, using the Python found (or --python), then stop",
+    )
+    group.add_argument(
+        "--repair-addon",
+        action="store_true",
+        help="remove the add-on's folder and install it again, then stop",
+    )
+    group.add_argument(
+        "--uninstall-addon",
+        action="store_true",
+        help="remove the add-on's folder (Audio8D keeps working without it), then stop",
+    )
+    group.add_argument(
+        "--per-song",
+        type=Path,
+        metavar="FILE",
+        help="a text file giving some songs settings of their own, one song per "
+        'line, e.g.  "Rain Study.mp3" --style smooth --format flac  '
+        "(--default on a line resets that song to the defaults)",
+    )
+    group.add_argument(
+        "--default",
+        action="store_true",
+        help=argparse.SUPPRESS,
     )
 
 
@@ -512,6 +620,7 @@ def create_parser() -> argparse.ArgumentParser:
     _add_sound_options(parser)
     _add_output_options(parser)
     _add_extra_options(parser)
+    _add_setup_options(parser)
     return parser
 
 
@@ -539,22 +648,38 @@ _KNOBS = {
 }
 
 
-def resolve_config(
-    args: argparse.Namespace, presets: dict[str, Preset] | None = None
-) -> EffectConfig:
-    """Start from the chosen preset (or the defaults), then apply any typed knobs."""
-    known = presets if presets is not None else known_presets()
-    if args.preset and args.preset not in known:
-        raise InputValidationError(
-            f"There is no style called '{args.preset}'. Choose from: {', '.join(known)}"
-        )
-    base = known[args.preset].config if args.preset else EffectConfig()
+# Each friendly word option and the exact option that sets the same value
+_EXACT = {"movement": "intensity", "speed": "rotation-seconds", "space": "ambience"}
 
+
+def _level_value(level: SoundLevel) -> Callable[[str], float]:
+    """An argparse type for one friendly option, e.g. --movement gentle."""
+
+    def parse(text: str) -> float:
+        try:
+            return level.value_for(text)
+        except InputValidationError as exc:
+            raise argparse.ArgumentTypeError(str(exc)) from None
+
+    return parse
+
+
+def typed_changes(args: argparse.Namespace) -> dict[str, object]:
+    """The EffectConfig settings typed on the command line (or a per-song line)."""
     overrides: dict[str, object] = {
         field: getattr(args, option)
         for option, field in _KNOBS.items()
         if getattr(args, option, None) is not None
     }
+    for level in (MOVEMENT, SPEED, SPACE):
+        value = getattr(args, level.key, None)
+        if value is None:
+            continue
+        if level.field in overrides:
+            raise InputValidationError(
+                f"Use --{level.key} or --{_EXACT[level.key]}, not both"
+            )
+        overrides[level.field] = value
     if overrides.get("bitrate") == BITRATE_AUTO:
         overrides["bitrate"] = None
     if args.loudness is not None:
@@ -562,6 +687,20 @@ def resolve_config(
             None if args.loudness in (LOUDNESS_OFF, LOUDNESS_MATCH) else args.loudness
         )
         overrides["match_loudness"] = args.loudness == LOUDNESS_MATCH
+    return overrides
+
+
+def resolve_config(
+    args: argparse.Namespace,
+    presets: dict[str, Preset] | None = None,
+    *,
+    with_speakers: bool = True,
+) -> EffectConfig:
+    """Start from the chosen preset (or the defaults), then apply any typed knobs."""
+    known = presets if presets is not None else known_presets()
+    base = style_config(args.preset or RECOMMENDED_PRESET, known)
+
+    overrides = typed_changes(args)
     # An output name like "song.flac" chooses the format when --format doesn't
     output = getattr(args, "output", None)
     if args.format is None and output is not None:
@@ -569,13 +708,33 @@ def resolve_config(
         if inferred is not None:
             overrides["output_format"] = inferred
 
+    output_format = overrides.pop("output_format", None)
+    if output_format is not None:
+        # The typed --bitrate and --limiter-ceiling still win over these
+        base = with_format(base, str(output_format))
     config = dataclasses.replace(base, **overrides)
-    if args.speakers:
+    if with_speakers and args.speakers:
         config = speaker_safe(config)
     return config
 
 
+def style_config(name: str, known: dict[str, Preset]) -> EffectConfig:
+    """A style's sound with the standard output (older names keep their old output)."""
+    if name in LEGACY_STYLES:
+        return legacy_config(name)
+    if name not in known:
+        raise InputValidationError(
+            f"There is no style called '{name}'. Choose from: {', '.join(known)}"
+        )
+    # A style only decides the sound; the file is saved the recommended way
+    return with_standard_output(known[name].config)
+
+
 def used_only_defaults(args: argparse.Namespace) -> bool:
-    """True when the user typed no preset and no sound knobs at all."""
-    typed = [getattr(args, option) for option in _KNOBS] + [args.preset, args.loudness]
+    """True when the user typed no style and no sound knobs at all."""
+    typed = [getattr(args, option) for option in _KNOBS] + [
+        args.preset,
+        args.loudness,
+        *(getattr(args, level.key) for level in LEVELS),
+    ]
     return all(value is None for value in typed) and not args.speakers

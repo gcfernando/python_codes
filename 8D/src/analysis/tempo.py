@@ -10,6 +10,7 @@ gentle preference for everyday tempos, is the beat.
 
 import math
 import sys
+import threading
 from array import array
 from pathlib import Path
 
@@ -28,7 +29,11 @@ _MIN_CONFIDENCE = 0.1
 
 
 def _decode_bands(
-    toolchain: FFmpegToolchain, song: Path, start: float, seconds: float
+    toolchain: FFmpegToolchain,
+    song: Path,
+    start: float,
+    seconds: float,
+    cancel: threading.Event | None = None,
 ) -> array:
     """16-bit samples, interleaved: [low band, high band] per frame."""
     raw = run_binary(
@@ -53,6 +58,7 @@ def _decode_bands(
             "-",
         ],
         error_type=ConversionError,
+        cancel=cancel,
     )
     data = array("h")
     data.frombytes(raw[: len(raw) - len(raw) % 2])
@@ -117,13 +123,19 @@ def tempo_from_onsets(novelty: list[float]) -> float | None:
 
 
 def detect_bpm(
-    toolchain: FFmpegToolchain, song: Path, duration: float | None
+    toolchain: FFmpegToolchain,
+    song: Path,
+    duration: float | None,
+    *,
+    cancel: threading.Event | None = None,
 ) -> float | None:
     """The song's tempo, or None when it has no clear beat (speech, ambient)."""
     total = duration or _ANALYSE_SECONDS
     # Skip the intro when there is enough song, since intros often have no drums
     start = min(30.0, max(0.0, total - _ANALYSE_SECONDS))
-    samples = _decode_bands(toolchain, song, start, min(_ANALYSE_SECONDS, total))
+    samples = _decode_bands(
+        toolchain, song, start, min(_ANALYSE_SECONDS, total), cancel
+    )
     return tempo_from_onsets(onset_strength(samples))
 
 

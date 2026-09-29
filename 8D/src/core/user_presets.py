@@ -11,7 +11,7 @@ from typing import Any
 from .errors import InputValidationError
 from .locations import presets_file
 from .parsing import format_keyframes, parse_keyframes
-from .presets import PRESETS, Preset
+from .presets import LEGACY_STYLES, PRESETS, Preset, with_standard_output
 from .settings import EffectConfig
 
 # One PascalCase word, like Sunset or PartyMix; a later word may also be a number
@@ -30,8 +30,9 @@ _FIELDS = {field.name: field for field in dataclasses.fields(EffectConfig)}
 _OPTIONAL = {"loudness_target", "bitrate", "bpm"}
 _CURVES = {"speed_curve", "intensity_curve"}
 _HEADER = (
-    "# Audio8D custom styles. Save new ones with --save-preset NAME.\n"
+    "# Audio8D custom styles. Save new ones with --save-style NAME.\n"
     "# Any setting left out comes from the style named in based_on.\n"
+    "# A style is only the sound: file type and loudness are chosen separately.\n"
 )
 
 Table = dict[str, dict[str, Any]]
@@ -86,7 +87,7 @@ def check_style_name(
             f"'{name}' is too long: style names have at most {MAX_NAME_LENGTH} "
             "letters, numbers and spaces"
         )
-    if name_key(name) in {name_key(builtin) for builtin in PRESETS}:
+    if name_key(name) in {name_key(builtin) for builtin in [*PRESETS, *LEGACY_STYLES]}:
         raise InputValidationError(
             f"'{name}' is a built-in style; pick another name for your own style"
         )
@@ -170,6 +171,8 @@ def dump_toml(tables: Table) -> str:
 def _config_from(name: str, values: dict[str, Any]) -> EffectConfig:
     """Build a style's settings on top of the style it is based on."""
     base_name = str(values.get("based_on", "classic"))
+    # Styles based on an older name (lossless, hifi…) keep that name's sound
+    base_name = LEGACY_STYLES.get(base_name, (base_name, {}))[0]
     if base_name not in PRESETS:
         raise InputValidationError(
             f"style '{name}' is based on '{base_name}', which does not exist"
@@ -191,7 +194,8 @@ def _config_from(name: str, values: dict[str, Any]) -> EffectConfig:
     except TypeError as exc:
         raise InputValidationError(f"style '{name}': {exc}") from exc
     config.validate()
-    return config
+    # File settings from older style files are ignored: output is chosen apart
+    return with_standard_output(config)
 
 
 def load_user_presets(path: Path | None = None) -> dict[str, Preset]:
@@ -255,8 +259,8 @@ def _read_styles(file: Path) -> dict[str, dict[str, Any]]:
 
 def _write_styles(file: Path, tables: dict[str, dict[str, Any]]) -> None:
     """Save the styles file whole: written aside, then swapped in one step."""
-    # A crash half-way must never cost every saved style
-    partial = file.with_name(f"{file.name}.tmp")
+    # A crash half-way must never cost every saved style; the name is per process
+    partial = file.with_name(f"{file.name}.{os.getpid()}.tmp")
     try:
         file.parent.mkdir(parents=True, exist_ok=True)
         partial.write_text(dump_toml(tables), encoding="utf-8")
@@ -294,8 +298,11 @@ def save_user_preset(
     file = path or presets_file()
     tables = _read_styles(file)
     final = check_style_name(name, tables)
-    base = based_on if based_on in PRESETS else "classic"
+    base = LEGACY_STYLES.get(based_on, (based_on, {}))[0]
+    base = base if base in PRESETS else "classic"
     config.validate()
+    # Only the sound is a style's; how the file is saved is chosen separately
+    config = with_standard_output(config)
     values: dict[str, Any] = {"based_on": base}
     described = clean_summary(summary)
     if described:
@@ -323,6 +330,52 @@ def rename_user_preset(name: str, new_name: str, *, path: Path | None = None) ->
     # Keep the styles in the same order, only the name changes
     renamed = {final if key == old else key: values for key, values in tables.items()}
     _write_styles(file, renamed)
+    return final
+
+
+def update_user_preset(
+    name: str,
+    config: EffectConfig,
+    *,
+    new_name: str | None = None,
+    summary: str | None = None,
+    path: Path | None = None,
+) -> str:
+    """Save new settings into an existing style, optionally renaming it too.
+
+    The style keeps its place in the file and the style it is based on. summary
+    None keeps the description, and an empty one removes it. Everything is
+    checked before writing, so a problem leaves the file exactly as it was.
+    Returns the style's (possibly new) name.
+    """
+    file = path or presets_file()
+    tables = _read_styles(file)
+    # Built-in styles are never in the file, so they can't be changed here
+    old = _stored(name, tables)
+    final = old if new_name is None else check_style_name(new_name, tables, keep=old)
+    stored = tables[old]
+    based_on = str(stored.get("based_on", "classic"))
+    base = LEGACY_STYLES.get(based_on, (based_on, {}))[0]
+    if base not in PRESETS:
+        raise InputValidationError(
+            f"style '{old}' is based on '{based_on}', which does not exist"
+        )
+    described = (
+        str(stored.get("summary", "")) if summary is None else clean_summary(summary)
+    )
+    config.validate()
+    # Only the sound is a style's; how the file is saved is chosen separately
+    config = with_standard_output(config)
+    values: dict[str, Any] = {"based_on": based_on}
+    if described:
+        values["summary"] = described
+    values.update(_differences(config, PRESETS[base].config))
+    # The same place in the file, under the (possibly new) name
+    updated = {
+        final if key == old else key: values if key == old else table
+        for key, table in tables.items()
+    }
+    _write_styles(file, updated)
     return final
 
 

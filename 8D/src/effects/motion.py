@@ -70,31 +70,58 @@ def path_azimuth(path: str, phase: float) -> float:
     return phase
 
 
-def trajectory(
+def _turn_seconds(config: EffectConfig, time: float) -> float:
+    """Seconds per full turn at this moment of the song."""
+    if config.speed_curve:
+        return interpolate(config.speed_curve, time)
+    return config.rotation_seconds
+
+
+def phase_at(config: EffectConfig, start: float, rate: float) -> float:
+    """The running phase a full render has reached `start` seconds into the song.
+
+    It adds the speed step by step exactly as trajectory() does, so a render
+    that begins part-way picks the movement up where the full song has it.
+    """
+    phase = 0.0
+    step = 1.0 / rate
+    # A hair of slack stops 12.3 s * 200 landing one sample short in floating point
+    whole = int(start * rate + 1e-9)
+    for index in range(whole):
+        phase += TWO_PI * step / _turn_seconds(config, index * step)
+    # A start between two samples gets the last part-step too
+    rest = start - whole * step
+    if rest > 0:
+        phase += TWO_PI * rest / _turn_seconds(config, whole * step)
+    return phase
+
+
+def trajectory(  # pylint: disable=too-many-arguments
     config: EffectConfig,
     *,
     rate: float,
     duration: float,
     total: float | None = None,
     intensity_scale: float = 1.0,
+    start: float = 0.0,
 ) -> Iterator[Position]:
     """Positions sampled `rate` times a second for `duration` seconds.
 
-    `total` is where the song really ends, so the movement can settle before it;
-    the extra samples after it just keep the last position.
+    `total` is where the render really ends, so the movement can settle before
+    it; the extra samples after it just keep the last position. `start` is the
+    song time the render begins at (a preview of the chorus, say): the curves,
+    the turning and the height follow song time, while the ease-in and ease-out
+    stay on the render's own clock.
     """
     direction = 1.0 if config.direction == "clockwise" else -1.0
-    phase = 0.0
+    phase = phase_at(config, start, rate) if start > 0 else 0.0
     step = 1.0 / rate
     for index in range(int(math.ceil(duration * rate)) + 1):
         time = index * step
-        seconds = (
-            interpolate(config.speed_curve, time)
-            if config.speed_curve
-            else config.rotation_seconds
-        )
+        song_time = start + time
+        seconds = _turn_seconds(config, song_time)
         amount = (
-            interpolate(config.intensity_curve, time)
+            interpolate(config.intensity_curve, song_time)
             if config.intensity_curve
             else config.intensity
         )

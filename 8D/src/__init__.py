@@ -14,7 +14,7 @@ from .pipeline import ConversionResult, ConvertOptions, compare, convert, previe
 
 __author__ = "Gehan Fernando"
 # Must match `version` in pyproject.toml; test_presets.py checks that they agree
-__version__ = "2.0.0"
+__version__ = "1.0.0"
 
 # The names the rest of Audio8D (and your own code) import from here
 __all__ = [

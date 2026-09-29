@@ -25,6 +25,7 @@ from src import (
     preview,
 )
 from src.batch import BatchItem, run_batch
+from src.core.presets import legacy_config, with_format
 from src.ffmpeg.toolchain import BUNDLED_DIR, FFmpegToolchain
 from src.pipeline import stages_for
 
@@ -308,8 +309,8 @@ def test_batch_converts_a_whole_list(
 def test_bundled_binaries_win_over_path() -> None:
     bundled = BUNDLED_DIR / "ffmpeg.exe"
     if not bundled.is_file():
-        pytest.skip("no ffmpeg.exe bundled in 8D/bin/executable")
-    assert BUNDLED_DIR.parts[-2:] == ("bin", "executable")
+        pytest.skip("no ffmpeg.exe bundled in 8D/bin")
+    assert BUNDLED_DIR.name == "bin"
 
     assert TOOLCHAIN is not None
     assert TOOLCHAIN.ffmpeg == bundled.resolve()
@@ -392,6 +393,37 @@ def test_studio_changes_volume_but_never_the_dynamics(
     assert peak <= -0.9
 
 
+@pytest.mark.parametrize("output_format", ["mp3", "flac", "opus"])
+@pytest.mark.parametrize("name", sorted(PRESETS))
+def test_every_style_reaches_the_target_without_clipping(
+    name: str, output_format: str, dynamic_song: Path, tmp_path: Path
+) -> None:
+    output = tmp_path / f"{name}.{output_format}"
+    config = with_format(PRESETS[name].config, output_format)
+    convert(dynamic_song, output, config)
+
+    integrated, peak = _loudness(output)
+    # -14 LUFS within 1.5 LU, and true peaks under -1 dBTP plus a little MP3 slack
+    assert -15.5 <= integrated <= -12.5, name
+    if output_format == "flac":
+        # Lossless files keep sample peaks under -1 dBFS; true peaks never clip
+        assert peak <= -0.5, name
+    else:
+        # Lossy files keep the -1 dBTP headroom (plus a little decoder slack)
+        assert peak <= -0.9, name
+
+
+@pytest.mark.parametrize("name", sorted(PRESETS))
+def test_every_style_keeps_a_hot_bass_line_from_clipping(
+    name: str, bass_heavy_song: Path, tmp_path: Path
+) -> None:
+    output = tmp_path / f"{name}.mp3"
+    convert(bass_heavy_song, output, PRESETS[name].config)
+
+    _integrated, peak = _loudness(output)
+    assert peak <= -0.9, name
+
+
 def test_second_run_reuses_the_loudness_measurement(
     stereo_tone: Path, tmp_path: Path
 ) -> None:
@@ -411,7 +443,7 @@ def test_loudness_can_match_the_original_song(
     result = convert(
         dynamic_song,
         tmp_path / "hifi.flac",
-        PRESETS["hifi"].config,
+        legacy_config("hifi"),
         on_progress=lambda stage, share: stages.add(stage),
     )
     original, _ = _loudness(dynamic_song)
@@ -468,7 +500,7 @@ def test_low_sample_rate_songs_are_lifted_so_the_3d_bands_fit(tmp_path: Path) ->
         check=True,
     )  # fmt: skip
 
-    result = convert(phone, tmp_path / "phone.flac", PRESETS["lossless"].config)
+    result = convert(phone, tmp_path / "phone.flac", legacy_config("lossless"))
 
     stream = _probe(result.output)["streams"][0]
     assert stream["sample_rate"] == "48000" and stream["channels"] == 2

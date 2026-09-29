@@ -13,6 +13,7 @@ from src.core.parsing import (
     parse_selection,
     parse_time,
 )
+from src.core.presets import with_standard_output
 from src.core.settings import speaker_safe
 from src.core.user_presets import (
     all_presets,
@@ -109,11 +110,13 @@ def test_saved_style_only_stores_differences(tmp_path: Path) -> None:
     text = file.read_text(encoding="utf-8")
 
     assert "intensity = 0.95" in text
-    assert 'loudness_target = "off"' in text
+    # A style is only the sound: the file settings are never stored in it
+    assert "loudness_target" not in text
     assert "bitrate" not in text
     assert name == "Party"
     loaded = load_user_presets(file)["Party"]
-    assert loaded.config == config
+    # The sound comes back exactly; the file is saved the recommended way
+    assert loaded.config == with_standard_output(config)
     assert loaded.custom and loaded.summary == "loud"
 
 
@@ -270,7 +273,7 @@ def test_speaker_safe_softens_any_style() -> None:
 def test_every_built_in_style_is_valid() -> None:
     for preset in PRESETS.values():
         preset.config.validate()
-    assert PRESETS["lossless"].config.output_format == "flac"
+    assert "lossless" not in PRESETS
     assert PRESETS["groove"].config.beat_sync is True
     assert PRESETS["retro"].config.engine == "pan"
 

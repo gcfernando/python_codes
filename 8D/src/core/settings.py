@@ -20,11 +20,22 @@ LOSSLESS_FORMATS = frozenset({"flac", "wav"})
 
 # "3d" places the sound around your head; "pan" is plain left-right volume panning
 ENGINES = ("3d", "pan")
-# How the sound travels: a full circle, a front arc, loops round each ear, or drifting
+# How the sound travels: a full circle, a front arc, loops around each ear, or drifting
 PATHS = ("circle", "arc", "figure8", "wander")
 DIRECTIONS = ("clockwise", "counterclockwise")
 # "move" spins the whole song; "center" keeps the singer near the middle (stems)
 VOCAL_MODES = ("move", "center")
+
+# The settings that decide how the file is saved rather than how the music sounds
+OUTPUT_FIELDS = (
+    "output_format",
+    "bitrate",
+    "quality",
+    "loudness_target",
+    "match_loudness",
+    "exact_loudness",
+    "limiter_ceiling",
+)
 
 # A time and a value, e.g. (60.0, 6.0) = "at 1:00, spin once every 6 seconds"
 Keyframes = tuple[tuple[float, float], ...]

@@ -1,14 +1,15 @@
 # Developed by ::> Gehan Fernando
-"""The building blocks of the Audio8D window: colours, icons and friendly controls.
+"""The building blocks of the Audio8D window: the design system and its controls.
 
-Every control here carries its own explanation: a short line under it that is
-always visible, and a longer tooltip on hover. That is what lets a beginner
-use every option without knowing any audio terms.
+One restrained palette (light and dark), one type scale and one set of
+controls. Every control:
+
+* says what it does in a short line that is always visible;
+* keeps deeper explanations behind a "Learn more" link that the keyboard can
+  open too (a tooltip never holds the only copy of anything);
+* can be reached with Tab and used with Space, Enter or the arrow keys, and
+  shows a clear focus ring while it has the keyboard focus.
 """
-
-# Widgets are small classes with many options by nature
-# pylint: disable=too-many-arguments,too-many-positional-arguments
-# pylint: disable=too-many-instance-attributes,too-many-ancestors
 
 __all__ = ["open_path"]
 
@@ -17,10 +18,12 @@ import tkinter as tk
 import tkinter.font as tkfont
 from collections.abc import Callable
 from pathlib import Path
+from tkinter import ttk
 from typing import Literal
 
 import customtkinter as ctk
 
+from .core.errors import Audio8DError
 from .opener import open_path
 
 # CustomTkinter's own scrollbar drawing, kept so the quicker version can call it
@@ -44,40 +47,99 @@ def _no_flush() -> None:
 # pylint: disable-next=protected-access
 ctk.CTkScrollbar._draw = _draw_scrollbar_without_flush  # type: ignore[method-assign]
 
+# The drop-down list does the same whenever it is redrawn, e.g. greyed out
+_OPTIONMENU_DRAW = ctk.CTkOptionMenu._draw  # pylint: disable=protected-access
 
-# ------------------------------------------------------------------ look & feel
 
-# (light mode, dark mode) pairs, the way CustomTkinter takes colours
-ACCENT = ("#6D28D9", "#8B5CF6")
-ACCENT_HOVER = ("#5B21B6", "#7C3AED")
-ACCENT_SOFT = ("#EDE9FE", "#2E1F4F")
-SURFACE = ("#FFFFFF", "#1E1E2E")
-SURFACE_ALT = ("#F4F4F8", "#181825")
-SIDEBAR = ("#EDEDF4", "#11111B")
-BORDER = ("#DCDCE6", "#313244")
-TEXT_DIM = ("#5B5B6E", "#A6ADC8")
-INK = ("#1F2937", "#E5E7EB")
+def _draw_optionmenu_without_flush(
+    self: ctk.CTkOptionMenu, no_color_updates: bool = False
+) -> None:
+    """Draw a drop-down list without a full layout pass of the whole window."""
+    # pylint: disable-next=protected-access
+    self._canvas.update_idletasks = _no_flush
+    _OPTIONMENU_DRAW(self, no_color_updates)
+
+
+# pylint: disable-next=protected-access
+ctk.CTkOptionMenu._draw = _draw_optionmenu_without_flush  # type: ignore[method-assign]
+
+
+# CustomTkinter re-grids hidden widgets on a size change; these patches keep them hidden
+_CtkBase = ctk.CTkFrame.__mro__[1]  # CustomTkinter's CTkBaseClass
+_BASE_GRID = _CtkBase.grid
+
+
+def _grid_remembered(self: tk.Misc, **kwargs: object) -> object:
+    """grid(), remembering the placement so a bare grid() can restore all of it."""
+    if kwargs:
+        self.audio8d_grid = kwargs  # type: ignore[attr-defined]
+    else:
+        kwargs = getattr(self, "audio8d_grid", {})
+    return _BASE_GRID(self, **kwargs)
+
+
+def _grid_remove_tracked(self: tk.Misc) -> None:
+    """grid_remove() that CustomTkinter's rescaling respects."""
+    # pylint: disable-next=protected-access
+    self._last_geometry_manager_call = None  # type: ignore[attr-defined]
+    tk.Grid.grid_remove(self)  # type: ignore[arg-type]
+
+
+_CtkBase.grid = _grid_remembered  # type: ignore[method-assign]
+_CtkBase.grid_remove = _grid_remove_tracked  # type: ignore[method-assign]
+
+
+# ------------------------------------------------------------------ design tokens
+
+# (light, dark) colour pairs; every text colour passes WCAG AA on its surface
+BACKGROUND = ("#F3F5F8", "#111318")
+SURFACE = ("#FFFFFF", "#191C22")
+SURFACE_ALT = ("#F6F7F9", "#20242B")
+SIDEBAR = ("#FFFFFF", "#15181D")
+BORDER = ("#D8DDE4", "#2F343D")
+BORDER_STRONG = ("#AEB6C2", "#4A515D")
+INK = ("#111827", "#E8EBF0")
+TEXT_DIM = ("#4B5563", "#A7AFBB")
+TEXT_DISABLED = ("#9AA3AF", "#626A76")
+ACCENT = ("#1D5FD1", "#2F6BE0")
+ACCENT_HOVER = ("#174DAB", "#2458C2")
+ACCENT_TEXT = ("#1A56C0", "#8AB4FF")
+ACCENT_SOFT = ("#E8F0FE", "#1B2A44")
+ACCENT_SOFT_HOVER = ("#D2E1FC", "#243A5E")
+FOCUS = ("#0B57D0", "#A8C7FA")
+# The ring around a blue button: dark on light mode, light on dark mode
+FOCUS_ON_ACCENT = ("#0A1F4D", "#FFFFFF")
 WHITE = ("#FFFFFF", "#FFFFFF")
-SUCCESS = ("#15803D", "#4ADE80")
-DANGER = ("#B91C1C", "#F87171")
-DANGER_HOVER = ("#991B1B", "#EF4444")
-WARNING = ("#B45309", "#FBBF24")
-WARNING_SOFT = ("#FEF3C7", "#3A2E12")
-DANGER_SOFT = ("#FEE2E2", "#3B1A1F")
+SUCCESS = ("#126B33", "#4ADE80")
+SUCCESS_SOFT = ("#E7F6EC", "#15291D")
+WARNING = ("#9A5B06", "#FBBF24")
+WARNING_SOFT = ("#FEF6E4", "#2E2512")
+DANGER = ("#B42318", "#F97066")
+DANGER_FILL = ("#B42318", "#C0392B")
+DANGER_HOVER = ("#912018", "#A93226")
+DANGER_SOFT = ("#FDECEA", "#34191A")
+# Kept for older callers: the sidebar used to be its own colour
+SURFACE_SIDEBAR = SIDEBAR
+
+# One corner radius and control height everywhere
+RADIUS = 8
+CONTROL_HEIGHT = 36
 
 # Windows 11/10 icon-font glyphs, with plain characters for everyone else
 _GLYPHS = {
     "songs": ("\ue8d6", "♪"),
     "sound": ("\ue9e9", "≋"),
     "output": ("\ue74e", "⤓"),
-    "review": ("\ue9d5", "✓"),
+    "review": ("\ue768", "▶"),
     "styles": ("\ue771", "✎"),
     "settings": ("\ue713", "⚙"),
     "add": ("\ue710", "+"),
     "folder": ("\ue8b7", "▤"),
     "open": ("\ued25", "↗"),
     "play": ("\ue768", "▶"),
+    "pause": ("\ue769", "❚❚"),
     "stop": ("\ue71a", "■"),
+    "replay": ("\ue72c", "↻"),
     "preview": ("\ue7f6", "♫"),
     "compare": ("\ue8ab", "⇄"),
     "remove": ("\ue711", "✕"),
@@ -96,12 +158,29 @@ _GLYPHS = {
     "back": ("\ue72b", "←"),
     "down": ("\ue70d", "▾"),
     "up": ("\ue70e", "▴"),
+    "search": ("\ue721", "⌕"),
+    "wand": ("\ue945", "✦"),
+    "copy": ("\ue8c8", "⧉"),
+    "test": ("\ue9d5", "✓"),
+    "headphones": ("\ue7f6", "♫"),
 }
 
 
+# One shared font per size and weight: a font per widget left garbage that stalled Tk
+_FONTS: dict[tuple[int, str], ctk.CTkFont] = {}
+
+
 def font(size: int = 13, weight: Literal["normal", "bold"] = "normal") -> ctk.CTkFont:
-    """The window's text font."""
-    return ctk.CTkFont(family="Segoe UI", size=size, weight=weight)
+    """The window's text font (shared; widgets never change it)."""
+    key = (size, weight)
+    if key not in _FONTS:
+        _FONTS[key] = ctk.CTkFont(family="Segoe UI", size=size, weight=weight)
+    return _FONTS[key]
+
+
+def shade(color: tuple[str, str]) -> str:
+    """The half of a (light, dark) colour pair that the current theme uses."""
+    return color[1] if ctk.get_appearance_mode() == "Dark" else color[0]
 
 
 class Icons:
@@ -114,8 +193,9 @@ class Icons:
     @classmethod
     def setup(cls) -> None:
         """Look for the icon font (call after the Tk root exists)."""
-        # Images belong to one window; a new window needs fresh ones
+        # Images and fonts belong to one window; a new window needs fresh ones
         cls._cache = {}
+        _FONTS.clear()
         try:
             families = set(tkfont.families())
         except tk.TclError:
@@ -191,8 +271,122 @@ def icon_text(
     """Button options for an icon followed by text (an image when possible)."""
     image = Icons.image(name, size, color)
     if image is None:
-        return {"text": f"{_GLYPHS[name][1]}  {text}"}
-    return {"text": f"  {text}", "image": image, "compound": "left"}
+        return {"text": f"{_GLYPHS[name][1]}  {text}" if text else _GLYPHS[name][1]}
+    return {
+        "text": f"  {text}" if text else "",
+        "image": image,
+        "compound": "left",
+    }
+
+
+# ------------------------------------------------------------------ keyboard
+
+
+def _take_focus(widget: tk.Misc) -> None:
+    """Let Tab stop on a CustomTkinter widget (they don't by themselves)."""
+    try:
+        widget.tk.call(str(widget), "configure", "-takefocus", 1)
+    except tk.TclError:
+        pass
+
+
+# Whether the keyboard (not a click) moved last: only keyboard users see the ring
+_KEYBOARD = {"on": False, "hooked": False}
+
+
+def keyboard_in_use(on: bool | None = None) -> bool:
+    """Whether the keyboard is how the user moves around (set it with on)."""
+    if on is not None:
+        _KEYBOARD["on"] = on
+    return _KEYBOARD["on"]
+
+
+def _hook_input_mode(widget: tk.Misc) -> None:
+    """Watch Tab and clicks once for the whole window."""
+    if _KEYBOARD["hooked"]:
+        return
+    _KEYBOARD["hooked"] = True
+    # CustomTkinter widgets refuse bind_all, so it is done on plain Tk
+    for key in ("<Tab>", "<Shift-Tab>", "<ISO_Left_Tab>"):
+        tk.Misc.bind_all(widget, key, lambda _e: keyboard_in_use(True), "+")
+    tk.Misc.bind_all(widget, "<ButtonPress>", lambda _e: keyboard_in_use(False), "+")
+
+
+def keyboard(
+    widget: tk.Misc,
+    activate: Callable[[], None] | None,
+    ring: Callable[[bool], None],
+    keys: dict[str, Callable[[], None]] | None = None,
+) -> None:
+    """Make widget reachable with Tab, usable with Space/Enter, and ringed on focus.
+
+    ring(True) draws the focus ring and ring(False) removes it; keys adds more
+    keys (e.g. arrows) with what each one does.
+    """
+    _take_focus(widget)
+    _hook_input_mode(widget)
+    # Tk's own bind: the keys and focus belong to the widget's outer frame
+    tk.Misc.bind(widget, "<FocusIn>", lambda _e: ring(keyboard_in_use()), "+")
+    tk.Misc.bind(widget, "<FocusOut>", lambda _e: ring(False), "+")
+    if activate is not None:
+        for key in ("<space>", "<Return>", "<KP_Enter>"):
+            tk.Misc.bind(widget, key, lambda _e: (activate(), "break")[1], "+")
+    for key, action in (keys or {}).items():
+        tk.Misc.bind(widget, key, lambda _e, act=action: (act(), "break")[1], "+")
+    # Clicking also gives keyboard focus, so Tab carries on from there
+    try:
+        widget.bind("<Button-1>", lambda _e: widget.focus_set(), add=True)
+    except NotImplementedError:
+        # Segmented buttons refuse bindings; their inner buttons take the click
+        pass
+
+
+def _button_ring(widget: ctk.CTkButton, kind: str) -> Callable[[bool], None]:
+    """The focus ring of a button: a thicker border in the focus colour."""
+    normal = (widget.cget("border_width"), widget.cget("border_color"))
+    color = FOCUS_ON_ACCENT if kind in ("primary", "danger") else FOCUS
+
+    def ring(on: bool) -> None:
+        try:
+            if on:
+                widget.configure(border_width=2, border_color=color)
+            else:
+                widget.configure(border_width=normal[0], border_color=normal[1])
+        except tk.TclError:
+            pass
+
+    return ring
+
+
+def accessible_button(widget: ctk.CTkButton, kind: str = "outline") -> ctk.CTkButton:
+    """Any CTkButton, made usable from the keyboard with a visible focus ring."""
+
+    def press() -> None:
+        if str(widget.cget("state")) != "disabled":
+            widget.invoke()
+
+    keyboard(widget, press, _button_ring(widget, kind))
+    return widget
+
+
+class Button(ctk.CTkButton):
+    """A CTkButton whose filled looks turn grey while disabled (not dim blue)."""
+
+    def __init__(self, *args: object, kind: str = "outline", **kwargs: object):
+        """kind is the look from button()."""
+        self.kind = kind
+        self._fill = kwargs.get("fg_color")
+        super().__init__(*args, **kwargs)  # type: ignore[arg-type]
+
+    def configure(self, require_redraw: bool = False, **kwargs: object) -> None:
+        """Grey filled buttons when disabled; back to their colour when enabled."""
+        if "state" in kwargs and self.kind in ("primary", "danger"):
+            off = kwargs["state"] == "disabled"
+            kwargs.setdefault("fg_color", _DISABLED_FILL if off else self._fill)
+        super().configure(require_redraw, **kwargs)  # type: ignore[arg-type]
+
+
+_DISABLED_FILL = ("#E1E5EB", "#2A2F38")
 
 
 def button(
@@ -203,30 +397,39 @@ def button(
     *,
     kind: str = "outline",
     width: int = 140,
-    height: int = 40,
+    height: int = CONTROL_HEIGHT,
     tooltip: str = "",
 ) -> ctk.CTkButton:
-    """A button in one of three looks: 'primary', 'outline' or 'danger'."""
+    """A button in one look: 'primary', 'accent', 'outline', 'quiet' or 'danger'.
+
+    'accent' is a lighter commit action (blue outline) for places where many
+    buttons repeat, e.g. one per style card, and a filled one would shout.
+    """
     looks = {
-        "primary": (ACCENT, ACCENT_HOVER, WHITE, 0),
-        "outline": ("transparent", ACCENT_SOFT, INK, 1),
-        "danger": (DANGER, DANGER_HOVER, WHITE, 0),
+        "primary": (ACCENT, ACCENT_HOVER, WHITE, 0, BORDER_STRONG),
+        "accent": (ACCENT_SOFT, ACCENT_SOFT_HOVER, ACCENT_TEXT, 1, ACCENT),
+        "outline": (SURFACE, ACCENT_SOFT, INK, 1, BORDER_STRONG),
+        "quiet": ("transparent", ACCENT_SOFT, ACCENT_TEXT, 0, BORDER_STRONG),
+        "danger": (DANGER_FILL, DANGER_HOVER, WHITE, 0, BORDER_STRONG),
     }
-    fill, hover, ink, border = looks[kind]
-    widget = ctk.CTkButton(
+    fill, hover, ink, border, edge = looks[kind]
+    widget = Button(
         master,
-        **icon_text(icon, text, 16, ink),
-        font=font(13, "bold" if kind != "outline" else "normal"),
+        kind=kind,
+        **(icon_text(icon, text, 16, ink) if icon else {"text": text}),
+        font=font(13, "bold" if kind in ("primary", "accent", "danger") else "normal"),
         width=width,
         height=height,
-        corner_radius=10,
+        corner_radius=RADIUS,
         fg_color=fill,
         hover_color=hover,
         border_width=border,
-        border_color=BORDER,
+        border_color=edge,
         text_color=ink,
+        text_color_disabled=TEXT_DISABLED,
         command=command,
     )
+    accessible_button(widget, kind)
     if tooltip:
         Tooltip(widget, tooltip)
     return widget
@@ -235,8 +438,37 @@ def button(
 # ------------------------------------------------------------------ helpers
 
 
+def problem_of(fn: Callable[[], object]) -> str | None:
+    """Run a check; return its error message, or None."""
+    try:
+        fn()
+    except Audio8DError as exc:
+        return str(exc)
+    return None
+
+
+def set_changed(widget: tk.Misc, **options: object) -> None:
+    """Configure only the options that really change: every redraw costs time."""
+    changed = {}
+    for key, value in options.items():
+        try:
+            same = widget.cget(key) == value
+        except (tk.TclError, ValueError):
+            same = False
+        if not same:
+            changed[key] = value
+    if changed:
+        widget.configure(**changed)
+
+
+def clear_children(frame: tk.Misc) -> None:
+    """Remove everything inside a frame."""
+    for child in frame.winfo_children():
+        child.destroy()
+
+
 class Tooltip:  # pylint: disable=too-few-public-methods
-    """A short explanation that appears when the mouse rests on a widget."""
+    """A short extra hint on hover or keyboard focus (never the only copy of it)."""
 
     def __init__(self, widget: tk.Misc, text: str | Callable[[], str]) -> None:
         """Attach to widget; text may be a function for hints that change."""
@@ -245,9 +477,11 @@ class Tooltip:  # pylint: disable=too-few-public-methods
         self.window: tk.Toplevel | None = None
         self.pending: str | None = None
         try:
-            widget.bind("<Enter>", self._schedule, add="+")
-            widget.bind("<Leave>", self._hide, add="+")
-            widget.bind("<ButtonPress>", self._hide, add="+")
+            widget.bind("<Enter>", self._schedule, add=True)
+            widget.bind("<Leave>", self._hide, add=True)
+            widget.bind("<ButtonPress>", self._hide, add=True)
+            widget.bind("<FocusIn>", self._schedule, add=True)
+            widget.bind("<FocusOut>", self._hide, add=True)
         except NotImplementedError:
             # Segmented buttons refuse bindings; their row's label has the tooltip
             pass
@@ -260,13 +494,17 @@ class Tooltip:  # pylint: disable=too-few-public-methods
     def _cancel(self) -> None:
         """Forget a hint that was about to appear."""
         if self.pending is not None:
-            self.widget.after_cancel(self.pending)
+            try:
+                self.widget.after_cancel(self.pending)
+            except tk.TclError:
+                pass
             self.pending = None
 
     def _show(self) -> None:
         """Draw the hint just below the widget."""
+        self.pending = None
         text = self.text() if callable(self.text) else self.text
-        if not text or not self.widget.winfo_exists():
+        if not text or not self.widget.winfo_exists() or self.window is not None:
             return
         x = self.widget.winfo_rootx() + 12
         y = self.widget.winfo_rooty() + self.widget.winfo_height() + 6
@@ -280,7 +518,7 @@ class Tooltip:  # pylint: disable=too-few-public-methods
             text=text,
             justify="left",
             wraplength=380,
-            background="#313244" if dark else "#1F2937",
+            background="#2B303A" if dark else "#1F2937",
             foreground="#F8FAFC",
             padx=10,
             pady=7,
@@ -300,18 +538,25 @@ def hint(
     text: str,
     color: tuple[str, str] = TEXT_DIM,
     margin: int = 0,
+    size: int = 12,
+    wrap: int | None = None,
 ) -> ctk.CTkLabel:
-    """A small grey explanation line that wraps to the width it is given."""
+    """A small grey explanation line that wraps to the width it is given.
+
+    With wrap, it wraps at that fixed width instead: needed inside anything whose
+    own width comes from its content, or the two would keep resizing each other.
+    """
     label = ctk.CTkLabel(
         master,
         text=text,
-        font=font(12),
+        font=font(size),
         text_color=color,
         anchor="w",
         justify="left",
-        wraplength=600,
+        wraplength=wrap or 600,
     )
-    fit_width(label, master, margin)
+    if wrap is None:
+        fit_width(label, master, margin)
     return label
 
 
@@ -331,10 +576,74 @@ def fit_width(label: ctk.CTkLabel, master: tk.Misc, margin: int) -> None:
             for lbl, gap in fitted:
                 # Events report real pixels, while wraplength is in unscaled units
                 scale = lbl._get_widget_scaling()  # pylint: disable=protected-access
-                lbl.configure(wraplength=max(160, int(event.width / scale) - gap))
+                wrap = max(160, int(event.width / scale) - gap)
+                # Every re-wrap costs a layout pass, so small wobbles are ignored
+                if abs(wrap - getattr(lbl, "audio8d_wrap", 0)) >= 6:
+                    lbl.audio8d_wrap = wrap  # type: ignore[attr-defined]
+                    lbl.configure(wraplength=wrap)
 
-        master.bind("<Configure>", resize, add="+")
+        master.bind("<Configure>", resize, add=True)
     fitted.append((label, margin))
+
+
+class Badge(ctk.CTkLabel):
+    """A small rounded tag such as 'Recommended' or 'Your style'.
+
+    Badges always carry words, so no state is told by colour alone.
+    """
+
+    _LOOKS = {
+        "accent": (ACCENT_SOFT, ACCENT_TEXT),
+        "success": (SUCCESS_SOFT, SUCCESS),
+        "warning": (WARNING_SOFT, WARNING),
+        "danger": (DANGER_SOFT, DANGER),
+        "neutral": (("#E5E8EE", "#2A2F38"), INK),
+    }
+
+    def __init__(self, master: tk.Misc, text: str, kind: str = "accent") -> None:
+        """Draw the tag."""
+        fill, ink = self._LOOKS[kind]
+        super().__init__(
+            master,
+            text=f" {text} ",
+            font=font(11, "bold"),
+            fg_color=fill,
+            text_color=ink,
+            corner_radius=6,
+            height=22,
+        )
+
+    def show(self, text: str, kind: str = "accent") -> None:
+        """Change the words and the look."""
+        fill, ink = self._LOOKS[kind]
+        set_changed(self, text=f" {text} ", fg_color=fill, text_color=ink)
+
+
+# A dependency's state as a badge: its words, symbol and look (never colour alone)
+STATUS_LOOKS = {
+    "ready": ("✓", "success"),
+    "missing": ("✗", "danger"),
+    "invalid": ("✗", "danger"),
+    "optional": ("○", "neutral"),
+    "unavailable": ("○", "warning"),
+    "checking": ("…", "neutral"),
+}
+
+
+class StatusBadge(Badge):
+    """A badge for a dependency: '✓ Ready', '✗ Missing', '○ Optional'…"""
+
+    def __init__(
+        self, master: tk.Misc, state: str = "checking", words: str = ""
+    ) -> None:
+        """Draw it in the look of the state."""
+        mark, kind = STATUS_LOOKS[state]
+        super().__init__(master, f"{mark} {words or state.title()}", kind)
+
+    def set_state(self, state: str, words: str) -> None:
+        """Show another state."""
+        mark, kind = STATUS_LOOKS[state]
+        self.show(f"{mark} {words}", kind)
 
 
 class Card(ctk.CTkFrame):
@@ -345,19 +654,21 @@ class Card(ctk.CTkFrame):
         super().__init__(
             master,
             fg_color=SURFACE,
-            corner_radius=14,
+            corner_radius=12,
             border_width=1,
             border_color=BORDER,
         )
         self.grid_columnconfigure(0, weight=1)
         row = 0
+        self.title_label: ctk.CTkLabel | None = None
         if title:
-            ctk.CTkLabel(self, text=title, font=font(15, "bold"), anchor="w").grid(
-                row=row, column=0, sticky="ew", padx=20, pady=(16, 0)
+            self.title_label = ctk.CTkLabel(
+                self, text=title, font=font(15, "bold"), anchor="w"
             )
+            self.title_label.grid(row=row, column=0, sticky="ew", padx=20, pady=(16, 0))
             row += 1
         if subtitle:
-            hint(self, subtitle).grid(
+            hint(self, subtitle, margin=40).grid(
                 row=row, column=0, sticky="ew", padx=20, pady=(2, 0)
             )
             row += 1
@@ -367,33 +678,48 @@ class Card(ctk.CTkFrame):
 
 
 class Section(Card):
-    """A card whose body folds away: used for the 'Advanced' settings."""
+    """A card whose body folds away: used for advanced and optional settings."""
 
-    def __init__(self, master: tk.Misc, title: str, subtitle: str, open_: bool = False):
-        """Draw the header with a show/hide button."""
+    def __init__(
+        self,
+        master: tk.Misc,
+        title: str,
+        subtitle: str,
+        open_: bool = False,
+        build: Callable[[ctk.CTkFrame], None] | None = None,
+    ):
+        """Draw the header with a show/hide button.
+
+        With build, the content is only made the first time the section opens,
+        which keeps the window quick to start.
+        """
         super().__init__(master, "", "")
+        self.builder = build
+        self.built = build is None
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", padx=20, pady=(14, 0))
         header.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(header, text=title, font=font(15, "bold"), anchor="w").grid(
-            row=0, column=0, sticky="w"
+        self.title_label = ctk.CTkLabel(
+            header, text=title, font=font(15, "bold"), anchor="w"
         )
-        hint(header, subtitle, margin=140).grid(row=1, column=0, sticky="ew")
+        self.title_label.grid(row=0, column=0, sticky="w")
+        self.subtitle_label = hint(header, subtitle, margin=160)
+        self.subtitle_label.grid(row=1, column=0, sticky="ew")
         self.toggle_button = ctk.CTkButton(
             header,
             width=120,
             height=32,
-            corner_radius=8,
-            fg_color="transparent",
+            corner_radius=RADIUS,
+            fg_color=SURFACE,
             hover_color=ACCENT_SOFT,
             border_width=1,
-            border_color=BORDER,
+            border_color=BORDER_STRONG,
             text_color=INK,
             font=font(12),
             command=self.toggle,
         )
         self.toggle_button.grid(row=0, column=1, rowspan=2, padx=(10, 0))
-        self.body.grid_configure(row=1)
+        accessible_button(self.toggle_button)
         self.opened = open_
         self._apply()
 
@@ -402,10 +728,20 @@ class Section(Card):
         self.opened = not self.opened
         self._apply()
 
+    def open(self) -> None:
+        """Show the content."""
+        if not self.opened:
+            self.toggle()
+
     def _apply(self) -> None:
         """Match the body and the button to the state."""
+        if self.opened and not self.built:
+            self.built = True
+            assert self.builder is not None
+            self.builder(self.body)
         if self.opened:
-            self.body.grid()
+            # The full call, as CustomTkinter replays the last grid() on a size change
+            self.body.grid(row=1, column=0, sticky="nsew", padx=20, pady=(12, 18))
             self.toggle_button.configure(**icon_text("up", "Hide", 12))
         else:
             self.body.grid_remove()
@@ -414,463 +750,174 @@ class Section(Card):
             self.grid_rowconfigure(1, minsize=14)
 
 
-class Field(ctk.CTkFrame):
-    """One setting: name on the left, control in the middle, explanation below."""
-
-    def __init__(self, master: tk.Misc, label: str, help_text: str, tooltip: str = ""):
-        """Lay out the name and the explanation; subclasses add the control."""
-        super().__init__(master, fg_color="transparent")
-        self.grid_columnconfigure(1, weight=1)
-        self.label = ctk.CTkLabel(
-            self, text=label, font=font(13), width=150, anchor="w"
-        )
-        self.label.grid(row=0, column=0, sticky="w")
-        # The explanation sits under the control, right of the 150-wide name column
-        self.help_text = help_text
-        self.help = hint(self, help_text, margin=170)
-        self.help.grid(row=1, column=1, columnspan=2, sticky="ew", pady=(1, 0))
-        if tooltip:
-            Tooltip(self.label, tooltip)
-
-    def explain(self, text: str, color: tuple[str, str] = TEXT_DIM) -> None:
-        """Change the explanation line (e.g. to a warning)."""
-        self.help.configure(text=text, text_color=color)
+def entry(master: tk.Misc, placeholder: str = "", width: int = 260) -> ctk.CTkEntry:
+    """A text box in the window's look, with a focus ring."""
+    box = ctk.CTkEntry(
+        master,
+        placeholder_text=placeholder,
+        width=width,
+        height=CONTROL_HEIGHT - 4,
+        font=font(12),
+        corner_radius=RADIUS,
+        border_width=1,
+        border_color=BORDER_STRONG,
+        fg_color=SURFACE_ALT,
+        text_color=INK,
+        placeholder_text_color=TEXT_DIM,
+    )
+    # The focus ring: a thicker border in the focus colour while typing
+    box.bind("<FocusIn>", lambda _e: box.configure(border_width=2), add=True)
+    box.bind("<FocusOut>", lambda _e: box.configure(border_width=1), add=True)
+    return box
 
 
-class SliderField(Field):
-    """A slider with its value shown on the right and a note under it."""
+class Notice(ctk.CTkFrame):
+    """A coloured message line in the page: problem, warning, success or info.
 
-    def __init__(
-        self,
-        master: tk.Misc,
-        label: str,
-        help_text: str,
-        low: float,
-        high: float,
-        steps: int,
-        fmt: Callable[[float], str],
-        on_change: Callable[[float], None],
-        tooltip: str = "",
-    ) -> None:
-        """Build the row; call set() to show a value."""
-        super().__init__(master, label, help_text, tooltip)
-        self.fmt = fmt
-        self.on_change = on_change
-        self.quiet = False
-        self.slider = ctk.CTkSlider(
-            self,
-            # CTkSlider takes floats (0.5 to 1.0 here), though its type hints say int
-            from_=low,  # pyright: ignore[reportArgumentType]
-            to=high,  # pyright: ignore[reportArgumentType]
-            number_of_steps=steps,
-            command=self._moved,
-            button_color=ACCENT,
-            button_hover_color=ACCENT_HOVER,
-            progress_color=ACCENT,
-        )
-        self.slider.grid(row=0, column=1, sticky="ew", padx=10)
-        self.value = ctk.CTkLabel(
-            self, text="", font=font(12, "bold"), width=80, anchor="e"
-        )
-        self.value.grid(row=0, column=2, sticky="e")
-        if tooltip:
-            Tooltip(self.slider, tooltip)
+    Each kind has its own icon and, where it helps, a button that fixes it.
+    """
 
-    def _moved(self, value: float) -> None:
-        """Show the new value and pass it on (unless we set it ourselves)."""
-        self.value.configure(text=self.fmt(value))
-        if not self.quiet:
-            self.on_change(value)
-
-    def set(self, value: float) -> None:
-        """Show a value without treating it as the user's change."""
-        self.quiet = True
-        self.slider.set(value)
-        self.value.configure(text=self.fmt(value))
-        self.quiet = False
-
-    def enable(self, on: bool) -> None:
-        """Grey the slider out, or bring it back."""
-        self.slider.configure(state="normal" if on else "disabled")
-        self.value.configure(text_color=INK if on else TEXT_DIM)
-
-
-class ChoiceField(Field):
-    """A segmented button of named options, e.g. Path: Circle | Arc | Figure-8."""
+    _LOOKS = {
+        "error": ("error", DANGER, DANGER_SOFT),
+        "warning": ("warning", WARNING, WARNING_SOFT),
+        "success": ("check", SUCCESS, SUCCESS_SOFT),
+        "info": ("info", ACCENT_TEXT, ACCENT_SOFT),
+    }
 
     def __init__(
         self,
         master: tk.Misc,
-        label: str,
-        help_text: str,
-        options: dict[str, object],
-        on_change: Callable[[object], None],
-        tooltip: str = "",
-    ) -> None:
-        """options maps shown text -> value."""
-        super().__init__(master, label, help_text, tooltip)
-        self.options = options
-        self.on_change = on_change
-        self.buttons = ctk.CTkSegmentedButton(
-            self,
-            values=list(options),
-            command=lambda shown: self.on_change(self.options[shown]),
-            selected_color=ACCENT,
-            selected_hover_color=ACCENT_HOVER,
-            font=font(12),
-        )
-        self.buttons.grid(row=0, column=1, columnspan=2, sticky="ew", padx=(10, 0))
-
-    def set(self, value: object) -> None:
-        """Select the option whose value is `value`."""
-        for shown, option in self.options.items():
-            if option == value:
-                self.buttons.set(shown)
-                return
-
-    def enable(self, on: bool) -> None:
-        """Grey the whole choice out, or bring it back."""
-        self.buttons.configure(state="normal" if on else "disabled")
-
-
-class SwitchField(ctk.CTkFrame):
-    """An on/off switch with its explanation under it."""
-
-    def __init__(
-        self,
-        master: tk.Misc,
+        kind: str,
         text: str,
-        help_text: str,
-        on_change: Callable[[bool], None],
-        tooltip: str = "",
+        action: tuple[str, Callable[[], None]] | None = None,
+        wrap: int | None = None,
     ) -> None:
-        """Build the switch."""
-        super().__init__(master, fg_color="transparent")
-        self.on_change = on_change
-        self.quiet = False
-        self.switch = ctk.CTkSwitch(
-            self, text=text, command=self._flipped, progress_color=ACCENT, font=font(13)
-        )
-        self.switch.grid(row=0, column=0, sticky="w")
-        self.grid_columnconfigure(0, weight=1)
-        # Indented under the switch's label, so it lines up with the text
-        self.help = hint(self, help_text, margin=60)
-        self.help.grid(row=1, column=0, sticky="ew", padx=(50, 0))
-        if tooltip:
-            Tooltip(self.switch, tooltip)
-
-    def _flipped(self) -> None:
-        """Pass the new state on (unless we set it ourselves)."""
-        if not self.quiet:
-            self.on_change(bool(self.switch.get()))
-
-    def set(self, on: bool) -> None:
-        """Show a state without treating it as the user's change."""
-        if bool(self.switch.get()) != on:
-            self.quiet = True
-            self.switch.toggle()
-            self.quiet = False
-
-    def get(self) -> bool:
-        """The current state."""
-        return bool(self.switch.get())
-
-    def enable(self, on: bool, why: str = "") -> None:
-        """Grey the switch out (with the reason under it), or bring it back."""
-        self.switch.configure(state="normal" if on else "disabled")
-        if why:
-            self.help.configure(text=why)
-
-    def explain(self, text: str, color: tuple[str, str] = TEXT_DIM) -> None:
-        """Change the explanation line."""
-        self.help.configure(text=text, text_color=color)
-
-
-class ChoiceMenu(ctk.CTkOptionMenu):
-    """A drop-down list of choices in the window's colours."""
-
-    def __init__(
-        self,
-        master: tk.Misc,
-        values: list[str],
-        on_change: Callable[[str], None],
-        width: int = 280,
-    ) -> None:
-        """values are the words shown; on_change gets the one picked."""
-        super().__init__(
-            master,
-            values=values,
-            width=width,
-            font=font(12),
-            dropdown_font=font(12),
-            dynamic_resizing=False,
-            fg_color=SURFACE,
-            button_color=ACCENT,
-            button_hover_color=ACCENT,
-            text_color=INK,
-            dropdown_hover_color=ACCENT_SOFT,
-            command=on_change,
-        )
-
-    def destroy(self) -> None:
-        """Let go of the drop-down list completely."""
-        dropdown = self._dropdown_menu
-        super().destroy()
-        # CustomTkinter 5.2 forgets this, so a later Size change would hit a closed list
-        # pylint: disable-next=protected-access
-        ctk.ScalingTracker.remove_widget(dropdown._set_scaling, dropdown)
-
-
-class EntryField(Field):
-    """A text box checked as you type: red border and a reason when it's wrong."""
-
-    def __init__(
-        self,
-        master: tk.Misc,
-        label: str,
-        help_text: str,
-        placeholder: str,
-        on_change: Callable[[str], str | None],
-        width: int = 260,
-        tooltip: str = "",
-    ) -> None:
-        """on_change stores the text and returns an error message, or None."""
-        super().__init__(master, label, help_text, tooltip)
-        self.on_change = on_change
-        self.entry = ctk.CTkEntry(
-            self, placeholder_text=placeholder, width=width, font=font(12)
-        )
-        self.entry.grid(row=0, column=1, sticky="w", padx=10)
-        self.entry.bind("<KeyRelease>", lambda _e: self.check())
-        self.entry.bind("<FocusOut>", lambda _e: self.check())
-        if tooltip:
-            Tooltip(self.entry, tooltip)
-
-    def check(self) -> bool:
-        """Store the text; show the reason in red if it can't be used."""
-        # A mistake that has been put right must not leave its red line behind
-        self.explain(self.help_text)
-        problem = self.on_change(self.entry.get())
-        if problem:
-            self.entry.configure(border_color=DANGER)
-            self.explain(problem, DANGER)
-            return False
-        self.entry.configure(border_color=BORDER)
-        return True
-
-    def set(self, text: str) -> None:
-        """Put text in the box (without checking)."""
-        self.entry.delete(0, "end")
-        if text:
-            self.entry.insert(0, text)
-
-    def enable(self, on: bool) -> None:
-        """Grey the box out, or bring it back."""
-        self.entry.configure(state="normal" if on else "disabled")
-
-
-# The title bar and taskbar icon of every Audio8D window (also the exe's icon)
-APP_ICON = Path(__file__).resolve().parent / "assets" / "audio8d.ico"
-
-
-def use_app_icon(window: tk.Wm) -> None:
-    """Show Audio8D's own icon in a window's title bar, where Windows allows it."""
-    if os.name == "nt" and APP_ICON.is_file():
-        try:
-            window.iconbitmap(str(APP_ICON))
-        except tk.TclError:
-            pass
-
-
-class Dialog(ctk.CTkToplevel):
-    """A small modal window with a message and some buttons."""
-
-    def __init__(
-        self,
-        master: ctk.CTk,
-        title: str,
-        message: str,
-        buttons: list[tuple[str, str]],
-        icon: str = "info",
-        color: tuple[str, str] = ACCENT,
-    ) -> None:
-        """buttons: (text, key) pairs; the pressed key ends up in self.result."""
-        super().__init__(master)
-        self.title(title)
-        use_app_icon(self)
-        # CustomTkinter puts its own icon on new windows after 200 ms; ours goes back on
-        self.after(250, lambda: use_app_icon(self))
-        self.result: str | None = None
-        self.resizable(False, False)
-        self.transient(master)
+        """Draw the line, with an optional (button text, what it does)."""
+        icon, color, fill = self._LOOKS[kind]
+        super().__init__(master, fg_color=fill, corner_radius=RADIUS)
         self.grid_columnconfigure(1, weight=1)
-        ctk.CTkLabel(
-            self, text=Icons.glyph(icon), font=Icons.font(30), text_color=color
-        ).grid(row=0, column=0, rowspan=2, padx=(24, 12), pady=24, sticky="n")
-        ctk.CTkLabel(self, text=title, font=font(16, "bold"), anchor="w").grid(
-            row=0, column=1, sticky="w", padx=(0, 24), pady=(24, 4)
-        )
-        ctk.CTkLabel(
-            self,
-            text=message,
-            font=font(13),
-            justify="left",
-            anchor="w",
-            wraplength=460,
-        ).grid(row=1, column=1, sticky="w", padx=(0, 24))
-        self.actions = ctk.CTkFrame(self, fg_color="transparent")
-        self.actions.grid(row=2, column=0, columnspan=2, sticky="e", padx=24, pady=20)
-        # Each button by its key, so a subclass can switch one off
-        self.buttons: dict[str, ctk.CTkButton] = {}
-        for index, (text, key) in enumerate(buttons):
-            primary = index == len(buttons) - 1
-            self.buttons[key] = ctk.CTkButton(
-                self.actions,
-                text=text,
-                width=120,
-                fg_color=ACCENT if primary else "transparent",
-                hover_color=ACCENT_HOVER if primary else ACCENT_SOFT,
-                border_width=0 if primary else 1,
-                border_color=BORDER,
-                text_color=WHITE if primary else INK,
-                command=lambda key=key: self.close(key),
-            )
-            self.buttons[key].pack(side="left", padx=(8, 0))
-        self.bind("<Escape>", lambda _e: self.close(None))
-        self.protocol("WM_DELETE_WINDOW", lambda: self.close(None))
-        self.after(50, self._center)
-
-    def _center(self) -> None:
-        """Sit in the middle of the main window, and take the focus."""
-        self.update_idletasks()
-        master = self.master
-        x = master.winfo_rootx() + (master.winfo_width() - self.winfo_width()) // 2
-        y = master.winfo_rooty() + (master.winfo_height() - self.winfo_height()) // 3
-        self.geometry(f"+{max(0, x)}+{max(0, y)}")
-        try:
-            self.grab_set()
-        except tk.TclError:
-            pass
-        self.focus_force()
-
-    def close(self, key: str | None) -> None:
-        """Remember the answer and close."""
-        self.result = key
-        try:
-            self.grab_release()
-        except tk.TclError:
-            pass
-        self.destroy()
-
-    def ask(self) -> str | None:
-        """Wait until a button is pressed and return its key."""
-        self.master.wait_window(self)
-        return self.result
-
-
-class NameDialog(Dialog):
-    """Asks for a style name, checking it as you type; OK only works when it's valid."""
-
-    def __init__(  # pylint: disable=too-many-arguments
-        self,
-        master: ctk.CTk,
-        title: str,
-        message: str,
-        initial: str,
-        check: Callable[[str], tuple[str | None, str | None]],
-        ok_text: str = "OK",
-    ) -> None:
-        """check(text) returns (the name it will get, None) or (None, why not)."""
-        super().__init__(master, title, message, [("Cancel", "no"), (ok_text, "ok")])
-        self.check_name = check
-        self.value: str | None = None
-        box = ctk.CTkFrame(self, fg_color="transparent")
-        box.grid(row=2, column=1, sticky="ew", padx=(0, 24), pady=(14, 0))
-        self.entry = ctk.CTkEntry(box, width=320, font=font(13))
-        self.entry.grid(row=0, column=0, sticky="w")
-        self.entry.insert(0, initial)
-        self.note = ctk.CTkLabel(
-            box, text="", font=font(12), anchor="w", justify="left", wraplength=440
-        )
-        self.note.grid(row=1, column=0, sticky="w", pady=(4, 0))
-        self.actions.grid(row=3, column=0, columnspan=2, sticky="e", padx=24, pady=20)
-        self.entry.bind("<KeyRelease>", lambda _e: self.check())
-        self.entry.bind("<Return>", lambda _e: self._accept())
-        self.check()
-        self.after(120, self.entry.focus_set)
-
-    def check(self) -> bool:
-        """Show what the name will be, or why it can't be used."""
-        name, problem = self.check_name(self.entry.get())
-        ok = self.buttons["ok"]
-        if problem or not name:
-            self.value = None
-            self.entry.configure(border_color=DANGER)
-            self.note.configure(text=problem or "", text_color=DANGER)
-            ok.configure(state="disabled")
-            return False
-        self.value = name
-        self.entry.configure(border_color=BORDER)
-        self.note.configure(text=f"It will be saved as {name}", text_color=SUCCESS)
-        ok.configure(state="normal")
-        return True
-
-    def _accept(self) -> None:
-        """Enter works like OK, but only for a valid name."""
-        if self.check():
-            self.close("ok")
-
-    def ask(self) -> str | None:
-        """The valid name that was accepted, or None for Cancel."""
-        return self.value if super().ask() == "ok" else None
-
-
-class Toast(ctk.CTkFrame):
-    """A short message in the status bar that goes away by itself."""
-
-    def __init__(self, master: ctk.CTk, text: str, kind: str = "info") -> None:
-        """Show text for a few seconds without covering any control."""
-        color = {"info": ACCENT, "ok": SUCCESS, "error": DANGER}[kind]
-        icon = {"info": "info", "ok": "check", "error": "error"}[kind]
-        # The app lends its status-bar summary cell; floating would cover buttons
-        slot = getattr(master, "toast_slot", None)
-        super().__init__(
-            slot[0] if slot else master,
-            fg_color=SURFACE_ALT,
-            corner_radius=10,
-            border_width=1,
-            border_color=color,
-        )
         ctk.CTkLabel(
             self, text=Icons.glyph(icon), font=Icons.font(15), text_color=color
-        ).pack(side="left", padx=(12, 8), pady=4)
-        ctk.CTkLabel(self, text=text, font=font(13)).pack(
-            side="left", padx=(0, 14), pady=4
+        ).grid(row=0, column=0, padx=(14, 10), pady=10, sticky="n")
+        self.message = ctk.CTkLabel(
+            self,
+            text=text,
+            font=font(13),
+            text_color=INK,
+            anchor="w",
+            justify="left",
+            wraplength=wrap or 640,
         )
-        self.slot = slot
-        if slot:
-            area, hidden = slot
-            for other in area.winfo_children():
-                if isinstance(other, Toast) and other is not self:
-                    other.destroy()
-            hidden.grid_remove()
-            self.grid(row=0, column=2, sticky="e", padx=28)
-        else:
-            self.place(relx=1.0, rely=1.0, x=-24, y=-24, anchor="se")
-        self.after(4000, self.destroy)
+        self.message.grid(row=0, column=1, sticky="ew", pady=10)
+        if wrap is None:
+            fit_width(self.message, self, 190 if action else 70)
+        if action:
+            words, command = action
+            button(self, "", words, command, width=110, height=30).grid(
+                row=0, column=2, padx=12, pady=6
+            )
 
-    def destroy(self) -> None:
-        """Hand the status-bar cell back to what it normally shows."""
-        try:
-            if self.slot and self.winfo_exists():
-                area, hidden = self.slot
-                others = [
-                    w
-                    for w in area.winfo_children()
-                    if isinstance(w, Toast) and w is not self
-                ]
-                if not others:
-                    hidden.grid()
-        except tk.TclError:  # the window itself is closing
-            pass
-        super().destroy()
+
+def style_tables(root: tk.Misc) -> None:
+    """Give Tk's table (ttk.Treeview) the window's colours, for the current theme."""
+    style = ttk.Style(root)
+    try:
+        style.theme_use("clam")
+    except tk.TclError:
+        pass
+    bg, ink, dim = shade(SURFACE), shade(INK), shade(TEXT_DIM)
+    head, line = shade(SURFACE_ALT), shade(BORDER)
+    chosen, chosen_ink = shade(ACCENT_SOFT), shade(INK)
+    scaling = ctk.ScalingTracker.get_widget_scaling(root)
+    row_height = int(30 * scaling)
+    size = max(9, round(10 * scaling))
+    style.configure(
+        "Audio8D.Treeview",
+        background=bg,
+        fieldbackground=bg,
+        foreground=ink,
+        bordercolor=line,
+        lightcolor=line,
+        darkcolor=line,
+        rowheight=row_height,
+        font=("Segoe UI", size),
+        borderwidth=1,
+        relief="flat",
+    )
+    style.map(
+        "Audio8D.Treeview",
+        background=[("selected", "focus", shade(ACCENT)), ("selected", chosen)],
+        foreground=[("selected", "focus", "#FFFFFF"), ("selected", chosen_ink)],
+    )
+    style.configure(
+        "Audio8D.Treeview.Heading",
+        background=head,
+        foreground=dim,
+        bordercolor=line,
+        lightcolor=head,
+        darkcolor=head,
+        relief="flat",
+        font=("Segoe UI", size, "bold"),
+        padding=(8, int(6 * scaling)),
+    )
+    style.map(
+        "Audio8D.Treeview.Heading",
+        background=[("active", shade(ACCENT_SOFT))],
+    )
+    style.layout("Audio8D.Treeview", [("Treeview.treearea", {"sticky": "nswe"})])
+
+
+# ------------------------------------------------------------------ pages
+
+
+class Page(ctk.CTkScrollableFrame):
+    """A scrolling page with a step label, a title and one short explanation."""
+
+    def __init__(self, master: tk.Misc, step: str, title: str, subtitle: str) -> None:
+        """Draw the heading; content goes in rows 2 and below."""
+        super().__init__(
+            master,
+            fg_color="transparent",
+            scrollbar_button_color=BORDER_STRONG,
+            scrollbar_button_hover_color=TEXT_DIM,
+        )
+        self.grid_columnconfigure(0, weight=1)
+        head = ctk.CTkFrame(self, fg_color="transparent")
+        head.grid(row=0, column=0, sticky="ew", padx=28, pady=(22, 14))
+        if step:
+            ctk.CTkLabel(
+                head,
+                text=step.upper(),
+                font=font(12, "bold"),
+                text_color=ACCENT_TEXT,
+                anchor="w",
+            ).pack(anchor="w")
+        ctk.CTkLabel(
+            head, text=title, font=font(24, "bold"), text_color=INK, anchor="w"
+        ).pack(anchor="w")
+        hint(head, subtitle, size=13).pack(anchor="w", fill="x")
+
+    def reveal(self, part: str) -> None:
+        """Scroll to a named part of the page (pages that have parts say which)."""
+
+    def add(self, widget: tk.Widget, row: int, pady: tuple[int, int] = (0, 16)) -> None:
+        """Place a card on the page."""
+        widget.grid(row=row, column=0, sticky="ew", padx=28, pady=pady)
+
+    def footer(
+        self,
+        row: int,
+        back: Callable[[], None] | None,
+        text: str,
+        forward: Callable[[], None] | None,
+    ) -> ctk.CTkFrame:
+        """The Back / Next buttons at the bottom of a step."""
+        strip = ctk.CTkFrame(self, fg_color="transparent")
+        strip.grid(row=row, column=0, sticky="ew", padx=28, pady=(4, 28))
+        if back is not None:
+            button(strip, "back", "Back", back, width=110).pack(side="left")
+        if forward is not None:
+            button(strip, "next", text, forward, kind="primary", width=260).pack(
+                side="right"
+            )
+        return strip

@@ -8,7 +8,9 @@ without a screen. Nothing here converts audio: that stays in pipeline/batch.
 """
 
 import dataclasses
+import os
 import re
+import tempfile
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -16,60 +18,120 @@ from pathlib import Path
 from . import display
 from .batch import MAX_JOBS, BatchItem, default_jobs
 from .core.errors import InputValidationError
-from .core.parsing import format_keyframes, format_time, parse_keyframes, parse_time
-from .core.presets import PRESETS, RECOMMENDED_PRESET, Preset
+from .core.parsing import (
+    format_keyframes,
+    parse_keyframes,
+    typed_loudness,
+    typed_number,
+)
+from .core.presets import (
+    PRESETS,
+    QUALITY_TIERS,
+    RECOMMENDED_PRESET,
+    STANDARD_OUTPUT,
+    Preset,
+    with_format,
+)
 from .core.settings import FORMAT_EXTENSIONS, EffectConfig, speaker_safe
-from .core.types import AudioStreamInfo, Trim
-from .core.user_presets import name_key
+from .core.types import Trim
 from .files import default_output_for
 from .pipeline import ConvertOptions
+from .song_settings import (
+    FILE_KEYS,
+    FILE_OPTIONS,
+    OUTPUT_FIELDS,
+    SOUND_KEYS,
+    SPEAKERS,
+    check_keys,
+    needs_singer,
+    parse_trim,
+    song_convert_options,
+    song_effect,
+    with_output,
+)
 
-# What the loudness choices in the window mean, in LUFS (None = natural level)
-LOUDNESS_CHOICES = {
-    "Spotify / YouTube (-14)": -14.0,
+BITRATE_CHOICES = ("Auto", "128", "160", "192", "224", "256", "320")
+# The window's words for the output choices (the values are what the file gets)
+FORMAT_CHOICES = {
+    "MP3 — works everywhere": "mp3",
+    "FLAC — lossless quality": "flac",
+    "WAV — uncompressed": "wav",
+    "M4A — small, high-quality files": "m4a",
+    "Opus — efficient modern format": "opus",
+}
+# High, Medium and Small by format; MP3's are the ones shown for most songs
+QUALITY_CHOICES = {"High": 320, "Medium": 192, "Small": 128}
+
+
+def quality_choices(output_format: str) -> dict[str, int]:
+    """High / Medium / Small for one format, in kbps."""
+    tiers = QUALITY_TIERS.get(output_format, QUALITY_TIERS["mp3"])
+    return dict(zip(("High", "Medium", "Small"), tiers, strict=True))
+
+
+LOUDNESS_MAIN = {
+    "Match music apps": -14.0,
+    "Keep original loudness": "match",
+    "Advanced…": "advanced",
+}
+LOUDNESS_MORE = {
     "Apple Music (-16)": -16.0,
     "TV & radio (-23)": -23.0,
-    "Same as original": "match",
-    "Natural (off)": None,
+    "No change": None,
     "Custom…": "custom",
 }
-BITRATE_CHOICES = ("Auto", "128", "160", "192", "224", "256", "320")
 ORIGINAL_CHOICES = ("keep", "replace", "replace-8d")
 
 # The command line's words for things, and the window's words for the same things
 _GUI_WORDS = (
-    (r"--rotation-seconds (-?[0-9]+(?:\.[0-9]+)?)", r"Spin \1 s (Sound page)"),
-    (r"--intensity (-?[0-9]+(?:\.[0-9]+)?)", r"Movement \1 (Sound page)"),
-    (r"--ambience (-?[0-9]+(?:\.[0-9]+)?)", r"Room \1 (Sound page)"),
-    (r"--bitrate 320", "Bitrate 320 (Output page, Advanced)"),
-    (r"--bitrate (-?[0-9]+(?:\.[0-9]+)?)", r"Bitrate \1 (Output page, Advanced)"),
+    (
+        r"set it up \(audio8d --install-addon, then audio8d --check\)",
+        "install it in Settings (Add-on, 'Install add-on')",
+    ),
+    (r"audio8d --install-addon", "'Install add-on' in Settings"),
+    (r"audio8d --repair-addon", "'Repair' in Settings (Add-on)"),
+    (
+        r"--rotation-seconds (-?[0-9]+(?:\.[0-9]+)?)",
+        r"Speed \1 s (Customize, Advanced)",
+    ),
+    (r"--intensity (-?[0-9]+(?:\.[0-9]+)?)", r"Movement \1 (Customize, Advanced)"),
+    (r"--ambience (-?[0-9]+(?:\.[0-9]+)?)", r"Space \1 (Customize, Advanced)"),
+    (r"--bitrate 320", "Quality: High (Output)"),
+    (
+        r"--bitrate (-?[0-9]+(?:\.[0-9]+)?)",
+        r"Bitrate \1 (Output, More output options)",
+    ),
     (
         r"--limiter-ceiling (-?[0-9]+(?:\.[0-9]+)?)",
-        r"Peak roof \1 (Output page, Advanced)",
+        r"Peak limit \1 (Output, More output options)",
     ),
-    (r"--loudness -14", "Loudness: Spotify / YouTube (Output page)"),
-    (r"--loudness (-?[0-9]+(?:\.[0-9]+)?|match|off)", r"Loudness \1 (Output page)"),
-    (r"--bass 120", "Keep the bass in the middle at 120 Hz (Sound page, Advanced)"),
-    (r"--preset studio", "the Studio style (Sound page)"),
-    (r"--speakers", "'Safe for speakers too' (Sound page, Advanced)"),
-    (r"--quality (-?[0-9]+(?:\.[0-9]+)?)", r"MP3 quality \1 (Output page, Advanced)"),
-    (r"--overwrite", "'Replace 8D files that already exist' (Output page, Advanced)"),
-    (r"--vocals center", "'Keep the singer in the middle'"),
-    (r"--recursive", "'Include songs in sub-folders' (Songs page)"),
-    (r"--format", "the file type (Output page)"),
-    (r"--start", "the trim times (Output page, Advanced)"),
-    (r"--end", "the trim times (Output page, Advanced)"),
+    (r"--loudness -14", "Loudness: Match music apps (Output)"),
+    (r"--loudness match", "Loudness: Keep original loudness (Output)"),
+    (r"--loudness (-?[0-9]+(?:\.[0-9]+)?|off)", r"Loudness \1 (Output, Advanced…)"),
+    (r"--bass 120", "'Keep bass centered' (Customize)"),
+    (r"--(?:style|preset) studio", "the Studio style (Change style, step 2)"),
+    (r"--speakers", "'Safe for speakers too' (Customize, Advanced)"),
+    (
+        r"--quality (-?[0-9]+(?:\.[0-9]+)?)",
+        r"MP3 quality \1 (Output, More output options)",
+    ),
+    (r"--overwrite", "'If the 8D file exists: Replace it' (Output)"),
+    (r"--vocals center", "'Keep the singer in the middle' (Customize)"),
+    (r"--recursive", "'Include songs in sub-folders' (Add music step)"),
+    (r"--format", "the output format (Output)"),
+    (r"--start", "the part-of-song times (Output, More output options)"),
+    (r"--end", "the part-of-song times (Output, More output options)"),
     (r"--verbose", "'Show technical details' (Settings)"),
-    (r"with --save-preset", "on the Your styles page"),
-    (r"--elevation (-?[0-9]+(?:\.[0-9]+)?)", r"Height \1 (Sound page, Advanced)"),
-    (r"--fade (-?[0-9]+(?:\.[0-9]+)?)", r"Ease in and out \1 s (Sound page, Advanced)"),
-    (r"--bpm (-?[0-9]+(?:\.[0-9]+)?)", r"Tempo \1 (Sound page, Advanced)"),
-    (r'--speed-curve ("[^"]*")', r"\1 in 'Speed over time' (Sound page, Advanced)"),
+    (r"with --save-style", "on the Your styles page"),
+    (r"--elevation (-?[0-9]+(?:\.[0-9]+)?)", r"Height \1 (Customize, Advanced)"),
+    (r"--fade (-?[0-9]+(?:\.[0-9]+)?)", r"Ease in and out \1 s (Customize, Advanced)"),
+    (r"--bpm (-?[0-9]+(?:\.[0-9]+)?)", r"Tempo \1 (Customize, Advanced)"),
+    (r'--speed-curve ("[^"]*")', r"\1 in 'Speed over time' (Customize, Advanced)"),
     (
         r'--intensity-curve ("[^"]*")',
-        r"\1 in 'Movement over time' (Sound page, Advanced)",
+        r"\1 in 'Movement over time' (Customize, Advanced)",
     ),
-    (r"see --list-presets for where it is", "its place is shown on Your styles"),
+    (r"see --list-styles for where it is", "its place is shown on Your styles"),
     (
         r"type audio8d alone and drag the folder in",
         "drag the folder onto the window",
@@ -82,6 +144,16 @@ _GUI_WORDS = (
     (r"\bspeed_curve\b", "Speed over time"),
     (r"\bintensity_curve\b", "Movement over time"),
 )
+
+# The per-song names the pages use, kept importable from here
+__all__ = [
+    "FILE_KEYS",
+    "FILE_OPTIONS",
+    "OUTPUT_FIELDS",
+    "SOUND_KEYS",
+    "SPEAKERS",
+    "with_output",
+]
 
 
 def gui_words(text: str) -> str:
@@ -96,8 +168,10 @@ class GuiSettings:  # pylint: disable=too-many-instance-attributes
     """Every choice on the window's pages, starting from a style."""
 
     style: str = RECOMMENDED_PRESET
-    # The sound knobs; filled from the style, then changed by the controls
-    sound: EffectConfig = field(default_factory=EffectConfig)
+    # The sound knobs (from the style) and the Output step's file settings
+    sound: EffectConfig = field(
+        default_factory=lambda: PRESETS[RECOMMENDED_PRESET].config
+    )
     speakers: bool = False
     # Typed values, kept as text until the conversion so mistakes can be shown
     speed_curve_text: str = ""
@@ -125,41 +199,39 @@ class GuiSettings:  # pylint: disable=too-many-instance-attributes
     verbose: bool = False
     # Songs that use a style of their own instead of the one for all songs
     song_styles: dict[Path, str] = field(default_factory=dict)
+    # Songs with file settings of their own: song -> {FILE_KEYS name: value}
+    song_files: dict[Path, dict[str, object]] = field(default_factory=dict)
+    # Songs with sound settings of their own: song -> {SOUND_KEYS name: value}
+    song_sound: dict[Path, dict[str, object]] = field(default_factory=dict)
 
     def apply_style(self, preset: Preset) -> None:
-        """Take every sound and format knob from a style."""
+        """Take every sound knob from a style; the Output step's choices stay."""
         self.style = preset.name
-        self.sound = preset.config
+        self.sound = with_output(preset.config, self.sound)
         self.speed_curve_text = format_keyframes(preset.config.speed_curve)
         self.intensity_curve_text = format_keyframes(preset.config.intensity_curve)
         self.bpm_text = f"{preset.config.bpm:g}" if preset.config.bpm else ""
-        self.loudness_is_custom = False
 
     def change(self, **knobs: object) -> None:
-        """Change some sound knobs, keeping the rest."""
+        """Change some sound or output knobs, keeping the rest."""
+        knobs = dict(knobs)
+        output_format = knobs.pop("output_format", None)
+        if output_format is not None and output_format != self.sound.output_format:
+            self.sound = with_format(self.sound, str(output_format))
         self.sound = dataclasses.replace(self.sound, **knobs)
 
+    def reset_output(self) -> None:
+        """The Output step's file settings go back to the recommended ones."""
+        self.sound = dataclasses.replace(self.sound, **STANDARD_OUTPUT)
+        self.loudness_is_custom = False
+
     def differs_from(self, preset: Preset) -> bool:
-        """True when the knobs no longer match the chosen style exactly."""
+        """True when the sound knobs no longer match the chosen style exactly."""
         try:
-            return (
-                config_for(self, with_speakers=False) != preset.config or self.speakers
-            )
+            config = config_for(self, with_speakers=False)
         except InputValidationError:
             return True
-
-
-def _typed_number(text: str, what: str, low: float, high: float) -> float | None:
-    """A typed number in a range, or None when the box is empty."""
-    if not text.strip():
-        return None
-    try:
-        value = float(text.strip().replace(",", "."))
-    except ValueError:
-        raise InputValidationError(f"{what} must be a number") from None
-    if not low <= value <= high:
-        raise InputValidationError(f"{what} must be between {low:g} and {high:g}")
-    return value
+        return with_output(config, preset.config) != preset.config or self.speakers
 
 
 def config_for(settings: GuiSettings, *, with_speakers: bool = True) -> EffectConfig:
@@ -178,14 +250,12 @@ def config_for(settings: GuiSettings, *, with_speakers: bool = True) -> EffectCo
         )
     except InputValidationError as exc:
         raise InputValidationError(f"Changes over time: {exc}") from None
-    bpm = _typed_number(settings.bpm_text, "The tempo (BPM)", 40, 240)
+    bpm = typed_number(settings.bpm_text, "The tempo (BPM)", 40, 240)
     config = dataclasses.replace(
         config, speed_curve=speed, intensity_curve=amount, bpm=bpm
     )
     if settings.loudness_is_custom:
-        target = _typed_number(settings.custom_loudness_text, "The loudness", -30, -5)
-        if target is None:
-            raise InputValidationError("Type a loudness between -30 and -5, e.g. -14")
+        target = typed_loudness(settings.custom_loudness_text)
         config = dataclasses.replace(
             config, loudness_target=target, match_loudness=False
         )
@@ -197,13 +267,7 @@ def config_for(settings: GuiSettings, *, with_speakers: bool = True) -> EffectCo
 
 def trim_for(settings: GuiSettings) -> Trim | None:
     """The chosen part of the song, or None for all of it."""
-    start = parse_time(settings.trim_start) if settings.trim_start.strip() else None
-    end = parse_time(settings.trim_end) if settings.trim_end.strip() else None
-    if start is None and end is None:
-        return None
-    if start is not None and end is not None and end <= start:
-        raise InputValidationError("The chosen start and end leave no sound to convert")
-    return Trim(start, end)
+    return parse_trim(settings.trim_start, settings.trim_end)
 
 
 def options_for(settings: GuiSettings) -> ConvertOptions:
@@ -243,9 +307,383 @@ def style_for(
 def song_config(
     settings: GuiSettings, song: Path, styles: Mapping[str, Preset] | None = None
 ) -> EffectConfig:
-    """The exact settings one song gets: its own style as it is, or the shared ones."""
+    """The exact settings one song gets (preview and conversion use the same).
+
+    A song with its own style gets that style's sound exactly as saved; the file
+    type, quality and loudness are the Output step's defaults. On top of that
+    come the song's own sound and file settings (both from Customize).
+    """
+    return _song_config(
+        settings, song, styles, config_for(settings, with_speakers=False)
+    )
+
+
+def _own_changes(settings: GuiSettings, song: Path) -> dict[str, object]:
+    """A song's own sound settings plus its own file type, quality and loudness."""
+    files = settings.song_files.get(song, {})
+    return {
+        **settings.song_sound.get(song, {}),
+        **{key: value for key, value in files.items() if key in OUTPUT_FIELDS},
+    }
+
+
+def _song_config(
+    settings: GuiSettings,
+    song: Path,
+    styles: Mapping[str, Preset] | None,
+    default: EffectConfig,
+) -> EffectConfig:
+    """song_config with the default (before speakers) already worked out."""
     own = style_for(settings, song, styles or {})
-    return own.config if own else config_for(settings)
+    return song_effect(
+        default,
+        default_speakers=settings.speakers,
+        style=own.config if own else None,
+        changes=_own_changes(settings, song),
+    )
+
+
+def has_own_sound(settings: GuiSettings, song: Path) -> bool:
+    """True when a song has sound settings of its own (from Customize)."""
+    return bool(settings.song_sound.get(song))
+
+
+def _base_sound(
+    settings: GuiSettings, song: Path, styles: Mapping[str, Preset] | None
+) -> tuple[EffectConfig, bool]:
+    """A song's sound before its own changes: (settings, 'safe for speakers')."""
+    own = style_for(settings, song, styles or {})
+    default = config_for(settings, with_speakers=False)
+    config = song_effect(default, style=own.config if own else None)
+    return config, settings.speakers and own is None
+
+
+def sound_of(
+    settings: GuiSettings, song: Path | None, styles: Mapping[str, Preset] | None
+) -> tuple[EffectConfig, bool]:
+    """What the fine-tuning controls show: (sound settings, 'safe for speakers').
+
+    None means the default style's; a song shows its own, speakers switch apart.
+    """
+    if song is None:
+        return settings.sound, settings.speakers
+    base, speakers = _base_sound(settings, song, styles)
+    own = dict(settings.song_sound.get(song, {}))
+    speakers = bool(own.pop(SPEAKERS, speakers))
+    return dataclasses.replace(base, **own), speakers  # type: ignore[arg-type]
+
+
+def set_sound_settings(
+    settings: GuiSettings,
+    songs: Sequence[Path],
+    styles: Mapping[str, Preset] | None = None,
+    **values: object,
+) -> int:
+    """Give songs these sound settings; values equal to their base are dropped.
+
+    Returns how many of the songs now have sound settings of their own.
+    """
+    check_keys(values, SOUND_KEYS, "sound")
+    for song in songs:
+        own = {**settings.song_sound.get(song, {}), **values}
+        base, speakers = _base_sound(settings, song, styles)
+        # A value that equals what the song would get anyway is no exception
+        own = {
+            key: value
+            for key, value in own.items()
+            if value != (speakers if key == SPEAKERS else getattr(base, key))
+        }
+        if own:
+            # Checked now, so a wrong value is refused instead of stored
+            song_effect(base, changes=own)
+            settings.song_sound[song] = own
+        else:
+            settings.song_sound.pop(song, None)
+    return sum(1 for song in songs if song in settings.song_sound)
+
+
+def typed_sound(key: str, text: str) -> dict[str, object]:
+    """A typed tempo or curve ('bpm_text'…) as sound settings, or raise why not."""
+    text = text.strip()
+    if key == "bpm_text":
+        bpm = typed_number(text, "The tempo (BPM)", 40, 240)
+        return {"bpm": bpm, "beat_sync": True} if bpm else {"bpm": None}
+    field_name = key.removesuffix("_text")
+    try:
+        return {field_name: parse_keyframes(text) if text else ()}
+    except InputValidationError as exc:
+        raise InputValidationError(f"Changes over time: {exc}") from None
+
+
+def reset_sound_settings(settings: GuiSettings, songs: Sequence[Path]) -> int:
+    """Songs lose their own sound settings; returns how many had some."""
+    return sum(1 for song in songs if settings.song_sound.pop(song, None) is not None)
+
+
+def singer_songs(
+    settings: GuiSettings,
+    songs: Sequence[tuple[Path, Path | None]],
+    styles: Mapping[str, Preset] | None = None,
+) -> list[Path]:
+    """The songs that keep the singer in the middle (they need the add-on)."""
+    try:
+        default = config_for(settings, with_speakers=False)
+    except InputValidationError:
+        return []
+    found = []
+    for song, _folder in songs:
+        try:
+            if needs_singer(_song_config(settings, song, styles, default)):
+                found.append(song)
+        except InputValidationError:
+            continue
+    return found
+
+
+def file_value(settings: GuiSettings, song: Path | None, key: str) -> object:
+    """One file setting of a song (its own, or the default); None song: default."""
+    own = settings.song_files.get(song, {}) if song is not None else {}
+    if key in own:
+        return own[key]
+    if key in OUTPUT_FIELDS:
+        try:
+            if song is not None and own:
+                # A song's own format also moves its quality tier and peak limit
+                return getattr(song_config(settings, song), key)
+            return getattr(config_for(settings), key)
+        except InputValidationError:
+            return getattr(settings.sound, key)
+    return getattr(settings, key)
+
+
+# The Output step's defaults that are remembered between runs (never per song)
+REMEMBERED_OUTPUT = (
+    *OUTPUT_FIELDS,
+    "keep_cover",
+    "tag_title",
+    "destination",
+    "name_style",
+)
+
+
+def output_defaults(settings: GuiSettings) -> dict[str, object]:
+    """The output defaults to remember, as plain values (song overrides never)."""
+    saved: dict[str, object] = {
+        key: getattr(settings.sound, key) for key in OUTPUT_FIELDS
+    }
+    for key in REMEMBERED_OUTPUT[len(OUTPUT_FIELDS) :]:
+        saved[key] = getattr(settings, key)
+    # A custom name only fits the one song it was typed for
+    if saved["name_style"] == "custom":
+        saved["name_style"] = "8d"
+    if settings.loudness_is_custom:
+        try:
+            level = typed_number(settings.custom_loudness_text, "The loudness", -30, -5)
+        except InputValidationError:
+            level = None
+        if level is not None:
+            saved["loudness_target"], saved["match_loudness"] = level, False
+    return saved
+
+
+def _usable_default(settings: GuiSettings, key: str, value: object) -> bool:
+    """True when a remembered output default can still be used as it is."""
+    if key in OUTPUT_FIELDS:
+        try:
+            dataclasses.replace(settings.sound, **{key: value}).validate()
+        except (InputValidationError, TypeError):
+            return False
+        return True
+    if key == "destination":
+        return isinstance(value, str) and destination_problem(value) is None
+    if key == "name_style":
+        return value in ("8d", "original")
+    return isinstance(value, bool)
+
+
+def apply_output_defaults(
+    settings: GuiSettings, saved: Mapping[str, object]
+) -> list[str]:
+    """Take remembered output defaults; returns the names that couldn't be used."""
+    ignored = []
+    for key, value in saved.items():
+        if key not in REMEMBERED_OUTPUT or not _usable_default(settings, key, value):
+            ignored.append(key)
+        elif key in OUTPUT_FIELDS:
+            settings.sound = dataclasses.replace(settings.sound, **{key: value})
+        else:
+            setattr(settings, key, value)
+    return ignored
+
+
+def has_own_files(settings: GuiSettings, song: Path) -> bool:
+    """True when a song has file settings of its own."""
+    return bool(settings.song_files.get(song))
+
+
+def set_file_settings(
+    settings: GuiSettings, songs: Sequence[Path], **values: object
+) -> int:
+    """Give songs these file settings; values equal to the defaults are dropped.
+
+    Returns how many songs now have file settings of their own.
+    """
+    unknown = set(values) - set(FILE_KEYS)
+    if unknown:
+        raise ValueError(f"Not a file setting: {', '.join(sorted(unknown))}")
+    for song in songs:
+        own = dict(settings.song_files.get(song, {}))
+        own.update(values)
+        # A value that equals the default is no exception: it follows the default
+        own = {k: v for k, v in own.items() if v != file_value(settings, None, k)}
+        if own:
+            settings.song_files[song] = own
+        else:
+            settings.song_files.pop(song, None)
+    return sum(1 for song in songs if song in settings.song_files)
+
+
+def reset_file_settings(settings: GuiSettings, songs: Sequence[Path]) -> int:
+    """Songs go back to the default file settings; returns how many had their own."""
+    return sum(1 for song in songs if settings.song_files.pop(song, None) is not None)
+
+
+def is_custom(settings: GuiSettings, song: Path) -> bool:
+    """True when a song has any setting of its own (style, sound or output)."""
+    return (
+        song in settings.song_styles
+        or bool(settings.song_sound.get(song))
+        or bool(settings.song_files.get(song))
+    )
+
+
+def reset_songs(settings: GuiSettings, songs: Sequence[Path]) -> int:
+    """'Reset to default': songs lose all their own settings; returns how many had."""
+    count = 0
+    for song in songs:
+        had = is_custom(settings, song)
+        settings.song_styles.pop(song, None)
+        settings.song_sound.pop(song, None)
+        settings.song_files.pop(song, None)
+        count += had
+    return count
+
+
+@dataclass
+class Changes:
+    """What a Customize dialog changed, kept apart until Apply.
+
+    style is a style name (for songs: the default style means 'follow the
+    default'); sound holds SOUND_KEYS values; texts holds typed tempo and
+    curves ('bpm_text'…); files holds FILE_KEYS values. Only what was really
+    touched is listed, so a bulk edit never overwrites other settings.
+    """
+
+    style: str | None = None
+    sound: dict[str, object] = field(default_factory=dict)
+    texts: dict[str, str] = field(default_factory=dict)
+    files: dict[str, object] = field(default_factory=dict)
+
+    def __bool__(self) -> bool:
+        """True when anything was changed."""
+        return bool(self.style or self.sound or self.texts or self.files)
+
+
+def customize(
+    settings: GuiSettings,
+    songs: Sequence[Path],
+    styles: Mapping[str, Preset],
+    changes: Changes,
+) -> None:
+    """Apply a Customize dialog's changes: to these songs, or (no songs) the defaults.
+
+    Raises InputValidationError, changing nothing, when a value can't be used.
+    """
+    trial = draft(settings, songs, styles, changes)
+    # Checked on a copy first, so a bad value leaves the real settings untouched
+    config_for(trial)
+    options_for(trial)
+    for song in songs:
+        song_config(trial, song, styles)
+        song_options(trial, song)
+    for name in dataclasses.fields(settings):
+        setattr(settings, name.name, getattr(trial, name.name))
+
+
+def _customize(
+    settings: GuiSettings,
+    songs: Sequence[Path],
+    styles: Mapping[str, Preset],
+    changes: Changes,
+) -> None:
+    """customize() without the safety copy."""
+    if changes.style is not None and changes.style not in styles:
+        raise InputValidationError(f"There is no style called '{changes.style}'")
+    if not songs:
+        _customize_default(settings, styles, changes)
+        return
+    if changes.style is not None:
+        for song in songs:
+            if changes.style == settings.style:
+                settings.song_styles.pop(song, None)
+            else:
+                settings.song_styles[song] = changes.style
+    sound = dict(changes.sound)
+    for key, text in changes.texts.items():
+        sound.update(typed_sound(key, text))
+    if sound:
+        set_sound_settings(settings, songs, styles, **sound)
+    if changes.files:
+        set_file_settings(settings, songs, **changes.files)
+
+
+def _customize_default(
+    settings: GuiSettings, styles: Mapping[str, Preset], changes: Changes
+) -> None:
+    """The default for every song that isn't customized takes the changes."""
+    if changes.style is not None and changes.style != settings.style:
+        settings.apply_style(styles[changes.style])
+        settings.speakers = False
+    sound = dict(changes.sound)
+    if SPEAKERS in sound:
+        settings.speakers = bool(sound.pop(SPEAKERS))
+    output = {k: v for k, v in changes.files.items() if k in OUTPUT_FIELDS}
+    if sound or output:
+        settings.change(**sound, **output)
+    for key, value in changes.files.items():
+        if key not in OUTPUT_FIELDS:
+            setattr(settings, key, value)
+    for key, text in changes.texts.items():
+        setattr(settings, key, text)
+
+
+def draft(
+    settings: GuiSettings,
+    songs: Sequence[Path],
+    styles: Mapping[str, Preset],
+    changes: Changes,
+) -> GuiSettings:
+    """A copy of the settings with the changes in, for showing and previewing them."""
+    copy = dataclasses.replace(
+        settings,
+        song_styles=dict(settings.song_styles),
+        song_sound={k: dict(v) for k, v in settings.song_sound.items()},
+        song_files={k: dict(v) for k, v in settings.song_files.items()},
+    )
+    _customize(copy, songs, styles, changes)
+    return copy
+
+
+def song_options(settings: GuiSettings, song: Path) -> ConvertOptions | None:
+    """The song's own file treatment (art, title, part), or None for the defaults."""
+    own = dict(settings.song_files.get(song, {}))
+    if not any(key in own for key in FILE_OPTIONS):
+        return None
+    # A song's own start or end pairs with the default's other half
+    if "trim_start" in own or "trim_end" in own:
+        own.setdefault("trim_start", settings.trim_start)
+        own.setdefault("trim_end", settings.trim_end)
+    return song_convert_options(options_for(settings), own)
 
 
 def items_for(
@@ -253,14 +691,33 @@ def items_for(
     songs: Sequence[tuple[Path, Path | None]],
     styles: Mapping[str, Preset] | None = None,
 ) -> list[BatchItem]:
-    """(song, folder it was added from) pairs -> songs, output paths and settings."""
+    """(song, folder it was added from) pairs -> songs, output paths and settings.
+
+    Songs that would land on the same file name get ' (2)', ' (3)'… added.
+    """
+    return unique_outputs(_plain_items(settings, songs, styles))
+
+
+def _plain_items(
+    settings: GuiSettings,
+    songs: Sequence[tuple[Path, Path | None]],
+    styles: Mapping[str, Preset] | None = None,
+) -> list[BatchItem]:
+    """items_for, before clashing names are made unique."""
     shared = config_for(settings)
+    default = config_for(settings, with_speakers=False)
     output_dir = destination_for(settings)
 
     def own(song: Path) -> EffectConfig | None:
-        """A song's own style's settings, if it has one."""
-        style = style_for(settings, song, styles or {})
-        return style.config if style else None
+        """A song's own settings (style, sound or file), or None for the shared."""
+        if song not in settings.song_styles and not _own_changes(settings, song):
+            return None
+        return _song_config(settings, song, styles, default)
+
+    def extension(song: Path) -> str:
+        """The ending the song's file gets, from its (own) file type."""
+        config = own(song)
+        return (config or shared).extension
 
     if (
         settings.name_style == "custom"
@@ -275,25 +732,142 @@ def items_for(
             else name
         )
         folder = output_dir or song.parent
-        config = own(song) or shared
-        return [BatchItem(song, folder / f"{stem}{config.extension}", own(song))]
+        return [
+            BatchItem(
+                song,
+                folder / f"{stem}{extension(song)}",
+                own(song),
+                song_options(settings, song),
+            )
+        ]
     return [
         BatchItem(
             song,
             default_output_for(
                 song,
-                (own(song) or shared).extension,
+                extension(song),
                 output_dir=output_dir,
                 name_style=name_style_for(settings),
                 relative_to=folder,
             ),
             own(song),
+            song_options(settings, song),
         )
         for song, folder in songs
     ]
 
 
+def _same_key(path: Path) -> str:
+    """How Windows compares file names: letter case doesn't matter."""
+    return os.path.normcase(str(path))
+
+
+def unique_outputs(items: list[BatchItem]) -> list[BatchItem]:
+    """Songs that would be saved under one name get ' (2)', ' (3)'… instead.
+
+    Two songs called 'Intro' from different folders, saved into one folder,
+    would otherwise overwrite each other or fail half-way.
+    """
+    taken: set[str] = set()
+    result = []
+    for item in items:
+        output, number = item.output, 2
+        while _same_key(output) in taken:
+            output = item.output.with_name(
+                f"{item.output.stem} ({number}){item.output.suffix}"
+            )
+            number += 1
+        taken.add(_same_key(output))
+        result.append(
+            item if output == item.output else dataclasses.replace(item, output=output)
+        )
+    return result
+
+
+def name_clashes(
+    settings: GuiSettings, songs: Sequence[tuple[Path, Path | None]]
+) -> int:
+    """How many songs share a new file name with an earlier song."""
+    try:
+        plain = _plain_items(settings, songs)
+    except InputValidationError:
+        return 0
+    return len(plain) - len({_same_key(item.output) for item in plain})
+
+
+# Windows' classic limit for a whole path; longer ones confuse many programs
+MAX_PATH = 259
+
+
+def long_paths(items: Sequence[BatchItem]) -> list[BatchItem]:
+    """New files whose full path is longer than older Windows programs can open."""
+    return [item for item in items if len(str(item.output)) > MAX_PATH]
+
+
+# One plain answer per way a folder can be unusable
+def destination_problem(  # pylint: disable=too-many-return-statements
+    text: str,
+) -> str | None:
+    """Why the chosen 'Save in' folder can't be used, in plain words, or None.
+
+    A folder that doesn't exist yet is fine (it is made), as long as the drive
+    is there and the nearest existing folder can be written to.
+    """
+    if not text.strip():
+        return None
+    folder = Path(text.strip()).expanduser()
+    if not folder.is_absolute():
+        return (
+            "Choose a complete folder, such as C:\\Music\\8D. Browse picks one for you."
+        )
+    if folder.anchor and not Path(folder.anchor).exists():
+        return (
+            f"The drive {folder.anchor} isn't available. Plug it in, or choose "
+            "another folder."
+        )
+    if folder.exists() and not folder.is_dir():
+        return "The 'Save in' place is a file, not a folder."
+    existing = folder
+    while not existing.exists() and existing != existing.parent:
+        existing = existing.parent
+    if existing.exists() and not existing.is_dir():
+        return f"{existing} is a file, so no folder can be made inside it."
+    if existing.exists() and not os.access(existing, os.W_OK):
+        return (
+            f"Audio8D isn't allowed to save in {existing}. Choose another folder, "
+            "such as your Music folder."
+        )
+    return None
+
+
+def can_write(folder: Path) -> str | None:
+    """Really try to write in a folder (or its nearest existing parent).
+
+    os.access can't see every Windows permission, so right before converting a
+    tiny test file is made and removed. Returns a plain-word problem, or None.
+    """
+    existing = folder
+    while not existing.exists() and existing != existing.parent:
+        existing = existing.parent
+    try:
+        with tempfile.NamedTemporaryFile(dir=existing, prefix=".audio8d-check-"):
+            pass
+    except OSError:
+        return (
+            f"Audio8D isn't allowed to save in {existing}. Choose another folder, "
+            "such as your Music folder."
+        )
+    return None
+
+
 _BAD_NAME = re.compile(r'[<>:"/\\|?*]')
+
+
+def name_problem(name: str) -> str | None:
+    """Why a typed file name can't be used on Windows, or None."""
+    if _BAD_NAME.search(name):
+        return "File names can't contain  < > : \" / \\ | ? *"
+    return None
 
 
 def _missing_styles(
@@ -337,7 +911,6 @@ def problems(
         trim_for(settings)
     except InputValidationError as exc:
         found.append(("output", f"Trim: {exc}. Write times like 90 or 1:30."))
-    destination = destination_for(settings)
     if (
         settings.destination.strip() == ""
         and settings.name_style == "original"
@@ -350,8 +923,9 @@ def problems(
                 "Choose a 'Save in' folder, or pick 'Replace them'.",
             )
         )
-    if destination is not None and destination.exists() and not destination.is_dir():
-        found.append(("output", "The 'Save in' place is a file, not a folder."))
+    where = destination_problem(settings.destination)
+    if where:
+        found.append(("output", where))
     if settings.name_style == "custom":
         name = settings.custom_name.strip()
         if len(songs) != 1:
@@ -362,8 +936,9 @@ def problems(
             found.append(
                 ("output", "Type the custom file name, or choose another naming.")
             )
-        elif _BAD_NAME.search(name):
-            found.append(("output", "File names can't contain  < > : \" / \\ | ? *"))
+        elif name_problem(name):
+            found.append(("output", name_problem(name) or ""))
+    found += _song_file_problems(settings, songs, styles)
     if not 1 <= settings.jobs <= MAX_JOBS:
         found.append(("output", f"Songs at once must be between 1 and {MAX_JOBS}."))
     if settings.originals not in ORIGINAL_CHOICES:
@@ -371,8 +946,32 @@ def problems(
     return found
 
 
-def warnings(settings: GuiSettings) -> list[str]:
-    """Plain-word heads-ups (the same advice the terminal gives), in window words."""
+def _song_file_problems(
+    settings: GuiSettings,
+    songs: Sequence[tuple[Path, Path | None]],
+    styles: Mapping[str, Preset] | None,
+) -> list[tuple[str, str]]:
+    """Songs whose own sound or file settings can't be used, each named."""
+    found: list[tuple[str, str]] = []
+    for song, _folder in songs:
+        if not settings.song_files.get(song) and not settings.song_sound.get(song):
+            continue
+        try:
+            song_config(settings, song, styles)
+            song_options(settings, song)
+        except InputValidationError as exc:
+            page = "output" if settings.song_files.get(song) else "sound"
+            found.append(
+                (page, f"'{song.stem}' has settings that can't be used: {exc}.")
+            )
+    return found
+
+
+def warnings(settings: GuiSettings, singers: int = 0) -> list[str]:
+    """Plain-word heads-ups (the same advice the terminal gives), in window words.
+
+    singers is how many songs keep the singer in the middle.
+    """
     try:
         config = config_for(settings)
     except InputValidationError:
@@ -385,400 +984,9 @@ def warnings(settings: GuiSettings) -> list[str]:
         )
     if settings.overwrite:
         notes.append("8D files that already exist will be replaced.")
-    if config.vocals == "center":
-        notes.append("Keeping the singer in the middle takes a minute or two per song.")
-    return notes
-
-
-def style_label(name: str, styles: Mapping[str, Preset] | None = None) -> str:
-    """How a style's name is shown: Studio, Streaming, or yours as you saved it."""
-    preset = (styles or PRESETS).get(name) or PRESETS.get(name)
-    return preset.label if preset else name
-
-
-def own_styles_line(
-    settings: GuiSettings,
-    songs: Sequence[tuple[Path, Path | None]],
-    styles: Mapping[str, Preset] | None = None,
-) -> str | None:
-    """'2 songs with their own style (City Lights: Lossless, …)', or None."""
-    chosen = [
-        (song, settings.song_styles[song])
-        for song, _folder in songs
-        if song in settings.song_styles
-    ]
-    if not chosen:
-        return None
-    shown = ", ".join(
-        f"{song.stem}: {style_label(name, styles)}" for song, name in chosen[:3]
-    )
-    more = f", and {len(chosen) - 3} more" if len(chosen) > 3 else ""
-    count = "1 song with its" if len(chosen) == 1 else f"{len(chosen)} songs with their"
-    return f"{count} own style ({shown}{more})"
-
-
-def review(
-    settings: GuiSettings, styles: Mapping[str, Preset] | None = None
-) -> list[tuple[str, str]]:
-    """(label, plain-word value) pairs describing every choice, for the Review page."""
-    config = config_for(settings)
-    rows = [
-        (
-            "Style",
-            style_label(settings.style, styles)
-            + ("  (changed)" if settings.speakers else ""),
-        ),
-        ("Sound", display.describe_sound(config)),
-        ("Spin", display.describe_spin(config)),
-        (
-            "Movement",
-            f"{config.intensity:.2f} ({display.describe_movement(config.intensity)})",
-        ),
-        ("Bass", display.describe_bass(config.bass_hz)),
-        ("Room", f"{config.ambience:.2f} ({display.describe_room(config.ambience)})"),
-        (
-            "File type",
-            display.describe_quality(
-                config.quality, config.bitrate, config.output_format
-            ),
-        ),
-        (
-            "Loudness",
-            "the same as the original song"
-            if config.match_loudness
-            else display.describe_loudness(config.loudness_target),
-        ),
-        ("Peak roof", display.describe_ceiling(config.limiter_ceiling)),
-    ]
-    extras = display.extras(config, trim_for(settings))
-    if extras:
-        rows.append(("Extras", ", ".join(extras)))
-    destination = destination_for(settings)
-    rows.append(
-        ("Save in", str(destination) if destination else "next to each original song")
-    )
-    naming = {
-        "8d": "'<song> (8D)'",
-        "original": "the song's own name",
-        "custom": f"'{settings.custom_name.strip()}'"
-        if settings.custom_name.strip()
-        else "a name of your own (not typed yet)",
-    }[settings.name_style if settings.originals == "keep" else name_style_for(settings)]
-    rows.append(("New names", naming))
-    rows.append(
-        (
-            "Originals",
-            {
-                "keep": "kept as they are",
-                "replace": "replaced (moved to the Recycle Bin)",
-                "replace-8d": "moved to the Recycle Bin; new files keep '(8D)'",
-            }[settings.originals],
-        )
-    )
-    files = []
-    if settings.keep_cover:
-        files.append("album art kept")
-    if settings.tag_title:
-        files.append("' (8D)' added to titles")
-    if settings.check:
-        files.append("each song checked")
-    if settings.overwrite:
-        files.append("existing 8D files replaced")
-    rows.append(("Files", ", ".join(files) or "nothing extra"))
-    rows.append(
-        ("Speed", f"{settings.jobs} song{'s' if settings.jobs != 1 else ''} at once")
-    )
-    return rows
-
-
-def describe(settings: GuiSettings) -> str:
-    """One line summing up the choices, for the status bar."""
-    config = config_for(settings)
-    parts = [
-        "3D" if config.engine == "3d" else "panning",
-        config.path,
-        "beat sync"
-        if config.beat_sync or config.bpm
-        else f"{config.rotation_seconds:g} s",
-        config.output_format.upper(),
-    ]
-    if config.match_loudness:
-        parts.append("original loudness")
-    elif config.loudness_target is not None:
-        parts.append(f"{config.loudness_target:g} LUFS")
-    if settings.speakers:
-        parts.append("speaker-safe")
-    own = len(settings.song_styles)
-    if own:
-        parts.append(f"{own} song{'s' if own != 1 else ''} with own style")
-    return " · ".join(parts)
-
-
-def describe_curve(text: str, unit: str) -> str:
-    """'10 s from 0:00, 6 s from 1:00' - a typed curve read back in words."""
-    frames = parse_keyframes(text)
-    return ", then ".join(
-        f"{value:g}{unit} at {format_time(time)}" for time, value in frames
-    )
-
-
-# ------------------------------------------------------ creating your own style
-
-# Each question's choices: the words people see -> the answer kept
-MUSIC_CHOICES = {
-    "Strong beat": "beat",
-    "Calm": "calm",
-    "Big and loud": "big",
-    "Talking": "talk",
-    "A bit of everything": "mixed",
-}
-MOVEMENT_CHOICES = {"Gentle": "gentle", "Clear": "clear", "Big": "big"}
-SPEED_CHOICES = {
-    "Slow": "slow",
-    "Normal": "normal",
-    "Fast": "fast",
-    "With the beat": "beat",
-}
-ROOM_CHOICES = {"None": "none", "A little": "little", "A big hall": "hall"}
-PLACE_CHOICES = {"Headphones": "headphones", "Speakers or a car too": "speakers"}
-FILE_CHOICES = {"MP3": "mp3", "FLAC": "flac", "M4A": "m4a"}
-LEVEL_CHOICES = {
-    "Like music apps": "apps",
-    "Same as the song": "original",
-    "Natural": "natural",
-}
-
-# The built-in style each kind of music starts from (it brings the right path)
-_BASE_STYLE = {
-    "beat": "groove",
-    "calm": "smooth",
-    "big": "strong",
-    "talk": "voice",
-    "mixed": "studio",
-}
-_MOVEMENT = {"gentle": 0.6, "clear": 0.8, "big": 0.95}
-_SPEED = {"slow": 12.0, "normal": 8.0, "fast": 5.0, "beat": 8.0}
-_ROOM = {"none": 0.0, "little": 0.25, "hall": 0.5}
-# Kept short, so a style name built from it stays readable
-_MUSIC_WORD = {
-    "beat": "Beat",
-    "calm": "Calm",
-    "big": "Big",
-    "talk": "Voice",
-    "mixed": "Everyday",
-}
-
-
-@dataclass
-class StyleAnswers:  # pylint: disable=too-many-instance-attributes
-    """The answers to 'Create your own style', each one a key from its choices."""
-
-    music: str = "mixed"
-    movement: str = "clear"
-    speed: str = "normal"
-    room: str = "little"
-    place: str = "headphones"
-    file_type: str = "mp3"
-    level: str = "apps"
-
-
-def suggested_answers(music: str) -> StyleAnswers:
-    """Good answers for a kind of music, so a beginner can simply press Save."""
-    answers = {
-        "beat": StyleAnswers("beat", "big", "beat", "little"),
-        "calm": StyleAnswers("calm", "gentle", "slow", "little"),
-        "big": StyleAnswers("big", "big", "normal", "little"),
-        "talk": StyleAnswers("talk", "gentle", "slow", "none"),
-    }
-    return answers.get(music, StyleAnswers())
-
-
-def guided_config(answers: StyleAnswers) -> EffectConfig:
-    """The exact settings a set of answers stands for (always valid)."""
-    base = PRESETS[_BASE_STYLE.get(answers.music, "studio")].config
-    file_type = (
-        answers.file_type if answers.file_type in FILE_CHOICES.values() else "mp3"
-    )
-    lossless = file_type == "flac"
-    config = dataclasses.replace(
-        base,
-        intensity=_MOVEMENT.get(answers.movement, 0.8),
-        rotation_seconds=_SPEED.get(answers.speed, 8.0),
-        beat_sync=answers.speed == "beat",
-        bpm=None,
-        speed_curve=(),
-        intensity_curve=(),
-        ambience=_ROOM.get(answers.room, 0.25),
-        output_format=file_type,
-        # 320 is the best MP3; M4A and FLAC choose their own best
-        bitrate=320 if file_type == "mp3" else None,
-        quality=0,
-        limiter_ceiling=0.89 if lossless else 0.84,
-        loudness_target=-14.0 if answers.level == "apps" else None,
-        match_loudness=answers.level == "original",
-        exact_loudness=False,
-        vocals="move",
-    )
-    if answers.place == "speakers":
-        config = speaker_safe(config)
-    config.validate()
-    return config
-
-
-def suggested_description(answers: StyleAnswers) -> str:
-    """A one-line description built from the answers, e.g. for the Description box."""
-    music = {
-        "beat": "Music with a strong beat",
-        "calm": "Calm music",
-        "big": "Big, loud music",
-        "talk": "Talking",
-    }.get(answers.music, "All kinds of music")
-    movement = {"gentle": "gentle", "clear": "clear", "big": "big"}.get(
-        answers.movement, "clear"
-    )
-    speed = {
-        "slow": "slow spin",
-        "fast": "fast spin",
-        "beat": "spins with the beat",
-    }.get(answers.speed, "normal spin")
-    room = {"none": "no room", "hall": "a big hall"}.get(answers.room, "a little room")
-    extras = ", safe for speakers" if answers.place == "speakers" else ""
-    return (
-        f"{music}: {movement} movement, {speed}, {room}{extras}, "
-        f"{answers.file_type.upper()}"
-    )
-
-
-def suggested_name(answers: StyleAnswers, taken: Sequence[str]) -> str:
-    """A free name built from the answers: Calm Mix, or Calm Mix 2 if that's taken."""
-    stem = _MUSIC_WORD.get(answers.music, "My") + " Mix"
-    # Compared the way style names are, so CalmMix and Calm Mix count as the same
-    used = {name_key(name) for name in [*taken, *PRESETS]}
-    name, number = stem, 2
-    while name_key(name) in used:
-        name, number = f"{stem} {number}", number + 1
-    return name
-
-
-@dataclass(frozen=True)
-class StyleNote:
-    """One line of the quality check: its level, what it says, and a fix if any."""
-
-    level: str  # "error" stops saving, "warning" can be fixed, "tip" is a hint
-    text: str
-    fix: dict[str, object] = field(default_factory=dict)
-
-
-def style_check(config: EffectConfig, summary: str) -> list[StyleNote]:
-    """Everything that would make a saved style weak, most important first."""
-    notes: list[StyleNote] = []
-    moving = config.intensity > 0 or any(v > 0 for _t, v in config.intensity_curve)
-    if not moving:
+    if singers:
         notes.append(
-            StyleNote(
-                "error",
-                "This style doesn't move the music at all, so there would be no 8D "
-                "effect. Choose some movement.",
-                {"intensity": 0.8, "intensity_curve": ()},
-            )
-        )
-    for text, fix in display.advice_items(config):
-        # The first sentence says what's weak; "Improve it for me" does the fixing
-        notes.append(StyleNote("warning", text.split(". ")[0].rstrip(".") + ".", fix))
-    if not summary.strip():
-        notes.append(
-            StyleNote(
-                "tip", "Add a few words to the description so you remember its use."
-            )
-        )
-    return notes
-
-
-def improved(config: EffectConfig, notes: Sequence[StyleNote]) -> EffectConfig:
-    """The settings with every suggested fix applied."""
-    changes: dict[str, object] = {}
-    for note in notes:
-        changes.update(note.fix)
-    return dataclasses.replace(config, **changes) if changes else config
-
-
-def improve_answers(answers: StyleAnswers, notes: Sequence[StyleNote]) -> StyleAnswers:
-    """The answers that follow the quality check's advice."""
-    better = dataclasses.replace(answers)
-    for note in notes:
-        if "loudness_target" in note.fix:
-            better.level = "apps"
-        if "intensity" in note.fix:
-            better.movement = "clear"
-        if "rotation_seconds" in note.fix:
-            better.speed = "normal"
-        if "ambience" in note.fix:
-            better.room = "little"
-    return better
-
-
-def style_summary(config: EffectConfig) -> str:
-    """What a style does, in plain words, one part per line."""
-    quality = display.describe_quality(
-        config.quality, config.bitrate, config.output_format
-    )
-    kind = config.output_format.upper()
-    loudness = (
-        "the same loudness as each song"
-        if config.match_loudness
-        else display.describe_loudness(config.loudness_target)
-    )
-    return "\n".join(
-        [
-            f"Sound: {display.describe_sound(config)}",
-            f"Spin: {display.describe_spin(config)}",
-            f"Movement: {config.intensity:.2f} "
-            f"({display.describe_movement(config.intensity)})",
-            f"Room: {config.ambience:.2f} ({display.describe_room(config.ambience)})",
-            f"File: {quality}" if kind in quality else f"File: {kind}, {quality}",
-            f"Loudness: {loudness}",
-        ]
-    )
-
-
-# Below this, an MP3 or AAC file has already lost detail the 8D version can't bring back
-LOW_BITRATE = 192_000
-# Below this, a recording (a phone or voice memo) has no high notes to move around
-LOW_SAMPLE_RATE = 32_000
-
-
-def source_notes(songs: Sequence[tuple[str, AudioStreamInfo]]) -> list[str]:
-    """Heads-ups about the song files themselves, since they decide the best result."""
-
-    def some(names: list[str], one: str, many: str) -> str:
-        examples = ", ".join(names[:2]) + (" and others" if len(names) > 2 else "")
-        return (one if len(names) == 1 else f"{len(names)} {many}") + f" ({examples})"
-
-    notes = []
-    low = [
-        name
-        for name, info in songs
-        if not info.is_lossless and info.bit_rate and info.bit_rate < LOW_BITRATE
-    ]
-    if low:
-        notes.append(
-            some(low, "1 song is a low-quality file", "songs are low-quality files")
-            + ", under 192 kbps. The 8D version can't sound better than the file you "
-            "give it: use a better copy (FLAC, WAV or a 320 kbps MP3) if you have one."
-        )
-    thin = [
-        name
-        for name, info in songs
-        if info.sample_rate and info.sample_rate < LOW_SAMPLE_RATE
-    ]
-    if thin:
-        notes.append(
-            some(
-                thin,
-                "1 song is a low-detail recording",
-                "songs are low-detail recordings",
-            )
-            + ", like a phone or voice memo. Audio8D raises it so the 3D effect works, "
-            "but it can't add the missing high notes."
+            f"Keeping the singer in the middle ({singers} "
+            f"song{'s' if singers != 1 else ''}) takes a minute or two per song."
         )
     return notes

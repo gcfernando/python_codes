@@ -12,12 +12,23 @@ _BEST = PRESETS[RECOMMENDED_PRESET].config
 _FIXES = (
     (
         "Missing required executable",
-        "put ffmpeg.exe and ffprobe.exe in the bin\\executable folder of Audio8D.",
+        "put ffmpeg.exe and ffprobe.exe in the bin folder of Audio8D, "
+        "or choose them in the window's Settings (FFmpeg and FFprobe).",
+    ),
+    (
+        "The ffmpeg chosen in Settings",
+        "open Settings, FFmpeg and FFprobe: choose ffmpeg.exe again with Browse, "
+        "or press 'Find automatically'.",
+    ),
+    (
+        "The ffprobe chosen in Settings",
+        "open Settings, FFmpeg and FFprobe: choose ffprobe.exe again with Browse, "
+        "or press 'Find automatically'.",
     ),
     (
         "This FFmpeg build",
-        "download the 'essentials' build from gyan.dev "
-        "and copy ffmpeg.exe + ffprobe.exe into src.",
+        "download the 'essentials' build from gyan.dev and choose its ffmpeg.exe "
+        "and ffprobe.exe in Settings (or copy them into the bin folder).",
     ),
     (
         "Input file does not exist",
@@ -69,8 +80,9 @@ _FIXES = (
         "--start 1:00 --end 1:30.",
     ),
     (
-        "Keeping vocals in the centre needs Demucs",
-        "leave out --vocals center, or get Demucs as the message says.",
+        "Keeping the singer in the middle needs the singer add-on",
+        "set it up (audio8d --install-addon, then audio8d --check), or leave out "
+        "--vocals center for those songs.",
     ),
     (
         "Demucs could not split",
@@ -91,7 +103,7 @@ _FIXES = (
     ),
     (
         "presets.toml",
-        "fix that line in your styles file (see --list-presets for where it is).",
+        "fix that line in your styles file (see --list-styles for where it is).",
     ),
     (
         "already have a style called",
@@ -120,7 +132,7 @@ _FIXES = (
     ),
     (
         "style ",
-        "fix that style in your styles file, or save it again with --save-preset.",
+        "fix that style in your styles file, or save it again with --save-style.",
     ),
     (
         "Cannot create output directory",
@@ -211,6 +223,16 @@ _FIXES = (
         "check the disk has free space and the drive is still plugged in.",
     ),
     ("I/O error", "check the disk has free space and the drive is still plugged in."),
+    (
+        "ffprobe.exe took longer",
+        "the file may be on a slow or disconnected drive. Copy it to your computer "
+        "and try again.",
+    ),
+    (
+        "ffprobe took longer",
+        "the file may be on a slow or disconnected drive. Copy it to your computer "
+        "and try again.",
+    ),
 )
 
 
@@ -246,8 +268,11 @@ _USAGE_FIXES = (
     ),
     (
         "--preset",
-        f"use one of: {', '.join(PRESETS)}. Best: --preset {RECOMMENDED_PRESET}",
+        f"use one of: {', '.join(PRESETS)}. Best: --style {RECOMMENDED_PRESET}",
     ),
+    ("--movement", "use gentle, balanced or strong, e.g. --movement gentle."),
+    ("--speed:", "use slow, normal or fast, e.g. --speed slow."),
+    ("--space", "use dry, natural or spacious, e.g. --space natural."),
     ("--loudness", "write a number such as -14 (best), or the word match or off."),
     ("--jobs", "write how many songs to make at once, from 1 to 16, e.g. --jobs 4."),
     ("--format", "use one of: mp3, flac, wav, m4a, opus. Best: mp3 (or flac)."),
@@ -287,6 +312,19 @@ def short_message(error: BaseException) -> str:
     return f"FFmpeg stopped: {reason}"
 
 
+def headline(error: BaseException) -> str:
+    """One plain sentence; the exact words stay in 'Show details' and the log."""
+    if isinstance(error, DependencyError):
+        return "A program Audio8D needs isn't working."
+    if isinstance(error, Audio8DError):
+        if str(error).startswith(_TOOL_FAILURES) or "exit code" in str(error):
+            return "FFmpeg couldn't process this song."
+        return short_message(error)
+    return (
+        "Something unexpected went wrong. Your songs are safe; nothing was half-saved."
+    )
+
+
 def fix_for(error: Audio8DError) -> str | None:
     """The friendly fix for an Audio8D error, if we know one."""
     message = str(error)
@@ -296,12 +334,12 @@ def fix_for(error: Audio8DError) -> str | None:
     ):
         return (
             "FFmpeg would not run. Put the 'essentials' build from gyan.dev "
-            "in bin\\executable."
+            "in the bin folder."
         )
     if message.startswith("Failed to start"):
         return (
             "FFmpeg would not start. "
-            "Put fresh copies of ffmpeg.exe and ffprobe.exe in bin\\executable."
+            "Put fresh copies of ffmpeg.exe and ffprobe.exe in the bin folder."
         )
     # Windows and FFmpeg word this differently, but it always means a locked folder
     if any(clue in message for clue in ("Permission denied", "Access is denied")):

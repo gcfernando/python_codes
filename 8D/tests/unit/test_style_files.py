@@ -22,16 +22,13 @@ from src.core.style_files import (
 )
 from src.core.user_presets import load_user_presets, save_user_preset
 
+# A style is only the sound, so a shared style carries no file settings
 _WILD = dataclasses.replace(
     PRESETS["groove"].config,
     intensity=0.95,
     elevation=0.4,
     speed_curve=((0.0, 10.0), (60.0, 6.0)),
     bpm=128.0,
-    loudness_target=None,
-    match_loudness=True,
-    output_format="flac",
-    bitrate=None,
 )
 
 

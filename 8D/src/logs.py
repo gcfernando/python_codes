@@ -63,3 +63,44 @@ def _catch_crashes() -> None:
 
         on_thread_crash.audio8d = True  # type: ignore[attr-defined]
         threading.excepthook = on_thread_crash
+
+
+def log_files() -> list[Path]:
+    """The saved log and its older, rotated copies (only those that exist)."""
+    path = log_file()
+    candidates = [path] + [path.with_name(f"{path.name}.{n}") for n in (1, 2, 3)]
+    return [candidate for candidate in candidates if candidate.is_file()]
+
+
+def delete_log_files() -> tuple[int, list[Path]]:
+    """Delete the saved logs; (how many were deleted, the ones that couldn't be).
+
+    The open log is closed first (Windows won't delete an open file); the next
+    log line simply starts a fresh file.
+    """
+    handlers = [
+        handler
+        for handler in logging.getLogger().handlers
+        if getattr(handler, "audio8d_file", False)
+    ]
+    deleted, failed = 0, []
+    for handler in handlers:
+        handler.acquire()
+    try:
+        for handler in handlers:
+            stream = getattr(handler, "stream", None)
+            if stream is not None:
+                stream.close()
+                handler.stream = None  # type: ignore[attr-defined]
+        for path in log_files():
+            try:
+                path.unlink()
+                deleted += 1
+            except OSError:
+                failed.append(path)
+    finally:
+        for handler in handlers:
+            handler.release()
+    if deleted:
+        LOG.info("Saved log files deleted by the user")
+    return deleted, failed

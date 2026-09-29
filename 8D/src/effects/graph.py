@@ -284,11 +284,14 @@ def finish_stages(
     peak_margin: bool | None = None,
     *,
     sample_rate: int,
+    lossless: bool | None = None,
 ) -> str:
     """The loudness change and the limiter that end every mix, as one filter chain.
 
     peak_margin lowers the limiter's roof by 1 dB, for when it will be working:
     lossy encoders overshoot limited peaks a little. None means 'exact mode only'.
+    lossless says whether the margin is skipped; None asks the config's format,
+    and a preview saved as WAV passes the real format's answer instead.
     """
     stages = []
     ceiling = config.limiter_ceiling
@@ -300,7 +303,9 @@ def finish_stages(
         # Nothing was measured, so leave headroom and assume the limiter will work
         stages.append(f"volume=-{NATURAL_HEADROOM_DB:g}dB")
         margin = True
-    if margin and not config.is_lossless:
+    if lossless is None:
+        lossless = config.is_lossless
+    if margin and not lossless:
         # Lower the roof by the margin, but never below alimiter's 0.0625 minimum
         ceiling = max(0.0625, ceiling * 10 ** (-EXACT_MODE_MARGIN_DB / 20))
     # The limiter goes last so it guards exactly what reaches the encoder
@@ -316,11 +321,14 @@ def build_graph(
     source_rate: int | None = None,
     gain_db: float | None = None,
     peak_margin: bool | None = None,
+    lossless: bool | None = None,
 ) -> str:
     """The -filter_complex text for a one-pass encode; its output label is [out]."""
     config.validate()
     lines = _mix(config, inputs, sample_rate, source_rate)
-    finish = finish_stages(config, gain_db, peak_margin, sample_rate=sample_rate)
+    finish = finish_stages(
+        config, gain_db, peak_margin, sample_rate=sample_rate, lossless=lossless
+    )
     lines.append(f"[mix]{finish}[out]")
     return ";".join(lines)
 
@@ -332,9 +340,12 @@ def build_finish_graph(
     peak_margin: bool | None = None,
     *,
     sample_rate: int,
+    lossless: bool | None = None,
 ) -> str:
     """The second pass: the already-made mix (a float WAV), turned up and limited."""
-    finish = finish_stages(config, gain_db, peak_margin, sample_rate=sample_rate)
+    finish = finish_stages(
+        config, gain_db, peak_margin, sample_rate=sample_rate, lossless=lossless
+    )
     return f"[{mix_input}:a]aformat=sample_fmts=fltp,{finish}[out]"
 
 

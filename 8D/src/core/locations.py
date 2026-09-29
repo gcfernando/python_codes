@@ -22,17 +22,13 @@ def app_dir() -> Path:
 
 
 def tools_dir() -> Path:
-    """bin/executable, where the bundled ffmpeg and ffprobe live."""
-    return app_dir() / "bin" / "executable"
+    """The bin folder: Audio8D's programs and the bundled ffmpeg and ffprobe."""
+    # The exe itself lives in bin, so its own folder is bin
+    return app_dir() if is_packaged() else app_dir() / "bin"
 
 
-# The one and only guide, online, for copies of the app that have no README beside them
+# The one and only guide; 'Open the full guide' always opens it in the browser
 GUIDE_URL = "https://github.com/gcfernando/python_codes/blob/main/8D/README.md"
-
-
-def guide_file() -> Path:
-    """The README that 'Open the full guide' shows when it sits next to the app."""
-    return app_dir() / "README.md"
 
 
 def config_dir() -> Path:
@@ -63,8 +59,21 @@ def cache_dir() -> Path:
     return Path(base) / "audio8d"
 
 
+def addon_dir() -> Path:
+    """The add-on's own private Python environment, removed again by Uninstall."""
+    override = os.environ.get(HOME_OVERRIDE)
+    if override:
+        return Path(override) / "addon"
+    if os.name == "nt":
+        return cache_dir().parent / "addon"
+    if sys.platform == "darwin":
+        return config_dir() / "addon"
+    base = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
+    return Path(base) / "audio8d" / "addon"
+
+
 def presets_file() -> Path:
-    """The TOML file that holds styles saved with --save-preset."""
+    """The TOML file that holds styles saved with --save-style."""
     return config_dir() / "presets.toml"
 
 

@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from src import gui, launcher, logs
+from src import addons, gui, launcher, logs
 from src.analysis import stems
 from src.core import locations
 
@@ -29,15 +29,15 @@ def test_the_project_folder_is_home_during_development() -> None:
 
     assert not locations.is_packaged()
     assert locations.app_dir() == root
-    assert locations.tools_dir() == root / "bin" / "executable"
-    assert locations.guide_file() == root / "README.md"
+    assert locations.tools_dir() == root / "bin"
+    assert locations.GUIDE_URL.endswith("/8D/README.md")
 
 
 def test_the_exe_finds_everything_next_to_itself(packaged: Path) -> None:
+    # The exe lives in bin, beside ffmpeg
     assert locations.is_packaged()
     assert locations.app_dir() == packaged
-    assert locations.tools_dir() == packaged / "bin" / "executable"
-    assert locations.guide_file() == packaged / "README.md"
+    assert locations.tools_dir() == packaged
 
 
 def test_the_exe_restarts_itself_in_windows_terminal(packaged: Path) -> None:
@@ -47,10 +47,19 @@ def test_the_exe_restarts_itself_in_windows_terminal(packaged: Path) -> None:
     ]
 
 
-def test_the_exe_never_offers_demucs(packaged: Path) -> None:
-    del packaged
+@pytest.mark.usefixtures("packaged")
+def test_the_exe_never_runs_the_add_on_with_itself(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The exe is not a Python, so without one on the computer the add-on waits
+    monkeypatch.setattr(addons.shutil, "which", lambda _name: None)
+    addons.set_preferred_python(None)
+    status = addons.singer_status(refresh=True)
+
+    assert status.python.path is None and not status.ready
     assert not stems.demucs_available()
-    assert "standalone" in stems.demucs_hint()
+    assert "Install Python" in stems.demucs_hint()
+    addons.forget_status()
 
 
 # The helper thread below crashes on purpose, and pytest reports that as well

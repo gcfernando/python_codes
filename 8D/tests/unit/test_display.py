@@ -7,6 +7,7 @@ from pathlib import Path
 from src import PRESETS, AudioStreamInfo, ConversionError, EffectConfig, display
 from src.analysis import QualityReport
 from src.batch import BatchItem, BatchOutcome, BatchReport
+from src.core.presets import legacy_config
 from src.ffmpeg import LoudnessMeasurement
 from src.pipeline import ConversionResult, LoudnessPlan
 
@@ -34,9 +35,14 @@ def test_colour_is_off_when_not_a_terminal() -> None:
 
 def test_settings_are_described_in_plain_words() -> None:
     assert display.describe_movement(0) == "off, stays in the middle"
-    assert display.describe_movement(0.85) == "strong"
-    assert display.describe_room(0) == "off, completely dry"
-    assert display.describe_room(0.3) == "subtle room"
+    # The same words as the Movement and Space choices (--movement, --space)
+    assert display.describe_movement(0.65) == "gentle"
+    assert display.describe_movement(0.85) == "balanced"
+    assert display.describe_movement(0.95) == "strong"
+    assert display.describe_room(0) == "no room sound at all"
+    assert display.describe_room(0.1) == "dry"
+    assert display.describe_room(0.3) == "natural"
+    assert display.describe_room(0.45) == "spacious"
     assert display.describe_quality(0).startswith("V0  (~245 kbps, best")
     assert display.describe_ceiling(0.89) == "0.89  (-1.0 dBFS)"
     assert "Spotify" in display.describe_loudness(-14)
@@ -60,10 +66,10 @@ def test_settings_panel_lists_every_knob() -> None:
         "Song in",
         "Song out",
         "Style",
-        "Spin",
+        "Speed",
         "Movement",
-        "Room",
-        "Peak roof",
+        "Space",
+        "Peak limit",
         "Quality",
     )
     for label in (*labels, "Loudness"):
@@ -112,7 +118,7 @@ def test_other_values_show_what_the_best_would_be() -> None:
 
     assert "best: 0.80" in shown
     assert "best: 0" in shown
-    assert "best: -14 LUFS" in shown
+    assert "best: match music apps" in shown
 
 
 def test_risky_values_get_a_heads_up_with_a_fix() -> None:
@@ -228,7 +234,7 @@ def test_new_rows_describe_the_3d_sound() -> None:
         EffectConfig(path="figure8", elevation=0.5, bass_hz=0, output_format="flac"),
     )
 
-    assert "3D, loops round each ear, clockwise" in shown
+    assert "3D, loops around each ear, clockwise" in shown
     assert "moves with everything else" in shown
     assert "rises overhead" in shown
     assert "FLAC 24-bit" in shown
@@ -281,7 +287,7 @@ def test_batch_summary_counts_songs() -> None:
     display.show_batch_summary(painter, report)
     shown = stream.getvalue()
 
-    assert "Done: 1 converted, 1 failed" in shown
+    assert "Done: 1 created, 1 failed" in shown
     assert "1 original moved to the Recycle Bin." in shown
     assert "boom" in display.batch_line(painter, 2, 2, report.outcomes[1])
 
@@ -291,4 +297,5 @@ def test_every_style_can_be_shown_and_advised() -> None:
         shown = _panel(name, preset.config)
         assert "Loudness" in shown
         display.advice(preset.config)
-    assert "same as the original" in _panel("hifi", PRESETS["hifi"].config)
+    assert "Keep original loudness" in _panel("hifi", legacy_config("hifi"))
+    assert "Match music apps" in _panel("studio", PRESETS["studio"].config)

@@ -20,8 +20,12 @@ def control_streams(
     duration: float,
     *,
     intensity_scale: float = 1.0,
+    start: float = 0.0,
 ) -> list[tuple[int, array]]:
     """Every gain stream as (channels, frame-after-frame samples).
+
+    start is the song time the render begins at, so the movement matches the
+    full song there (see motion.trajectory).
 
     The 3D engine has two: the delay-tap weights and the band gains.
     Plain panning has one: a left and a right gain.
@@ -32,6 +36,7 @@ def control_streams(
         duration=duration + _SPARE_SECONDS,
         total=duration,
         intensity_scale=intensity_scale,
+        start=start,
     )
     # Compact float arrays: a long song has millions of gains, too many for lists
     if config.engine != "3d":
@@ -54,10 +59,13 @@ def write_controls(
     duration: float,
     *,
     intensity_scale: float = 1.0,
+    start: float = 0.0,
 ) -> list[Path]:
     """Save each gain stream as a float WAV in folder and return their paths."""
     paths = []
-    streams = control_streams(config, duration, intensity_scale=intensity_scale)
+    streams = control_streams(
+        config, duration, intensity_scale=intensity_scale, start=start
+    )
     for index, (channels, samples) in enumerate(streams):
         paths.append(
             write_float_wav(
