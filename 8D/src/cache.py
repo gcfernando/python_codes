@@ -22,7 +22,7 @@ from .ffmpeg import LoudnessMeasurement
 LOG = logging.getLogger(__name__)
 
 # Bump when the effect's sound changes, so old measurements are never reused
-_ENGINE_VERSION = "2.0"
+_ENGINE_VERSION = "2.1"
 _MAX_ENTRIES = 500
 # Settings that come after the measurement, so they never change it
 _AFTER_MEASURE = {

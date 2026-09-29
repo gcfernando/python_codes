@@ -97,7 +97,7 @@ def encoder_arguments(config: EffectConfig) -> list[str]:
     return codec
 
 
-def build_encode_command(
+def build_encode_command(  # pylint: disable=too-many-arguments
     ffmpeg: Path,
     inputs: list[InputFile],
     output_file: Path,
@@ -107,10 +107,12 @@ def build_encode_command(
     sample_rate: int,
     cover_art: bool = False,
     title: str | None = None,
+    tags_on_stream: bool = False,
 ) -> list[str]:
     """The argv that renders the song through the graph into output_file.
 
-    Input 0 is always the original song, so its tags and album art are copied.
+    Input 0 is always the original song, so its tags and album art are copied;
+    tags_on_stream reads them from its audio stream (Ogg files keep them there).
     """
     command = [
         str(ffmpeg),
@@ -127,8 +129,8 @@ def build_encode_command(
     if cover_art and config.output_format in COVER_FORMATS:
         # Copy the picture untouched and mark it as the cover, not as a video
         command += ["-map", "0:v:0", "-c:v", "copy", "-disposition:v:0", "attached_pic"]
-    # Carry over title, artist, album and friends from the source
-    command += ["-map_metadata", "0"]
+    # Carry over title, artist, album and friends from wherever the source keeps them
+    command += ["-map_metadata", "0:s:a:0" if tags_on_stream else "0"]
     if title:
         command += ["-metadata", f"title={title}"]
     command += [

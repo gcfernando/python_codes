@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from src.core.errors import DependencyError
+from src.core.locations import tools_dir
 from src.core.preferences import (
     Preferences,
     load_preferences,
@@ -30,7 +31,7 @@ from src.ffmpeg.toolchain import (
 from src.logs import delete_log_files, log_files, start_log_file
 from src.player import PAUSED, PLAYING, STOPPED, Player
 
-BUNDLED = Path(__file__).resolve().parents[2] / "bin"
+BUNDLED = tools_dir()
 EXE = ".exe" if os.name == "nt" else ""
 needs_ffmpeg = pytest.mark.skipif(
     not (BUNDLED / f"ffmpeg{EXE}").is_file(), reason="no bundled FFmpeg"

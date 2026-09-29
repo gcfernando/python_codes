@@ -17,7 +17,14 @@ from src import (
 @pytest.mark.parametrize(
     ("error", "expected"),
     [
-        (DependencyError("Missing required executable(s): ffmpeg"), "bin folder"),
+        (DependencyError("Missing required executable(s): ffmpeg"), "ZIP again"),
+        (
+            ConversionError(
+                "FFmpeg conversion failed with exit code 8: Error applying option "
+                "'irnorm' to filter 'afir': Option not found"
+            ),
+            "older than version 7",
+        ),
         (
             DependencyError("Command failed with exit code 1: boom"),
             "FFmpeg would not run",

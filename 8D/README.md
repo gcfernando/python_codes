@@ -9,7 +9,7 @@
 
 <p>
 <img src="https://img.shields.io/badge/version-1.0.0-1D5FD1?style=for-the-badge" alt="Version 1.0.0"/>
-<img src="https://img.shields.io/badge/Windows-standalone%20app-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Standalone app for Windows"/>
+<img src="https://img.shields.io/badge/runs%20on-Windows%20%7C%20Linux%20%7C%20macOS%20(untested)-0078D4?style=for-the-badge" alt="Runs on Windows and Linux; macOS untested"/>
 <img src="https://img.shields.io/badge/listen%20with-headphones-111827?style=for-the-badge" alt="Listen with headphones"/>
 </p>
 <p>
@@ -24,17 +24,15 @@ choose how you want it to sound, listen to a preview, and create the new audio f
 People call this effect **"8D audio"**: the music seems to travel past one ear, behind
 you, past the other ear and back.
 
-- **Who is it for?** Anyone with songs on their computer. You don't need to know
-  anything about sound, music software or computers beyond opening a file.
-- **Your songs are safe.** Audio8D always makes a **new** file. Your original song is
-  not changed.
-- **It uses FFmpeg**, a free and well-known sound program, to do the work. It is
-  included; you don't install it yourself.
+- **Your songs are safe.** Audio8D always makes a **new** file. Your original song is not
+  changed (unless you ask it to replace the original).
+- **Nothing else to install.** The ready-made packages include everything Audio8D needs,
+  including Python and FFmpeg (the sound program that does the work).
+- **There is a window and a command line.** Both do the same job.
 
 > [!IMPORTANT]
 > 🎧 **Use headphones or earbuds.** The effect works because each ear hears something
-> a little different. On speakers it sounds much weaker (the **Speakers** style,
-> on step 2 → **Change style**, helps).
+> a little different. On speakers it sounds much weaker (the **Speakers** style helps).
 
 <p align="center">
   <img src="docs/images/choose-sound.png" alt="Audio8D's step 2, Choose how it sounds: the Sound style card shows Studio with a Change style button, and below it the list of songs with Song, Sound, Settings (Default) and Actions (Preview, Customize) columns." width="100%"/>
@@ -44,261 +42,253 @@ you, past the other ear and back.
 
 ## Contents
 
-**Using Audio8D**
+**For everyone**
 
-1. [What can Audio8D do?](#what-can-audio8d-do)
-2. [Before you start (install and check)](#before-you-start)
-3. [Quick start with the window](#quick-start-with-the-window)
-4. [Sound styles](#sound-styles)
-5. [Change how one song sounds (Customize)](#change-how-one-song-sounds-customize)
-6. [Default and Custom](#default-and-custom)
-7. [Preview your music](#preview-your-music)
-8. [All songs or one song](#all-songs-or-one-song)
-9. [Choosing a file format](#choosing-a-file-format)
-10. [Loudness](#loudness)
-11. [Create your songs](#create-your-songs)
-12. [Optional add-on: keep the singer in the middle](#optional-add-on-keep-the-singer-in-the-middle)
-13. [Your own styles](#your-own-styles)
-14. [Settings, keyboard and getting help](#settings-keyboard-and-getting-help)
+1. [What Audio8D does](#what-audio8d-does)
+2. [Quick start](#quick-start)
+3. [Windows](#windows)
+4. [Linux](#linux)
+5. [macOS (not tested)](#macos-not-tested)
+6. [Check that it works](#check-that-it-works)
+7. [Your first song (the window)](#your-first-song-the-window)
+8. [Using the window](#using-the-window)
+9. [Command line](#command-line)
+10. [Troubleshooting](#troubleshooting)
+11. [Reference](#reference)
+12. [Known limitations](#known-limitations)
 
-**Command line (terminal)**
+**For developers**
 
-15. [Command line usage](#command-line-usage)
-16. [The window and the command line do the same job](#the-window-and-the-command-line-do-the-same-job)
-
-**Reference**
-
-17. [Settings reference](#settings-reference)
-18. [Troubleshooting](#troubleshooting)
-19. [Words used in this guide](#words-used-in-this-guide)
-20. [Advanced technical reference](#advanced-technical-reference)
-21. [For developers](#for-developers)
-22. [Known limitations](#known-limitations)
-23. [Credits and licences](#credits-and-licences)
+13. [Running from source](#running-from-source)
+14. [Building the packages](#building-the-packages)
+15. [Tests and project layout](#tests-and-project-layout)
+16. [Credits and licences](#credits-and-licences)
 
 ---
 
-## What can Audio8D do?
+## What Audio8D does
 
-- Turn normal music into 3D ("8D") audio that moves around your head
-- Let you **listen to a short preview** before creating anything
-- Offer **13 sound styles** (Studio, Gentle, Front, Smooth, Groove and more)
-- Let you **customize one song** (or several) without changing the others
-- Make **many songs at once**: a whole folder, even hundreds of songs
-- Save as **MP3, FLAC, WAV, M4A or Opus**
-- Make every song **as loud as your other music** (or keep its own loudness)
-- Do everything **from the window or from a terminal** (command line)
-- Keep **the singer in the middle** with an optional add-on, which you can install and
-  remove whenever you like
+- Turns normal music into 3D ("8D") audio that moves around your head
+- Lets you **listen to a short preview** before creating anything
+- Offers **13 sound styles** (Studio, Gentle, Front, Smooth, Groove and more), and lets you
+  make and edit your own
+- Lets you **customize one song** (or several) without changing the others
+- Makes **many songs at once**: a whole folder, even hundreds of songs
+- Saves as **MP3, FLAC, WAV, M4A or Opus**
+- Makes every song **as loud as your other music** (or keeps its own loudness)
+- Can keep **the singer near the middle** with an optional add-on
 
 Audio8D reads MP3, FLAC, WAV, M4A/AAC, OGG, Opus, WMA, AIFF, ALAC, APE, WavPack, MKA and
 the sound of MP4/WEBM videos.
 
 ---
 
-## Before you start
+## Quick start
 
-| You need | Why | Do I have to install it? |
-|---|---|---|
-| A **Windows 10 or 11** computer (64-bit) | To run the ready-made app | — |
-| **Headphones** or earbuds | To hear the effect | — |
-| **FFmpeg** | Makes the sound | **No**, it is included in the app (`bin\ffmpeg.exe`, `bin\ffprobe.exe`) |
-| **Python** (3.10 or newer) | Only for the optional singer add-on, or to run the source code | Only if you want those |
+1. **Choose the package for your computer:**
 
-### Install on a new computer
+   | Your computer | Package | Status |
+   |---|---|---|
+   | Windows 10 or 11 (64-bit) | `Audio8D-1.0.0-windows-x86_64.zip` (about 102 MB) | Tested |
+   | Linux (64-bit x86) | `Audio8D-1.0.0-linux-x86_64.zip` (about 82 MB) | Tested |
+   | Mac with Apple Silicon (M1 or newer) | `Audio8D-1.0.0-macos-arm64.zip` | **Not built or tested yet** |
 
-There are two ways to get Audio8D. Pick **A** if someone gave you the app, **B** if you
-start from the source code on GitHub.
+2. **Get it.** The packages are in the **`8D/bin`** folder of the Audio8D source code
+   ([github.com/gcfernando/python_codes](https://github.com/gcfernando/python_codes),
+   folder `8D`), or someone can give you a copy. There is no separate download page and no
+   GitHub release. If the package for your system is not in `8D/bin`, it hasn't been built
+   yet (see [Building the packages](#building-the-packages)).
+3. **Extract it.** You get an **`Audio8D`** folder (on Windows, inside a folder named
+   like the ZIP, `Audio8D-1.0.0-windows-x86_64`).
+4. **Run it:** double-click **`Audio8D.exe`** (Windows), **`Audio8D`** (Linux) or
+   **`Audio8D.app`** (macOS; that package is not built or tested yet).
 
-**A. The ready-made app (no Python needed)**
+> [!NOTE]
+> **You don't need Python or FFmpeg.** Each package already contains its own Python and
+> FFmpeg, and ignores any Python on your computer. (Only the optional
+> [singer add-on](#optional-add-on-keep-the-singer-in-the-middle) needs a Python.)
 
-1. Get **`Audio8D-1.0.0-windows.zip`**. Audio8D has no public download page: it is the
-   file a developer makes with `packaging\build.ps1 -Zip` (see B, step 5) and shares.
-2. Unzip it (right-click it, then **Extract All…**). You get a folder called `Audio8D`.
-3. Open the **`bin`** folder inside it and double-click **`Audio8D.exe`**.
+**What is in the `Audio8D` folder:**
 
-If Windows says *"Windows protected your PC"*, click **More info**, then **Run anyway**.
-This appears because the app is not signed with a paid certificate.
-
-The `bin` folder holds everything Audio8D needs: `Audio8D.exe` (the window),
-`audio8d-cli.exe` (the command line), `ffmpeg.exe`, `ffprobe.exe` and a folder called
-`_internal`. Keep them together.
-
-**B. From the source code (Windows)**
-
-| Tool | Why | Get it | Check it |
+| Windows | Linux | macOS | What it is |
 |---|---|---|---|
-| **Git** with **Git LFS** | Downloads the code; LFS brings the two large FFmpeg files | [git-scm.com](https://git-scm.com/download/win) (Git LFS is included) | `git lfs version` |
-| **Python 3.10 or newer** (64-bit) | Runs Audio8D | [python.org](https://www.python.org/downloads/); tick *Add python.exe to PATH* | `python --version` (if it opens the Microsoft Store instead, install Python again with *Add python.exe to PATH* ticked) |
+| `Audio8D.exe` | `Audio8D` | `Audio8D.app` | The window |
+| `audio8d-cli.exe` | `audio8d-cli` | `audio8d-cli` | The command line |
+| `_internal` | `_internal` | (inside `Audio8D.app`) | Audio8D's own Python, libraries and FFmpeg; don't change it |
+| `HOW TO RUN.txt`, `README.md`, `THIRD-PARTY-NOTICES.md`, `licenses` | same | same | Short instructions, this guide, licences |
 
-A **terminal** is the text window where you type commands (Start menu → type
-*Terminal*). In a terminal:
-
-```powershell
-git lfs install                                          # 1. once per computer
-git clone https://github.com/gcfernando/python_codes.git # 2. the code (Audio8D is in 8D)
-cd python_codes\8D
-python -m pip install customtkinter pillow               # 3. the window's parts
-python src\__main__.py --check                           # 4. should end: Everything required is ready
-```
-
-After step 2, `bin\ffmpeg.exe` must be about 100 MB. If it is only a few hundred bytes,
-Git LFS was missing: run `git lfs pull`.
-
-5. Start it: `python src\__main__.py --gui` opens the window (or double-click
-   `Audio8D.pyw`), and `python src\__main__.py --help` shows the command line. To make the
-   ready-made app of A instead, run
-   `powershell -ExecutionPolicy Bypass -File packaging\build.ps1 -Zip`; the zip lands in
-   `build\`.
-
-On macOS or Linux, write `python3` and `src/__main__.py`, and install FFmpeg first
-(`brew install ffmpeg` on macOS, `sudo apt install ffmpeg` on Ubuntu).
-
-`python -m pip install ".[gui]"` installs Audio8D as the commands `audio8d` and
-`audio8d-gui`. Those commands don't look in the `bin` folder, so tell them where FFmpeg
-is: choose `bin\ffmpeg.exe` and `bin\ffprobe.exe` in **Settings** (FFmpeg and FFprobe,
-**Browse…**), or add `--ffmpeg bin\ffmpeg.exe --ffprobe bin\ffprobe.exe` to a command
-run in the `8D` folder.
-
-### Check that it works
-
-1. **Window:** it opens on *1 Add music*. **Settings → System check** shows FFmpeg and
-   FFprobe as ready.
-2. **Command line:** open a terminal in the `bin` folder (A; in File Explorer open `bin`,
-   right-click an empty area → **Open in Terminal**) or the `8D` folder (B):
-
-   ```powershell
-   .\audio8d-cli.exe --check                     # A; for B: python src\__main__.py --check
-   ```
-
-   It ends with *Everything required is ready* (the singer add-on is optional).
-3. **A test song** (use any song you have): listen to a short preview first, then make
-   the 8D song. It is saved as `<song> (8D).mp3` next to the original:
-
-   ```powershell
-   .\audio8d-cli.exe "C:\Music\My Song.mp3" --preview
-   .\audio8d-cli.exe "C:\Music\My Song.mp3"
-   ```
-
-   For B, write `python src\__main__.py` instead of `.\audio8d-cli.exe`.
+Keep the folder together; you can put it anywhere, including a path with spaces.
 
 ---
 
-## Quick start with the window
+## Windows
 
-This is the easiest way to use Audio8D. It takes about five minutes.
+Tested on Windows 11 Pro (64-bit): unpacked to a folder with spaces and run with Python and
+FFmpeg hidden (only `C:\Windows\System32` on the PATH), also with a broken `PYTHONHOME`.
 
-### 1. Open Audio8D
+1. Right-click **`Audio8D-1.0.0-windows-x86_64.zip`** and choose **Extract All…**, then
+   **Extract**.
+2. Open the extracted **`Audio8D-1.0.0-windows-x86_64`** folder, then the **`Audio8D`**
+   folder inside it, and double-click **`Audio8D.exe`**.
+3. If Windows says *"Windows protected your PC"*, click **More info**, then **Run anyway**.
+   This appears because the app is not signed with a paid certificate.
 
-Double-click **`Audio8D.exe`** (in the `bin` folder). The window opens on **step 1**.
-The four steps down the left side are the whole journey:
+The command line is **`audio8d-cli.exe`** in the same folder: open the folder in File
+Explorer, right-click an empty area, choose **Open in Terminal**, and type
+`.\audio8d-cli.exe --check`.
+
+---
+
+## Linux
+
+Tested on 64-bit x86 computers: Debian 12 and Fedora 40 with no Python and no FFmpeg, and
+Ubuntu 24.04 (window shown). The package needs a **64-bit x86** computer with **glibc 2.35
+or newer** (it was built on Ubuntu 22.04, which has glibc 2.35) and a desktop for the
+window.
+
+1. Extract the package with your file manager, or in a terminal:
+
+   ```bash
+   unzip Audio8D-1.0.0-linux-x86_64.zip
+   ```
+
+2. Open the **`Audio8D`** folder and double-click **`Audio8D`**, or run:
+
+   ```bash
+   ./Audio8D/Audio8D
+   ```
+
+3. If you see *Permission denied* (some extract tools drop the "may run" mark), run this
+   once and try again:
+
+   ```bash
+   chmod +x Audio8D/Audio8D Audio8D/audio8d-cli
+   ```
+
+The command line is `./Audio8D/audio8d-cli` (for example `./Audio8D/audio8d-cli --check`).
+
+**What is different on Linux:** there is no drag and drop into the window (use **Add
+songs** or **Add folder**, even though the window says *Drop songs or folders here*);
+previews open in your usual music player (this needs `xdg-open`, which desktops include);
+replaced originals go to the Trash.
+
+---
+
+## macOS (not tested)
+
+> [!CAUTION]
+> The macOS package **has not been built or tested yet** (no Mac was available). These
+> steps describe how it is designed to work. It is for Macs with **Apple Silicon** only.
+
+1. Double-click **`Audio8D-1.0.0-macos-arm64.zip`**. You get an **`Audio8D`** folder.
+2. Move **`Audio8D.app`** wherever you like (for example *Applications*).
+3. The first time, **right-click `Audio8D.app` → Open**, then **Open** again (the app is not
+   signed). If macOS says the app is damaged, run this in Terminal, in the folder with the
+   app:
+
+   ```bash
+   xattr -dr com.apple.quarantine Audio8D.app
+   ```
+
+The command line is `./audio8d-cli` in the `Audio8D` folder (it runs the program inside
+`Audio8D.app`). Keyboard shortcuts use **Ctrl**, not Cmd; there is no drag and drop into
+the window; previews open in your usual music player; replaced originals go to the Trash.
+
+---
+
+## Check that it works
+
+1. **The window:** it opens on *1 Add music*. **Settings → System check** shows FFmpeg and
+   FFprobe as ready.
+2. **The command line:** `--check` ends with **Everything required is ready.** (the
+   singer add-on is optional).
+3. **A test song:** use any song you have. Listen to a short preview first, then make the
+   8D song. It is saved as `<song> (8D).mp3` next to the original.
+
+| System (terminal in the `Audio8D` folder) | Preview | Make the song |
+|---|---|---|
+| Windows | `.\audio8d-cli.exe "C:\Music\My Song.mp3" --preview` | `.\audio8d-cli.exe "C:\Music\My Song.mp3"` |
+| Linux or macOS | `./audio8d-cli ~/Music/"My Song.mp3" --preview` | `./audio8d-cli ~/Music/"My Song.mp3"` |
+
+The end of a successful run looks like this:
+
+```text
+  Created in 4.5 s  ->  C:\Music\Rain Study (8D).mp3  (3.6 MB)
+  Loudness: measured -17.8 LUFS, turned up 3.8 dB  ->  about -14.0 LUFS
+  Check: -14.1 LUFS, peaks -2.5 dBTP, range 5.0 LU, mono-safe (correlation +0.56)
+  Put on your headphones and press play!
+```
+
+---
+
+## Your first song (the window)
+
+This takes about five minutes. The four steps down the left side are the whole journey:
 **1 Add music → 2 Choose sound → 3 Output → 4 Create.**
 
 <p align="center">
   <img src="docs/images/main-screen.png" alt="The Audio8D window on first start: step 1 Add music with a large area saying Drop songs or folders here, and Add songs and Add folder buttons." width="100%"/>
 </p>
 
-### 2. Add your songs
+1. **Add your songs.** Click **Add songs** (one or more songs) or **Add folder** (every song
+   in a folder; switch on *Include songs in sub-folders* to add those too). On Windows you
+   can also **drag** songs or folders from File Explorer onto the window. A file that isn't
+   music is shown in red and skipped. Click **Next: choose sound**.
 
-Do **one** of these:
+   <p align="center">
+     <img src="docs/images/add-music.png" alt="Step 1 with 13 songs added: a table with Song, Artist, Album, Genre, Length, Type and Status columns; one file, notes-broken, is red with 'Can't be read: not music, or damaged'." width="100%"/>
+   </p>
 
-- **Drag** songs or a whole folder from File Explorer and **drop** them on the window, or
-- Click **Add songs** (pick one or more songs), or **Add folder** (every song in a folder;
-  switch on *Include songs in sub-folders* to add those too).
+2. **Choose a sound style.** **Studio** is already chosen and suits most music. To try
+   another, click **Change style**, click a card, and click **Apply …** (the button names
+   the style you picked).
 
-Audio8D reads each song's name, artist, album and length. A file that isn't music is
-shown in red and skipped; it doesn't stop the others.
+   <p align="center">
+     <img src="docs/images/choose-style.png" alt="The Choose sound style dialog: cards for Studio (Recommended, In use), Gentle, Front (Selected), Classic, Groove, Smooth, Strong and Spacious, each with one sentence, Good for, and Preview and Apply buttons; more cards below; Cancel and Apply Front at the bottom." width="85%"/>
+   </p>
 
-<p align="center">
-  <img src="docs/images/add-music.png" alt="Step 1 with 13 songs added: a table with Song, Artist, Album, Genre, Length, Type and Status columns; one file, notes-broken, is red with 'Can't be read: not music, or damaged'." width="100%"/>
-</p>
+3. **Preview.** Select a song and click **Preview**. After a few seconds you hear about 30
+   seconds from its loudest part. Nothing is kept. (On macOS and Linux the preview opens
+   in your music player.) Click **Next: output**.
 
-Click **Next: choose sound** (or **2 Choose sound** on the left).
+4. **Choose where and how to save** (step 3). The recommended choices are already selected,
+   so you can simply go on. The main ones: where the new files go (*next to each original*
+   or *in one folder you choose*), the **Output format** (MP3 works everywhere) and
+   **Loudness** (*Match music apps*). Click **Next: create**.
 
-### 3. Choose a sound style
+5. **Create.** Step 4 shows a short summary. Click the big **Create N songs** button (it
+   says how many). You see the progress and roughly how long is left; **Stop** stops after
+   the current step and keeps finished songs.
 
-Step 2 shows the **sound style** every song will use, and a list of your songs.
+   <p align="center">
+     <img src="docs/images/create-summary.png" alt="Step 4 Create: a Summary card with Songs 12 songs (1 that can't be read will be skipped), Sound Studio, Output MP3 High quality, Loudness Match music apps, Folder, File names; then notes such as Everything is ready." width="100%"/>
+   </p>
 
-**Studio** is already chosen. It is a safe choice for most music. To try another, click
-**Change style**, click a style card, and click **Apply Smooth** (the button names the
-style you picked; see [Sound styles](#sound-styles)).
+6. **Find your new music.** Each new song is called **`<song name> (8D).mp3`**, next to the
+   original song or in the folder you chose. Click **Open folder** to see them, or
+   **Play** to listen.
 
-<p align="center">
-  <img src="docs/images/choose-style.png" alt="The Choose sound style dialog: cards for Studio (Recommended, In use), Gentle, Front (Selected), Classic, Groove, Smooth, Strong and Spacious, each with one sentence, Good for, and Preview and Apply buttons; more cards below; Cancel and Apply Front at the bottom." width="85%"/>
-</p>
-
-### 4. Preview
-
-Select a song in the list and click **Preview** (or click **▶ Preview** in its row).
-After a few seconds you hear about 30 seconds of the song, taken from its loudest part.
-
-> Preview lets you listen before creating the final file. Audio8D does **not** keep the
-> temporary preview file.
-
-Click **Stop** to stop listening. More in [Preview your music](#preview-your-music).
-Then click **Next: output**.
-
-### 5. Choose where and how to save
-
-Click **3 Output**. The recommended choices are already selected, so you can simply go
-on. **Where the new files go** is chosen once for all songs:
-
-- **Save them**: *next to each original song* (the default) or *in one folder you choose*;
-- **File names**: `Song (8D)` beside the original (recommended), or the song's own name
-  in another folder;
-- **If the 8D file exists**: skip that song (so running again only makes what's missing)
-  or replace it;
-- **Original songs**: keep them (the default), or replace them with the 8D version (the
-  old one goes to the Recycle Bin, so you can get it back).
-
-**How the songs are saved** starts with two buttons, **All songs** and **One song** (see
-[All songs or one song](#all-songs-or-one-song)):
-
-- the **Output format**: MP3 works everywhere (see [Choosing a file format](#choosing-a-file-format));
-- **Loudness**: *Match music apps* makes your 8D songs as loud as your other music;
-- quality, and under **More output options** the bitrate, peak limit, album picture and
-  more.
-
-Then click **Next: create**.
-
-### 6. Create
-
-Click **4 Create**. A short summary tells you what will happen. Then click the big
-**Create 12 songs** button below it (it says how many songs will be made).
-
-<p align="center">
-  <img src="docs/images/create-summary.png" alt="Step 4 Create: a Summary card with Songs 12 songs (1 that can't be read will be skipped), Sound Studio, Output MP3 High quality, Loudness Match music apps, Folder, File names; then notes such as Everything is ready." width="100%"/>
-</p>
-
-While songs are being made you see the progress, which song is being made now, and
-roughly how long is left. **Stop** stops after the current step; finished songs are kept.
-You can keep using the window.
-
-### 7. Find your new music
-
-Each new song is called **`<song name> (8D).mp3`** and is saved **next to the original
-song**, or in the folder you chose on step 3. When everything is done, click **Open
-folder** to see them, or **Play** to listen.
-
-<p align="center">
-  <img src="docs/images/create-done.png" alt="Step 4 after creating: All done: 12 songs made in 0:29, and a results table where every song says Done and 'Saved as … (8D).mp3 · -14.0 LUFS'." width="100%"/>
-</p>
+   <p align="center">
+     <img src="docs/images/create-done.png" alt="Step 4 after creating: All done: 12 songs made in 0:29, and a results table where every song says Done and 'Saved as … (8D).mp3 · -14.0 LUFS'." width="100%"/>
+   </p>
 
 That's it. Put on your headphones and press play. 🎧
 
 ---
 
-## Sound styles
+## Using the window
+
+### Sound styles
 
 A **style** is a ready-made way to make the music move. A style only changes **how it
-sounds**: every style is saved the same way (see [Choosing a file format](#choosing-a-file-format)
-and [Loudness](#loudness)). If you don't know which to pick, **start with Studio**.
+sounds**; how the file is saved is chosen on step 3. If you don't know which to pick,
+**start with Studio**.
 
-**To change the style for all your songs:** on step 2, click **Change style**, click a
-card, listen with **Preview** if you like, then click **Apply** (or **Cancel** to leave
-it as it was). Clicking a card only selects it; nothing changes until you apply. The
-style in use is marked **✓ In use**, the one you picked **● Selected**. You can also
-move between cards with the arrow keys and press **Enter** to apply or **Esc** to cancel.
+**To change the style for all songs:** on step 2, click **Change style**, click a card,
+listen with **Preview** if you like, then click **Apply** (or **Cancel**). Clicking a card
+only selects it; nothing changes until you apply. The style in use is marked **✓ In use**,
+the one you picked **● Selected**. Arrow keys move between cards, **Enter** applies,
+**Esc** cancels.
 
 | Style | What it sounds like | Good for |
 |---|---|---|
@@ -316,94 +306,81 @@ move between cards with the arrow keys and press **Enter** to apply or **Esc** t
 | **Speakers** | Gentle left-right movement that works without headphones | Speakers and car stereos |
 | **Retro** | The old left-right "ping-pong" sound of the first Audio8D; the bass moves too | Nostalgia and short clips (not for long listening) |
 
-No style is "better" than another; they just suit different music. Every style was
-tested to land near -14 LUFS without clipping. Lossy files aim to keep true peaks under
--1 dBTP (measured for MP3 and Opus); FLAC and WAV keep sample peaks under -1 dBFS;
-and a preview uses exactly the same processing as the final file (only shorter, and
-played from a temporary WAV file). Fast spins (Whirlwind) can make some listeners
-feel they are turning; use them for short clips.
+No style is "better" than another; they suit different music. Every style was tested to
+land near -14 LUFS without clipping. A preview uses the same processing as the final file;
+it is only shorter, and the movement eases in over at most 1.5 s. A style preview uses the
+all-songs output settings (see [Known limitations](#known-limitations)). Fast spins (Whirlwind) can make some listeners feel they are
+turning; use them for short clips.
 
 Audio8D can also **suggest** a style for each song from its genre: click **Use suggested
 styles** on step 2 (it only changes songs where the genre makes the choice clear).
 
-### Where the styles come from
+#### Where the styles come from
 
-The styles are **Audio8D Sound Styles**: Audio8D's own ready-made settings, not an
-industry standard. No international standard defines a list of consumer "sound
-styles", and other 8D apps' preset names are not standards either. What the styles are
-built on:
+The styles are Audio8D's own ready-made settings, **not an industry standard**. No
+international standard defines a list of consumer "sound styles", and other 8D apps'
+preset names are not standards either.
 
 | Kind | What Audio8D uses |
 |---|---|
-| **Formal standards** | Loudness is measured with FFmpeg's meter, which follows ITU-R BS.1770 and EBU R 128; lossy files aim to keep true peaks below -1 dBTP, the headroom AES TD1008 recommends before lossy encoding (measured for MP3 and Opus; FLAC and WAV are not re-encoded, so they keep sample peaks under -1 dBFS). |
-| **Established practice** | Bass below 120 Hz stays in the middle (as in loudspeaker bass management); direction comes from the timing and level differences between your ears (established head models); a modest room helps the sound feel outside your head on headphones; Front stays within about the ±30° of a normal pair of stereo speakers (ITU-R BS.775). |
+| **Formal standards** | Loudness is measured with FFmpeg's meter, which follows ITU-R BS.1770 and EBU R 128. Lossy files aim to keep true peaks below -1 dBTP, the headroom AES TD1008 recommends before lossy encoding (measured for MP3 and Opus; M4A was not measured); FLAC and WAV keep sample peaks under -1 dBFS. |
+| **Established practice** | Bass below 120 Hz stays in the middle (as in loudspeaker bass management); direction comes from the timing and level differences between your ears; a modest room helps the sound feel outside your head; Front stays within about the ±30° of a normal pair of stereo speakers (ITU-R BS.775). |
 | **Audio8D's own choices** | The speed, depth, path and room of each style, chosen by listening and measurement. |
 
-Standards for full immersive audio, such as ITU-R BS.2051 / BS.2127, MPEG-H 3D Audio
-(ISO/IEC 23008-3) and MPEG-I Immersive Audio (ISO/IEC 23090-4), describe complete
-speaker, object and head-tracking systems. Audio8D makes ordinary stereo files for
-headphones; it does not implement those systems and claims no compliance with them.
+Standards for full immersive audio (ITU-R BS.2051 / BS.2127, MPEG-H 3D Audio, MPEG-I
+Immersive Audio) describe complete speaker, object and head-tracking systems. Audio8D makes
+ordinary stereo files for headphones; it does not implement those systems and claims no
+compliance with them.
 
----
+### Change how one song sounds (Customize)
 
-## Change how one song sounds (Customize)
-
-Every song follows the default style unless you **customize** it. To change one song:
+Every song follows the default style unless you **customize** it.
 
 1. On step 2, select the song and click **Customize…** (or double-click the song, or click
    **✎ Customize** in its row).
-2. The **Customize "song name"** window opens. Its title always says which song you are
-   changing, and the line under it says that only this song changes.
+2. The **Customize "song name"** window opens; its title says which song you are changing.
 3. Change what you like, then click **Apply**. **Cancel** (or **Esc**) changes nothing.
 
 <p align="center">
   <img src="docs/images/customize-song.png" alt="The Customize 'Rain Study' dialog: a Custom badge, Sound with Style (Studio, default), Movement Gentle/Balanced/Strong, Speed Slow/Normal/Fast, Space Dry/Natural/Spacious, Optional: Keep bass centered and Keep the singer in the middle (add-on), and Preview, Reset to default, Cancel and Apply buttons." width="85%"/>
 </p>
 
-What you can choose, in plain words:
-
 | Choice | What you hear |
 |---|---|
 | **Style** | The ready-made sound the song starts from |
-| **Movement** — Gentle, Balanced, Strong | How far the music travels around your head |
-| **Speed** — Slow, Normal, Fast | How quickly the music goes once around you |
-| **Space** — Dry, Natural, Spacious | How big the room around the music sounds |
+| **Movement**: Gentle, Balanced, Strong | How far the music travels around your head |
+| **Speed**: Slow, Normal, Fast | How quickly the music goes once around you |
+| **Space**: Dry, Natural, Spacious | How big the room around the music sounds |
 | **Keep bass centered** | The drums and bass stay steady in the middle (recommended) |
-| **Keep the singer in the middle** | The music moves; the voice moves only a little and stays near the front (needs the [add-on](#optional-add-on-keep-the-singer-in-the-middle)) |
+| **Keep the singer in the middle** | The music moves; the voice moves only a little and stays close to the middle (needs the [add-on](#optional-add-on-keep-the-singer-in-the-middle)) |
 
 Click **Preview** in the dialog to hear your changes **before** you apply them. If a
-style uses a value between two choices (for example Movement between Gentle and
-Balanced), no choice is highlighted and the line under it says so.
+style uses a value between two choices, no choice is highlighted and the line under it
+says so.
 
 **Save this song differently** (folded) gives this song its own file format, quality,
-loudness, or only part of the song (handy for ringtones). **Advanced** (folded) holds the
-exact numbers behind the choices, plus the path, direction, height, easing, beat sync and
-more; you never need them.
+loudness, or only part of the song. **Advanced** (folded) holds the exact numbers behind
+the choices, plus path, direction, height, easing, beat sync and more; you never need them.
 
 <p align="center">
   <img src="docs/images/customize-advanced.png" alt="The Customize dialog with Advanced open: sliders for Movement amount 0.65, Seconds per circle 12 s and Room amount 0.25, and choices for Sound engine, Path and Direction." width="85%"/>
 </p>
 
-**Several songs at once:** select them (Shift+click or Ctrl+click in the list) and click
-**Customize 2 songs…**. The dialog says how many songs it changes. Only what you change is
-applied to all of them; everything else each song already had stays.
+**Several songs at once:** select them (Shift+click or Ctrl+click) and click **Customize 2
+songs…**. Only what you change is applied to all of them.
 
 <p align="center">
   <img src="docs/images/customize-several.png" alt="The Customize 2 songs dialog: 'Editing 2 songs (City Lights, Midnight Arcade). Only what you change here is applied to all of them', with Style set to Groove." width="85%"/>
 </p>
 
 **The default sound for every song:** click **Customize default…** under **Change
-style**. The dialog then says *Editing defaults for all songs*; songs you customized keep
-their own settings.
+style**. The dialog says *Editing defaults for all songs*; songs you customized keep their
+own settings.
 
----
+### Default and Custom
 
-## Default and Custom
-
-> Audio8D starts with **one set of default settings**. Every song uses those settings
-> **unless you customize that song**.
-
-In the song list, the **Settings** column shows one of two words:
+Audio8D starts with **one set of default settings**. Every song uses them **unless you
+customize that song**. The **Settings** column in the song list says which:
 
 | Word | Meaning |
 |---|---|
@@ -416,95 +393,79 @@ In the song list, the **Settings** column shows one of two words:
 
 **Example.** You change the default style to **Smooth**. Every *Default* song now sounds
 Smooth. A song you had customized to **Strong** stays Strong. Songs you add later follow
-the default too.
+the default.
 
-**Reset to default** removes a song's own settings and makes it follow the main settings
-again. Select the song(s) on step 2 and click **Reset to default**, or open **Customize**
-and click **Reset to default** there.
+**Reset to default** removes a song's own settings. Select the song(s) on step 2 and click
+**Reset to default**, or click **Reset to default** inside **Customize**.
 
----
-
-## Preview your music
+### Preview your music
 
 **Preview** lets you listen before creating anything.
 
-- Preview does **not** create the final output file.
-- Audio8D makes only a **short temporary** piece of audio (30 seconds by default, taken
-  from the loudest part of the song; change it in **Settings → Preview length**).
-- The temporary data is **cleaned up automatically**. It is never saved next to your
-  music or in your output folder.
-- The button always tells you what it will do:
-  - **▶ Preview**: nothing is playing; click to listen.
-  - **◌ Preparing… 40%**: the preview is being made; click again to cancel.
-  - **■ Stop**: it is playing; click to stop.
-- Starting another preview replaces the current one. Only one preview is made at a time.
-- A song you already previewed with the same settings plays again straight away.
+- It makes only a **short temporary** piece of audio (30 seconds by default, from the
+  loudest part; change it in **Settings → Preview length**). It is never saved next to your
+  music, and it is cleaned up automatically.
+- **On Windows** the preview plays inside Audio8D and the button shows what it will do:
+  **▶ Preview** (click to listen), **◌ Preparing… 40%** (click to cancel), **■ Stop**
+  (click to stop).
+- **On macOS and Linux** the preview opens in your usual music player when it is ready;
+  stop it in that player.
+- Starting another preview replaces the current one. A song you already previewed with the
+  same settings plays again straight away.
+- Inside **Change style** and **Customize**, **Preview** plays the style or changes you are
+  looking at, **without applying them**.
 - To **save** a permanent file, use **Create** (step 4).
 
 <p align="center">
-  <img src="docs/images/preview.png" alt="The song list while a preview plays: the toolbar button says Stop, and Rain Study's row says Stop and Customize; the status bar says Playing a preview of Rain Study." width="85%"/>
+  <img src="docs/images/preview.png" alt="The song list while a preview plays (Windows): the toolbar button says Stop, and Rain Study's row says Stop and Customize; the status bar says Playing a preview of Rain Study." width="85%"/>
 </p>
 
-Inside **Change style** and **Customize**, **Preview** plays the selected song with the
-style or changes you are looking at, **without applying them**.
+### Where the new files go
 
----
+Step 3 starts with **Where the new files go (all songs)**:
 
-## All songs or one song
+- **Save them**: *Next to each original* (the default) or *In one folder I choose*
+  (**Browse…**);
+- **File names**: *'Song (8D)'* (recommended), *Same as the original* (needs a folder), or
+  *Custom…* (one song only);
+- **If the 8D file exists**: *Skip that song* (running again only makes what's missing) or
+  *Replace it*;
+- **Original songs**: *Keep them* (the default), *Replace them*, or *Replace, keep '(8D)'*.
+  A replaced original goes to the **Recycle Bin** on Windows or the **Trash** on macOS and
+  Linux, so you can get it back. On Windows, on a drive without a Recycle Bin, it is kept, renamed
+  *"… (original)"*.
 
-On **step 3 · Output**, *How the songs are saved* starts with **Settings for:
-All songs | One song**. Both parts of that card, the main choices and **More output
-options**, follow this one choice.
+<p align="center">
+  <img src="docs/images/output-settings.png" alt="Step 3 Output: Where the new files go (all songs): Save them In one folder I choose (C:\Audio8D Demo\Music 8D), File names, If the 8D file exists, Original songs; then How the songs are saved: Settings for All songs | One song, with All songs chosen." width="100%"/>
+</p>
 
-- **All songs** (where it starts): the line says *Changes here apply to every song
-  without its own output settings*. That includes songs you add later.
+### All songs or one song
+
+The next card, *How the songs are saved*, starts with **Settings for: All songs | One
+song**. Everything in that card, including **More output options**, follows this choice.
+
+- **All songs** (where it starts): *Changes here apply to every song without its own
+  output settings*, including songs you add later. **Reset to recommended** puts these
+  back to MP3, High quality, Match music apps; songs with their own settings keep them.
 - **One song**: a **Song** list appears, set to the song selected on step 2 (pick another
-  in the **Song** list if you like). The line says *Changes here apply to “Glass Clouds” only*, with a
-  **Default** or **Custom** badge. Everything you change below (format, quality,
-  loudness, bitrate, *Reach the loudness exactly*, peak limit, album picture, the *(8D)*
-  title, only part of the song) is kept for that song only. *More output options* says
-  *For “Glass Clouds” only*.
+  in the **Song** list). The line says *Changes here apply to "Glass Clouds" only*, with a
+  **Default** or **Custom** badge. **Reset to default** removes only that song's own output
+  settings; its sound (step 2) is not touched.
 
 <p align="center">
   <img src="docs/images/output-scope-song.png" alt="Step 3 Output, How the songs are saved: Settings for All songs | One song with One song chosen, Song Glass Clouds, a Custom badge, 'Changes here apply to “Glass Clouds” only. It has its own output settings.', a Reset to default button, Output format M4A and Quality High, and More output options 'For “Glass Clouds” only'." width="100%"/>
 </p>
 
-What happens when you change things later:
+Changing an **All songs** setting never changes a song's own choice (change the default to
+Opus, and a song you set to M4A stays M4A). A choice equal to the default doesn't make a
+song Custom. The same per-song settings are also under **Customize → Save this song
+differently** on step 2.
 
-- Changing a **default** changes every song that follows the defaults, but **never** a
-  song's own choice. (Change the default to Opus, and a song you set to M4A stays M4A.)
-- **Reset to default** (next to the badge, for One song) removes only that song's own
-  output settings; it follows All songs again. Its sound (step 2) is not touched.
-- **Reset to recommended** (the same place, for All songs) puts the defaults back to MP3,
-  High quality, Match music apps. Songs with their own output settings keep them.
-- A choice equal to the default is simply the default: it doesn't make the song Custom.
+Audio8D remembers the output defaults, the default style and the preview length for next
+time. It never remembers *Replace them* or *Replace it*, and a song's own settings last
+only while that song is on the list.
 
-The same per-song output settings are also under **Customize → Save this song
-differently** on step 2. On the command line, the run's options are the defaults and a
-`--per-song` line is one song's override (`--default` on a line resets it); see
-[Give some songs their own settings](#give-some-songs-their-own-settings). For example:
-
-```powershell
-audio8d "C:\Music" --format opus --per-song songs.txt
-```
-
-with this line in `songs.txt` saves every song as Opus except *Glass Clouds*, which is
-saved as M4A:
-
-```text
-"Glass Clouds.mp3" --format m4a
-```
-
-Audio8D remembers the **output defaults**, the default **style** and the **preview
-length** for next time. It never remembers *Replace them* or *Replace it*, and song
-overrides last only while those songs are on the list.
-
----
-
-## Choosing a file format
-
-Choose it on **step 3 · Output** (**Output format**), for all songs or for one song (see
-[All songs or one song](#all-songs-or-one-song)).
+### Choosing a file format
 
 | Format | Choose it when | Good to know |
 |---|---|---|
@@ -514,17 +475,18 @@ Choose it on **step 3 · Output** (**Output format**), for all songs or for one 
 | **M4A** | You want good quality with smaller files | Great on iPhone and in iTunes |
 | **Opus** | You want efficient modern compression | The smallest files; some older players can't open it |
 
-**Quality** (for MP3, M4A and Opus) is **High** by default. *Medium* and *Small* make
-smaller files. **High** means the best each format needs: MP3 320 kbps, M4A 256 kbps,
-Opus 192 kbps. FLAC and WAV are lossless, so they have no quality to choose. **More output options**
-holds the rest, and shows only what applies to the chosen file type and loudness:
+**Quality** (MP3, M4A and Opus) is **High** by default: MP3 320 kbps, M4A 256 kbps, Opus
+192 kbps. *Medium* and *Small* make smaller files. FLAC and WAV are lossless, so they have
+no quality to choose. A higher bitrate or FLAC keeps more of what the song has, but can't
+bring back detail a compressed source (such as a 128 kbps MP3) never had.
 
-- **Bitrate (kbps)**: the exact rate behind Quality (Auto, 128 to 320); not shown for FLAC
-  and WAV;
+**More output options** (click **Show**) holds the rest, showing only what applies:
+
+- **Bitrate (kbps)**: the exact rate behind Quality (Auto, 128 to 320); not for FLAC/WAV;
 - **Reach the loudness exactly**: off (recommended) never squeezes the loudest moments, so
-  a very dynamic song may end a little quieter; shown only when a loudness is chosen;
-- **Peak limit**: in dB, recommended -1.5 dB for MP3, M4A and Opus, -1.0 dB for FLAC and
-  WAV;
+  a very dynamic song may end a little quieter;
+- **Peak limit**: the loudest a peak may get, in dB; recommended -1.5 dB for MP3, M4A and
+  Opus, -1.0 dB for FLAC and WAV;
 - **Keep the album picture** and **Add ' (8D)' to the song title**;
 - **Use only part: from / to**: times like 90 or 1:30, for example for a ringtone.
 
@@ -532,218 +494,165 @@ holds the rest, and shows only what applies to the chosen file type and loudness
   <img src="docs/images/output-advanced.png" alt="More output options open for “Glass Clouds” only: Bitrate (kbps) Auto to 320 with 256 chosen, Reach the loudness exactly (off), Peak limit -1.5 dB, Keep the album picture, Add (8D) to the song title, Use only part: from / to." width="100%"/>
 </p>
 
-<p align="center">
-  <img src="docs/images/output-settings.png" alt="Step 3 Output: Where the new files go (all songs): Save them In one folder I choose (C:\Audio8D Demo\Music 8D), File names, If the 8D file exists, Original songs; then How the songs are saved: Settings for All songs | One song, with All songs chosen." width="100%"/>
-</p>
-
----
-
-## Loudness
+### Loudness
 
 Songs from different albums are often not equally loud. Audio8D can fix that.
 
-**Match music apps** (default). Makes your new songs play at about the same volume as
-music from Spotify, YouTube and other apps, so they don't sound quieter than the rest of
-your music. *(Technical target: -14 LUFS.)*
-
-**Keep original loudness.** Each new song is as loud as its original song was. Use it for
-albums whose quiet and loud songs should stay that way.
-
-**Advanced…** shows more: *Apple Music* (-16 LUFS), *TV & radio* (-23 LUFS), *No change*
-(no loudness adjustment; 8D songs are often a little quieter then), or *Custom…* (type a
-level from -30 to -5).
+- **Match music apps** (default): your new songs play at about the same volume as music
+  from Spotify, YouTube and other apps. *(Technical target: -14 LUFS.)*
+- **Keep original loudness:** each new song is as loud as its original was.
+- **Advanced…** shows *Apple Music (-16)*, *TV & radio (-23)*, *No change* (no adjustment;
+  8D songs are then often a little quieter) and *Custom…* (a level from -30 to -5).
 
 Loudness is **measured**, never guessed, and the loudest peaks are protected so nothing
-crackles. **LUFS** is simply the unit used to measure how loud music feels.
+crackles. **LUFS** is simply the unit for how loud music feels.
 
----
+### Create your songs
 
-## Create your songs
+Step 4 · **Create** shows a **Summary**, then anything that must be fixed first (red) or is
+worth knowing (yellow). When everything is fine you see *Everything is ready*.
 
-Step 4 · **Create** shows a short **Summary** (how many songs, the sound, output format,
-loudness, folder and file names), then anything that must be fixed first in red, or
-worth knowing in yellow. When everything is fine you see *Everything is ready*.
-
-Click **Create N songs**. During creating:
-
-- the bar and the line under it show *4 of 12 done · now: Nocturne in Blue · about 0:21 left*;
-- each song's row says what it is doing, then **Done** with its new file name;
-- **Stop** (or **Esc**) stops after the current step. Finished songs are kept; the song
-  being made is cleaned up.
+Click **Create N songs**. While it works, the bar shows *4 of 12 done · now: Nocturne in
+Blue · about 0:21 left*, and each song's row says what it is doing, then **Done**. **Stop**
+(or **Esc**) stops after the current step; finished songs are kept and the unfinished one
+is cleaned up. You can keep using the window.
 
 <p align="center">
   <img src="docs/images/create-progress.png" alt="Creating: the Create 12 songs button greyed out, a red Stop button, the progress bar at one third, '4 of 12 done · now: Nocturne in Blue (+1 more) · about 0:21 left', and rows saying Done, Saving the file 0% and Waiting." width="100%"/>
 </p>
 
-After creating: **Play** plays the selected new song, **Open folder** opens its folder,
-**Show only songs with a problem** filters the list, **Copy problem list** copies the
-problems (to send to someone helping you), and **Try failed songs again** retries only
-the songs that failed.
+Afterwards: **Play** plays the selected new song, **Open folder** opens its folder, **Show
+only songs with a problem** filters the list, **Copy problem list** copies the problems,
+and **Try failed songs again** retries only the songs that failed.
 
-If a song's 8D file already exists, Audio8D skips that song (so running again only makes
-what's missing). To make them again, choose **If the 8D file exists: Replace it** on
-step 3.
+If a song's 8D file already exists, it is skipped. To make it again, choose **If the 8D
+file exists: Replace it** on step 3.
 
----
-
-## Optional add-on: keep the singer in the middle
+### Optional add-on: keep the singer in the middle
 
 <p align="center">
   <img src="docs/images/addon-manager.png" alt="Settings, the Add-on card: Not installed, four boxes What it does, Benefits, Changes to your computer and Removal, the Python used to install it, and the buttons Install add-on and Check again." width="100%"/>
 </p>
 
-### What is it?
+#### What is it?
 
-An extra part, called **Demucs**, a free AI model that can separate a singer's voice from
-the music. It runs with **PyTorch** (about 1 GB). It is not included in Audio8D because of
-its size.
+An extra part called **Demucs**, a free AI model that separates a singer's voice from the
+music, with **PyTorch**, the engine it runs on. It is not included because of its size.
 
-### What does it give me?
+#### What does it give me?
 
-The option **Keep the singer in the middle**. With it, the band moves around your head
-while the voice moves only a little and stays clear near the front. Many people find songs with
-vocals more natural this way.
+The option **Keep the singer in the middle**: the band moves around your head while the
+voice moves only a little and stays close to the middle.
 
-### Do I need it?
+#### Do I need it?
 
 **No.** Audio8D works fully without it. Only this one option needs it.
 
-### What changes on my computer?
+#### What changes on my computer?
 
-Audio8D creates its **own add-on folder** and downloads about **1 GB** into it (Demucs and
-PyTorch), using a Python that is already on your computer. **Nothing else is changed**:
-not your Python, not your other programs. The folder is:
+Audio8D makes its **own add-on folder** and downloads Demucs and PyTorch into it, using a
+Python that is already on your computer (3.10 or newer; on Windows use 64-bit Python).
+**Nothing else is changed**: not your Python, not your other programs.
+
+- **Download size:** about **1 GB on Windows**; on Linux PyTorch can be **several GB**.
+- It needs an internet connection and takes a few minutes or more.
+- On Linux, Python's venv module must be installed (`sudo apt install python3 python3-venv`).
 
 | Windows | macOS | Linux |
 |---|---|---|
 | `%LOCALAPPDATA%\Audio8D\addon` | `~/Library/Application Support/Audio8D/addon` | `~/.local/share/audio8d/addon` |
 
-It works on Windows, macOS and Linux (64-bit Python 3.10 or newer). Installing needs an
-internet connection and takes a few minutes.
+#### How do I install it?
 
-### How do I install it?
+**Window:** **Settings** → the **Add-on** card → read the four boxes → **Install add-on** →
+confirm. You can keep using Audio8D while it installs; **Stop** cancels it, and nothing
+half-installed is kept. If no Python is found, the card says how to get one.
 
-**Window:** **Settings** → the **Add-on** card → read the four boxes → **Install add-on**
-→ confirm. You can keep using Audio8D while it installs; **Stop** cancels it, and nothing
-half-installed is kept. If Python isn't found, the card says how to get it
-(python.org; tick *Add python.exe to PATH* when installing).
-
-While it works, the card shows the step and, where it can be measured, a real
-percentage, for example *Downloading packages — 42% · torch-2.5.1-cp312-cp312-win_amd64.whl (12 of 31)*, counting the files downloaded. Steps that
-can't be measured (making the folder, working out what to download, pip's install step)
-show a moving bar and no number. The bar never goes backwards. **100%** appears only
-when the work really succeeded (*Installed successfully — 100%*); if it fails or you
-stop it, the card says where it stopped, for example *(stopped at 42%)*. **Show
-details** lists pip's own output.
+The card shows each step and, where it can be measured, a real percentage, for example
+*Downloading packages — 42% · torch-….whl (12 of 31)* (files downloaded). Steps that can't
+be measured show a moving bar with no number. **100%** appears only when it really worked
+(*Installed successfully — 100%*); a failed or stopped install says where it stopped, for
+example *(stopped at 42%)*. **Show details** lists pip's own output.
 
 <p align="center">
   <img src="docs/images/addon-progress.png" alt="The Add-on card while installing: an Installing badge, a Stop button, the progress bar at 42% and 'Downloading packages — 42% · torch (12 of 31)', with Show details under it." width="100%"/>
 </p>
 
-**Command line:**
+**Command line:** `audio8d --install-addon`
 
-```powershell
-audio8d --install-addon
-```
+#### How do I check whether it is installed?
 
-### How do I check whether it is installed?
-
-**Window:** Settings → Add-on shows **✓ Installed** or **○ Not installed**
-(or **Needs repair** if the folder was damaged).
+**Window:** Settings → Add-on shows **✓ Installed**, **○ Not installed**, or **Needs
+repair**. **Command line:** `audio8d --addon-status` (exit code 0 = installed, 1 = not).
 
 <p align="center">
   <img src="docs/images/addon-installed.png" alt="The Add-on card when installed: Installed: 'Keep the singer in the middle' can be used; where it is installed; the buttons Uninstall add-on, Repair (reinstall) and Check again." width="100%"/>
 </p>
 
-**Command line** (exit code 0 = installed, 1 = not installed):
+#### How do I use it?
 
-```powershell
-audio8d --addon-status
-```
+Customize a song (step 2) and switch on **Keep the singer in the middle**. Command line:
+`audio8d "My Song.mp3" --vocals center`. Each such song takes a minute or two longer.
 
-### How do I use it?
+#### How do I remove it?
 
-Customize a song (step 2) and switch on **Keep the singer in the middle**. From the
-command line: `audio8d "My Song.mp3" --vocals center`. Each such song takes a minute or
-two longer.
-
-### How do I remove it?
-
-**Window:** Settings → Add-on → **Uninstall add-on** → confirm. The card counts the
-files first, then shows the share removed, ending with *Uninstalled successfully — 100%*.
+**Window:** Settings → Add-on → **Uninstall add-on** → confirm. The card ends with
+*Uninstalled successfully — 100%*. **Command line:** `audio8d --uninstall-addon`.
 
 <p align="center">
   <img src="docs/images/addon-uninstall.png" alt="The question Uninstall the add-on?: the add-on folder will be deleted; Audio8D keeps working; Cancel and Uninstall buttons." width="60%"/>
 </p>
 
-**Command line:**
+**Repair (reinstall)** deletes the add-on folder and installs it again. Command line:
+`audio8d --repair-addon`.
 
-```powershell
-audio8d --uninstall-addon
-```
+After uninstalling, Audio8D keeps working; only *Keep the singer in the middle* becomes
+unavailable, and Audio8D tells you which songs used it. If you installed Demucs yourself
+into your own Python, Audio8D uses it too but never removes it.
 
-**Repair (reinstall)** deletes the add-on folder and installs it again, for when it stops
-working. Command line: `audio8d --repair-addon`.
-
-### What happens after uninstalling?
-
-Audio8D keeps working exactly as before. Only **Keep the singer in the middle** becomes
-unavailable. Songs that were set to use it can't be created until you install the add-on
-again or switch that option off for them; Audio8D tells you which songs.
-
-> If you installed Demucs yourself into your own Python, Audio8D uses it too, but it never
-> removes it; the card shows the command to remove it yourself.
-
----
-
-## Your own styles
+### Your own styles
 
 On **Your styles** (left side) you can make a style by answering a few questions (music
 type, movement, speed, space, headphones or speakers). Audio8D checks it, suggests a name
-and a description, and **Try it** plays the selected song with it. Saved styles appear in
-**Change style** and **Customize** like the built-in ones.
+and a description, and **Try it** plays the selected song with it. You can also save your
+current default sound as a style. Saved styles appear in **Change style** and
+**Customize** like the built-in ones.
 
-You can also save your current default sound as a style. Each saved style has these
-buttons:
+Each saved style has these buttons:
 
 - **Use**: makes it the default style (songs you customized keep theirs);
-- **Edit**: opens the style in the Customize dialog with a **Name** box. Change the
-  sound (Movement, Speed, Space, the Optional and Advanced parts) and the name, listen
-  with **Preview**, then click **Save changes**. The same style is updated; no copy is
-  made. Songs that use it get the new sound at once, and a new name is used everywhere.
-  **Cancel** keeps the style as it was;
-- **Rename**, **Duplicate**, **Export** (to share as a small `.json` file) and **Delete**;
+- **Edit**: opens the style with a **Name** box. Change the sound (Movement, Speed, Space,
+  the Optional and Advanced parts) and the name, listen with **Preview**, then click
+  **Save changes**. The same style is updated; no copy is made. Songs that use it get the
+  new sound at once. **Cancel** keeps the style as it was;
+- **Rename**, **Duplicate**, **Export** (a small `.json` file to share) and **Delete**;
   **Import a style…** adds one from a file.
-
-Saving checks the style the same way every time: the name (words starting with a
-capital, not taken, not a built-in name, at most 40 characters) and the quality
-check (a style with no movement is refused; a doubtful one asks *Save as it is* or
-*Improve and save*). Built-in styles can't be edited or renamed; **Duplicate** one of
-yours, or save your current sound, to start from it. A style is only a sound: file
-format and loudness are never part of it.
 
 <p align="center">
   <img src="docs/images/edit-style.png" alt="The Edit your style “Late Night” dialog: a Name box with Late Night Drive and 'It will be saved as Late Night Drive.', Movement, Speed and Space, Keep bass centered, and Preview, Cancel and Save changes buttons." width="70%"/>
 </p>
 
----
+Every save checks the name (words starting with a capital, not taken, not a built-in name,
+at most 40 characters) and the sound (a style with no movement is refused; a doubtful one
+asks *Save as it is* or *Improve and save*). Built-in styles can't be edited or renamed;
+save your current sound or duplicate one of your styles to start from it. A style is only a
+sound: file format and loudness are never part of it.
 
-## Settings, keyboard and getting help
+### Settings, keyboard and getting help
 
 **Settings** (left side) holds:
 
-- the **System check**: every program Audio8D depends on, with *Ready*, *Missing*,
-  *Invalid*, *Optional* or *Unavailable* and what to do; **Check everything again**
+- the **System check**: every program Audio8D depends on, marked *Ready*, *Missing*,
+  *Invalid*, *Optional* or *Unavailable*, with what to do; **Check everything again**
   re-runs it;
-- **FFmpeg and FFprobe**: normally found automatically; **Browse…** to choose your own;
+- **FFmpeg and FFprobe**: normally found automatically; **Browse…** chooses your own, and
+  **Find automatically** goes back;
 - the **Add-on** (see above);
 - **Appearance**: **Theme** (Light, Dark or System), **Size** (text and controls), and
   **Preview length**;
-- **Logs and saved data**, and **About** with **Open the full guide**, which opens this
-  guide in your web browser. If the browser can't start, the address is copied so you can
-  paste it into any browser.
+- **Logs and saved data**, and **About** with **Open the full guide** (this page).
 
-**Keyboard**
+**Keyboard** (Ctrl on every system; on macOS too, not Cmd, though untested there):
 
 | Keys | What they do |
 |---|---|
@@ -755,17 +664,12 @@ format and loudness are never part of it.
 | **Ctrl+P** | Preview (or stop) the selected song |
 | **Ctrl+Enter** | Create |
 | **Ctrl+F** | Search the song list |
-| **Enter** (in the song list) | Customize the selected song |
-| **Space** (in the song list) | Preview the selected song |
+| **Enter** / **Space** (in the song list) | Customize / preview the selected song |
 | **Esc** | Close a dialog without changing anything; otherwise stop creating or a preview |
-| **Enter** (in a dialog) | Apply |
-
-States are always said in words as well as colour (for example *Default*, *Custom*,
-*✓ Installed*, *● Selected*).
 
 **When something goes wrong,** Audio8D says what happened in plain words and what to do.
-The technical details are folded under **Show details** (and **Copy details** copies them
-for someone helping you).
+The technical details are under **Show details**; **Copy details** copies them for someone
+helping you.
 
 <p align="center">
   <img src="docs/images/error-message.png" alt="A problem message: Something went wrong. FFmpeg couldn't process this song. What to do: Audio8D isn't allowed to write there; choose another folder. Show details, Copy details and OK." width="60%"/>
@@ -776,97 +680,61 @@ for someone helping you).
 
 ---
 
-## Command line usage
+## Command line
 
-Everything the window does can also be done by **typing commands** in a terminal. This is
-handy for many songs, for scripts, or if you prefer typing.
+Everything the window does can also be done by **typing commands**, handy for many songs
+or for scripts.
 
 **How to start it:**
 
-| You have | Type |
+| You have | Type (in a terminal) |
 |---|---|
-| The Windows app (in its `bin` folder) | `.\audio8d-cli.exe` |
-| The source code (in the `8D` folder) | `python src\__main__.py` |
-| Installed with pip | `audio8d` |
+| The Windows package | `.\audio8d-cli.exe` (in the `Audio8D` folder) |
+| The Linux or macOS package | `./audio8d-cli` (in the `Audio8D` folder) |
+| The source code (developers) | `python src\__main__.py` or `python src/__main__.py` (in `8D`, venv on) |
 
-The examples below write **`audio8d`**; use whichever of these fits. Put names with spaces
-in **"quotes"**. Typing `audio8d` alone starts a **step-by-step helper** that asks you a few
-questions.
+The examples below write **`audio8d`**; replace it with the line that fits you. Put names
+with spaces in **"quotes"**. Typing the command alone starts a **step-by-step helper**
+that asks you a few questions.
 
-### Make one song
+### Make songs
 
 ```powershell
 audio8d "My Song.mp3"
-```
-
-What happens: it shows the settings, makes the song and checks it. You get
-**`My Song (8D).mp3`** next to the original (Studio style, MP3 High quality, as loud as
-music apps). The end of the output looks like this:
-
-```text
-  Created in 4.5 s  ->  C:\Music\Rain Study (8D).mp3  (3.6 MB)
-  Loudness: measured -17.8 LUFS, turned up 3.8 dB  ->  about -14.0 LUFS
-  Check: -14.1 LUFS, peaks -2.5 dBTP, range 5.0 LU, mono-safe (correlation +0.56)
-  Put on your headphones and press play!
-```
-
-### Make several songs (a folder)
-
-```powershell
 audio8d "C:\Music" --output-dir "C:\Music 8D"
 audio8d "C:\Music" --recursive --output-dir "C:\Music 8D" --jobs 4
 ```
 
-`--recursive` also takes songs from sub-folders; `--jobs 4` makes 4 songs at once. Each
-finished song gets a line such as `[2/12] ✓  Glass Clouds (8D).mp3`, then a total.
+One song gives **`My Song (8D).mp3`** next to the original (Studio style, MP3 High
+quality, as loud as music apps). With a folder, `--recursive` also takes songs from
+sub-folders and `--jobs 4` makes 4 songs at once.
 
-### Choose a style
+### Choose the sound
 
 ```powershell
 audio8d "My Song.mp3" --style smooth
 audio8d --list-styles
+audio8d "My Song.mp3" --movement gentle --speed slow --space spacious
 ```
 
-`--list-styles` shows every style with its exact values (your own styles included).
+`--list-styles` shows every style with its exact values (yours included). Exact values
+also work (`--intensity`, `--rotation-seconds`, `--ambience`); don't give a word and its
+exact value together.
 
-### Change the output format
+### Choose how it is saved
 
 ```powershell
 audio8d "My Song.mp3" --format flac
 audio8d "My Song.mp3" --format m4a --bitrate 192
-```
-
-Formats: `mp3` (default), `flac`, `wav`, `m4a`, `opus`. Quality is High unless you give
-`--bitrate` (128, 160, 192, 224, 256, 320 or `auto`).
-
-### Set the loudness
-
-```powershell
 audio8d "My Song.mp3" --loudness match
 audio8d "My Song.mp3" --loudness -16
 ```
 
-`-14` is *Match music apps* (default), `match` is *Keep original loudness*, `off` means no
-change; any number from -30 to -5 also works.
+Formats: `mp3` (default), `flac`, `wav`, `m4a`, `opus`. Loudness: `-14` is *Match music
+apps* (default), `match` is *Keep original loudness*, `off` means no change; any number
+from -30 to -5 also works.
 
-### Customize the sound
-
-The same friendly words as the window:
-
-```powershell
-audio8d "My Song.mp3" --movement gentle --speed slow --space spacious
-```
-
-Or exact values (advanced):
-
-```powershell
-audio8d "My Song.mp3" --intensity 0.7 --rotation-seconds 10 --path figure8 --elevation 0.3
-```
-
-Don't give a word and its exact value together (`--movement` with `--intensity`); Audio8D
-stops and tells you to use only one.
-
-### Preview from the command line
+### Listen first
 
 ```powershell
 audio8d "My Song.mp3" --preview
@@ -875,24 +743,14 @@ audio8d "My Song.mp3" --compare
 ```
 
 `--preview` makes a short sample (30 seconds, or the number you give) in a temporary
-folder, **plays it**, and **deletes it** when it ends (press Enter or Ctrl+C to stop
-early). Nothing is saved next to your music. `--compare` plays the original, a short
-pause, then the 8D version, at the same loudness. To keep a sample on purpose, name the
-file: `audio8d "My Song.mp3" "sample.wav" --preview 20`.
-
-### Use the defaults
-
-```powershell
-audio8d "My Song.mp3"
-```
-
-Giving no style or setting uses the defaults: **Studio**, **MP3 High quality**, **Match
-music apps**, saved next to the original as `<song> (8D).mp3`. These are the same defaults
-as the window.
+folder, plays it and deletes it afterwards (on Windows press Enter or Ctrl+C to stop
+early; on macOS and Linux it opens in your music player). `--compare` plays the original,
+then the 8D version, at the same loudness. To keep a sample, name the file:
+`audio8d "My Song.mp3" "sample.wav" --preview 20`.
 
 ### Give some songs their own settings
 
-For a folder, a small text file can give some songs their own settings (**one song per
+For a folder, a small text file gives some songs their own settings (**one song per
 line**, then the same options you would type):
 
 ```text
@@ -906,14 +764,13 @@ line**, then the same options you would type):
 audio8d "C:\Music" --per-song songs.txt
 ```
 
-- A line names a song by its file name, its name without `.mp3`, a pattern (`*.flac`) or
-  a path. Every matching line applies, top to bottom, so later lines win.
-- **`--default`** on a line is **Reset to default**: that song follows the command's
-  settings again, whatever earlier lines said.
-- Settings for the whole run (`--output-dir`, `--jobs`…) can't go on a line; the message
-  names the line.
+- The options on the command itself are the defaults; a line is one song's override.
+- A line names a song by its file name, its name without the extension, a pattern
+  (`*.flac`) or a path. Every matching line applies, top to bottom.
+- **`--default`** on a line is **Reset to default** for that song.
+- Settings for the whole run (`--output-dir`, `--jobs`…) can't go on a line.
 
-### Add-on: status, install, remove
+### The add-on, checks and help
 
 ```powershell
 audio8d --addon-status
@@ -921,37 +778,22 @@ audio8d --install-addon
 audio8d --repair-addon
 audio8d --uninstall-addon
 audio8d "My Song.mp3" --vocals center
-```
-
-`--addon-status` explains the add-on and exits with 0 when installed, 1 when not.
-Installing, repairing and uninstalling print the same steps and real percentages as the
-window, and 100% only when it worked; a failed or stopped run says where it stopped,
-for example *(stopped at 42%)*.
-Installing and uninstalling again changes nothing and says so. `--python PATH` chooses the
-Python used to install it.
-
-### Check that everything works
-
-```powershell
 audio8d --check
-```
-
-It runs every program Audio8D needs and says what is ready and what to fix (exit code 0 =
-ready, 1 = something required must be fixed). Add `--verbose` for technical details.
-
-### Show help
-
-```powershell
 audio8d --help
 audio8d --version
 ```
 
-`--help` lists every option with a short explanation and the defaults.
+- `--addon-status` explains the add-on (exit code 0 = installed, 1 = not).
+  Installing, repairing and uninstalling show the same steps and real percentages as the
+  window. `--python PATH` chooses the Python used to install it.
+- `--check` runs every program Audio8D needs and says what to fix (exit code 0 = ready).
+  Add `--verbose` for technical details.
+- **Exit codes:** 0 = done; 1 = a problem was explained (for example a song failed);
+  2 = the command itself was mistyped.
 
-### Exit codes
-
-**0** = done; **1** = a problem was explained (for example a song failed); **2** = the
-command itself was mistyped (the message says what, with an example).
+The command line uses the FFmpeg, Python and styles you chose in the window's Settings.
+Editing or renaming a saved style is done in the window; the command line can only save a
+new one (`--save-style NAME`).
 
 ### All options
 
@@ -976,7 +818,7 @@ command itself was mistyped (the message says what, with an example).
 | `--loudness LEVEL\|match\|off`, `--exact-loudness` | Loudness |
 | `--limiter-ceiling 0.0625..1` | Peak limit (advanced; 0.84 ≈ -1.5 dB, 0.89 ≈ -1.0 dB) |
 | `--output-dir FOLDER`, `--name 8d\|original` | Where and under which name |
-| `--replace`, `--overwrite` | Replace the originals (they go to the Recycle Bin); replace existing 8D files |
+| `--replace`, `--overwrite` | Replace the originals (to the Recycle Bin or Trash); replace existing 8D files |
 | `--start TIME`, `--end TIME` | Only part of the song (e.g. `1:30`) |
 | `--no-cover`, `--keep-title`, `--no-check` | No album picture; don't add (8D) to the title; don't check the result |
 
@@ -985,213 +827,160 @@ command itself was mistyped (the message says what, with an example).
 | `--recursive`, `--jobs N` | With a folder: sub-folders too; N songs at once |
 | `--per-song FILE` | Settings of their own for some songs |
 | `--preview [SECONDS]`, `--compare`, `--play` | Listen first; play the new file |
-| `--save-style NAME` | Save these sound settings as your own style |
+| `--save-style NAME` | Save these sound settings as a new style of your own |
 | `--list-styles`, `--gui`, `--verbose`, `--version`, `--help` | Styles, the window, details, version, help |
 | `--check`, `--ffmpeg PATH`, `--ffprobe PATH`, `--python PATH` | Check the setup; choose programs for this run |
 | `--addon-status`, `--install-addon`, `--repair-addon`, `--uninstall-addon` | The add-on |
 
-Older option names still work in scripts: `--preset` (= `--style`), `--list-presets`
-and `--save-preset`. The older style names `lossless`, `streaming` and `hifi` also still
-work; unlike the styles above, they also set how the file is saved (FLAC, exact loudness,
-or FLAC with the original loudness), as they always did.
-
-The command line uses the FFmpeg, Python and styles you chose in the window's Settings.
+Older names still work in scripts: `--preset` (= `--style`), `--list-presets`,
+`--save-preset`, and the style names `lossless`, `streaming` and `hifi` (which, unlike the
+styles above, also set how the file is saved).
 
 ---
 
-## The window and the command line do the same job
+## Troubleshooting
 
-Both use the same code for every decision, so the same choices give the same songs.
+### Audio8D cannot find FFmpeg, or every song fails
 
-### Choose the Studio style
+Audio8D opens **Settings → System check** by itself and says what is wrong.
 
-**Window:** step 2 → **Change style** → click **Studio** → **Apply**.
+- **A package:** FFmpeg is inside the `_internal` folder (or inside `Audio8D.app`).
+  **Extract the ZIP again** into a new folder and use that copy; don't move files out of
+  the `Audio8D` folder.
+- **In the window:** **Settings → FFmpeg and FFprobe → Find automatically**, or **Browse…**
+  to choose an FFmpeg 7 or newer and **Save and use**, then **Check everything again**.
+- **Command line:** add `--ffmpeg PATH --ffprobe PATH` to use other copies for one run.
+- **From source:** see [Running from source](#running-from-source). If songs with any room
+  sound (every style except Voice) fail and Audio8D says *Your FFmpeg is older than
+  version 7*, install FFmpeg 7 or newer, even when `--check` says it is ready.
+- **From source, the window doesn't open:** Tk or the window packages are missing. Linux:
+  `sudo apt install python3-tk`; macOS: `brew install python-tk@3.13`; then, with the
+  venv on, `python -m pip install customtkinter pillow`.
 
-```powershell
-audio8d "My Song.mp3" --style studio
-```
+### The package won't start
 
-### Make the movement gentle and slow for one song
+- **Windows:** *"Windows protected your PC"* → **More info** → **Run anyway**. Make sure you
+  extracted the ZIP first and started `Audio8D.exe` from the extracted `Audio8D` folder.
+- **Linux:** *Permission denied* → `chmod +x Audio8D/Audio8D Audio8D/audio8d-cli`. The
+  package needs 64-bit x86 and glibc 2.35 or newer (check with `ldd --version`); the window
+  needs a desktop session.
+- **macOS:** right-click `Audio8D.app` → **Open**; if it is "damaged", run
+  `xattr -dr com.apple.quarantine Audio8D.app`.
 
-**Window:** step 2 → select the song → **Customize…** → Movement **Gentle**, Speed
-**Slow** → **Apply**.
+### The song cannot be processed
 
-```powershell
-audio8d "My Song.mp3" --movement gentle --speed slow
-```
+The message says why. Common causes: the file isn't really music, is damaged, or was moved
+after you added it. Check that the song plays in your music app, or use another copy.
+Other songs are not affected.
 
-### Save as FLAC with the original loudness
+### Preview does not play
 
-**Window:** step 3 → Output format **FLAC — lossless quality** → Loudness **Keep original
-loudness**.
+- Wait for **Preparing…** to finish; long songs take a few seconds.
+- Check your volume and that headphones are connected.
+- On Linux, `xdg-utils` must be installed and you need a default music player; the preview
+  opens there, not inside Audio8D (the same on macOS).
 
-```powershell
-audio8d "My Song.mp3" --format flac --loudness match
-```
+### Output folder cannot be written
 
-### One song different from the rest, then back to default
+*"Audio8D isn't allowed to save in …"*: choose a folder you own, such as your **Music**
+folder (step 3, **In one folder I choose → Browse…**). Close any program that has the file
+open.
 
-**Window:** step 2 → select *Rain Study* → **Customize…** → Style **Smooth** → **Apply**.
-Later: select it → **Reset to default**.
+### The add-on will not install
 
-```powershell
-audio8d "C:\Music" --per-song songs.txt
-```
+- It needs **Python 3.10 or newer** (64-bit on Windows). The Add-on card says if Python is
+  missing or too old; on Windows install it from python.org (tick *Add python.exe to PATH*)
+  and click **Find automatically**. On Linux, install `python3-venv`.
+- It needs an internet connection and enough free space (about 1 GB on Windows, several GB
+  on Linux).
+- **Show details** on the card has pip's own words. Try **Repair (reinstall)**.
 
-(with a `songs.txt` line `"Rain Study.mp3" --style smooth`; change that line to
-`"Rain Study.mp3" --default`, or remove it, to reset.)
+### I customized a song by accident
 
-### Listen first
+Select it on step 2 and click **Reset to default**. Changes in **Customize** are only kept
+when you click **Apply**; **Cancel** changes nothing.
 
-**Window:** step 2 → select the song → **Preview**.
+### The output is too loud or too quiet
 
-```powershell
-audio8d "My Song.mp3" --preview
-```
+Step 3 → **Loudness**: **Match music apps** makes songs as loud as other music; **Keep
+original loudness** keeps each song as it was.
 
-### The add-on
+### The movement feels too strong
 
-**Window:** Settings → Add-on → **Install add-on** / **Uninstall add-on**.
+Choose a gentler style (**Gentle**, **Front** or **Smooth**), or **Customize** the song
+and set **Movement: Gentle** and **Speed: Slow**.
 
-```powershell
-audio8d --addon-status
-audio8d --install-addon
-audio8d --uninstall-addon
-```
+### A song asks for the singer add-on
+
+*"… keep the singer in the middle, but the singer add-on isn't ready"*: install the add-on
+(Settings → Add-on), or customize those songs and switch the option off.
 
 ---
 
-## Settings reference
+## Reference
 
-The recommended values are the defaults; you only need to change them if you want a
-different sound.
+### Settings and defaults
 
 | Setting | What it changes | Default | Simple recommendation |
 |---|---|---|---|
-| Style | The whole sound, as a ready-made set | Studio | Studio; Gentle for acoustic and classical |
+| Style | The whole sound, as a ready-made set | Studio | Studio; Gentle for acoustic music |
 | Movement | How far the music travels around you | Balanced (0.80) | Balanced; Gentle for calm music |
-| Speed | How quickly it goes around | Normal (8 s per circle) | Normal; under 6 s can make some people dizzy |
+| Speed | How quickly it goes around | Normal (8 s per circle) | Normal; faster than 5 s can make some people dizzy |
 | Space | How big the room sounds | Natural (0.25) | Natural; Dry for voices |
 | Keep bass centered | The bass (below 120 Hz) stays in the middle | On | On |
-| Height | Lets the sound float above ear level | 0 (ear level) | 0 for natural listening |
+| Height | Lets the sound float above ear level | 0 (ear level) | 0 |
 | Ease in and out | The movement grows in at the start and settles at the end | 3 s | 3 s |
 | Spin in time with the beat | Each circle lasts whole bars of music | Off (on in Groove) | On for dance and pop |
-| Keep the singer in the middle | The music moves; the voice moves only a little, near the front | Off | On for songs with vocals (needs the add-on) |
-| Output format | The kind of file | MP3 | MP3; FLAC to keep every detail |
+| Keep the singer in the middle | The voice moves only a little and stays close to the middle | Off | On for songs with vocals (needs the add-on) |
+| Output format | The kind of file | MP3 | MP3; FLAC to keep every detail of the 8D mix |
 | Quality | How much detail a compressed file keeps | High | High |
 | Loudness | How loud the new song is | Match music apps (-14 LUFS) | Match music apps |
 | Reach the loudness exactly | Squeezes the loudest moments to reach the level exactly | Off | Off |
 | Peak limit | The loudest a peak may get | -1.5 dB (MP3, M4A, Opus), -1.0 dB (FLAC, WAV) | Leave it |
 | Preview length | How long a preview plays | 30 s | 15–30 s |
 
----
+### Where Audio8D keeps things
 
-## Troubleshooting
+| What | Windows | macOS | Linux |
+|---|---|---|---|
+| Settings (`settings.json`) and your styles (`presets.toml`) | `%APPDATA%\Audio8D` | `~/Library/Application Support/Audio8D` | `~/.config/audio8d` |
+| Log (`audio8d.log`) | `%LOCALAPPDATA%\Audio8D\logs` | `~/Library/Application Support/Audio8D/logs` | `~/.config/audio8d/logs` |
+| Remembered measurements, separated vocals | `%LOCALAPPDATA%\Audio8D\cache` | `~/Library/Caches/Audio8D` | `~/.cache/audio8d` |
+| The singer add-on | `%LOCALAPPDATA%\Audio8D\addon` | `~/Library/Application Support/Audio8D/addon` | `~/.local/share/audio8d/addon` |
+| Previews (deleted automatically) | `%TEMP%\Audio8D previews` | the system temporary folder | the system temporary folder |
 
-### Audio8D cannot find FFmpeg
+Setting the environment variable `AUDIO8D_HOME` to a folder keeps all of these (except
+previews) there instead.
 
-The app includes FFmpeg, so this means a file is missing or a wrong one was chosen.
-Audio8D opens **Settings → System check** by itself and says what is wrong.
+### How the sound is made
 
-1. Click **Find automatically** in *FFmpeg and FFprobe*, then **Check everything again**.
-2. Still missing? Put `ffmpeg.exe` and `ffprobe.exe` back into the `bin` folder (they are
-   in the download), or click **Browse…** to choose them and **Save and use**.
-3. Command line: `audio8d --check`, or `--ffmpeg PATH --ffprobe PATH` for one run.
+First, a gentle filter below 5 Hz removes any DC offset and inaudible rumble, which would
+otherwise use up headroom (it changes nothing you can hear). A mono song is copied to both
+ears at its full level. Audio8D then splits the song into bass and the rest (at 120 Hz by
+default, so the bass stays centered). The rest is moved along a path around your head using the cues ears use: the
+tiny time difference between the ears, the level difference, and the shadow of the head.
+A little reverb (*Space*) helps the sound feel outside your head. Then everything is mixed
+back, loudness is measured (EBU R 128) and set, peaks are limited, and the file is encoded:
+MP3 with LAME, M4A with FFmpeg's AAC encoder, Opus with libopus, FLAC and WAV as 24-bit.
+All the work is done in 32-bit floating point, the song is resampled at most once (only
+when the format or the effect needs another rate), and a lossy file is encoded only once.
+The tags (title, artist, album, …) are copied, including from Opus and Ogg files, and so
+is the album picture where the format can hold one.
 
-No restart is needed.
+**How the sound was checked.** The same 23 test files (tones, sweeps, silence, mono, 5.1,
+hot and clipped audio, DC offset, lossy and hi-res sources, tagged files and a real song)
+were converted to all five formats by the old and the new code and measured by the same
+script: loudness, true peak, clipping, DC offset, spectrum, stereo width and correlation,
+channel order, distortion, metadata and decoding errors. A long file name, a damaged MP3
+and a file that isn't music were tried on the command line. The new code removed the DC
+offset (0.37–0.42 → 0.0001), let those files reach -14 LUFS, raised mono songs by the
+3 dB they had lost, and kept the tags from Opus files. No new file clipped or failed to
+decode, and a real song changed by less than 0.1 dB in loudness and width. Nobody
+listened to the results as a formal listening test.
 
-### The song cannot be processed
-
-The message says why. Common causes: the file isn't really music, is damaged, or uses an
-unusual format; the file was moved or deleted after you added it. Check that the song
-plays in your music app, or use another copy. Other songs are not affected.
-
-### Preview does not play
-
-- Wait for **Preparing…** to finish; long songs take a few seconds.
-- If it says the preview failed, the message says why (often the song file).
-- Check your volume and that headphones are connected.
-- On macOS and Linux the preview opens in your usual music player instead.
-
-### Output folder cannot be written
-
-*"Audio8D isn't allowed to save in …"*: choose a folder you own, such as your **Music**
-folder, on step 3 (**In one folder I choose → Browse…**). A drive that isn't plugged in is
-also named. Close any program that has the file open.
-
-### The add-on will not install
-
-- It needs **64-bit Python 3.10 or newer**. The Add-on card says if Python is missing or
-  too old; install it from python.org (tick *Add python.exe to PATH*) and click **Find
-  automatically**.
-- It needs an internet connection and about 1 GB of free space.
-- **Show details** on the card has pip's own words. Try **Repair (reinstall)**.
-- Command line: `audio8d --install-addon` shows every step.
-
-### I accidentally customized a song
-
-Select it on step 2 and click **Reset to default** (or open **Customize** and click
-**Reset to default**). It follows the main settings again. Changes in **Customize** are
-only kept when you click **Apply**; **Cancel** changes nothing.
-
-### The output is too loud or too quiet
-
-Step 3 → **Loudness**: **Match music apps** makes songs as loud as other music;
-**Keep original loudness** keeps each song as it was. *Advanced…* → *No change* makes
-no adjustment (often quieter).
-
-### The music movement feels too strong
-
-Choose a gentler style (**Gentle**, **Front** or **Smooth**) with **Change style**, or
-**Customize** the song and set **Movement: Gentle** and **Speed: Slow**.
-
-### The window seems stuck while creating
-
-Creating runs in the background; the window keeps working. The progress bar, *now: song
-name* and *about 0:21 left* show it is working. **Stop** (or **Esc**) stops after the
-current step. *Keep the singer in the middle* takes a minute or two per song.
-
-### A song asks for the singer add-on
-
-*"… keep the singer in the middle, but the singer add-on isn't ready"*: install the add-on
-(Settings → Add-on), or Customize those songs and switch the option off.
-
----
-
-## Words used in this guide
-
-| Word | Meaning |
-|---|---|
-| **8D audio** | Music that seems to move around your head when you use headphones. |
-| **Style** | A ready-made group of sound settings. |
-| **Default** | The settings used automatically unless you change a song. |
-| **Custom** | Settings that belong to one song only. |
-| **Customize** | Change the settings of one song (or the default). |
-| **Preview** | A temporary listen that does not create the final file. |
-| **Create** | Make and save the new 8D files. |
-| **Output** | How the new file is saved: format, quality, loudness, folder. |
-| **Bitrate** | A quality/size setting for compressed audio such as MP3. |
-| **Lossless** | Audio saved without throwing any sound data away (FLAC, WAV). |
-| **LUFS** | The unit for how loud music feels; music apps use -14. |
-| **Add-on** | An optional extra part you can install and remove. |
-| **FFmpeg** | The sound program Audio8D uses to do the work. |
-| **Terminal / command line** | A window where you type commands instead of clicking. |
-
----
-
-## Advanced technical reference
-
-*This part is for curious users and developers. You don't need it to use Audio8D.*
-
-**How the 3D sound is made.** Audio8D splits the song into bass and the rest (a crossover
-at 120 Hz by default, so the bass stays centered). The rest is moved along a path around
-your head using the cues ears use: the tiny time difference between the ears, the level
-difference, and the shadow of the head (treble is softer on the far ear and behind you).
-A little reverb (the *Space* setting) helps the sound feel outside your head. Then
-everything is mixed back, loudness is measured and set, peaks are limited, and the file
-is encoded.
-
-**Exact ranges**
+By default the peaks are protected: if reaching the loudness target would need more than about
+5 dB of peak limiting, the song stays slightly under the target instead (*Reach the
+loudness exactly* changes that).
 
 | Setting | Range | Option |
 |---|---|---|
@@ -1208,44 +997,230 @@ is encoded.
 | Bitrate | 128, 160, 192, 224, 256, 320 kbps | `--bitrate` |
 
 **Paths:** *circle* (all the way round), *arc* (side to side in front), *figure8* (loops
-around each ear), *wander* (drifts, never repeating). **Engine:** *3d* (the cues above)
-or *pan* (simple left-right volume, safe for speakers).
+around each ear), *wander* (drifts). **Engine:** *3d* (the cues above) or *pan* (simple
+left-right, safe for speakers). **Beat sync** detects the tempo and rounds the circle to
+2, 4, 8, 16 or 32 beats.
 
-**Beat sync** detects the tempo and rounds the circle to 2, 4, 8, 16 or 32 beats.
+### Words used in this guide
 
-**Loudness** is measured (EBU R 128) and the song is turned up or down to the target. By
-default the peaks are protected: if reaching the target would need more than a light
-touch of limiting, the song stays slightly under the target instead (*Always hit the
-loudness exactly* changes that). Lossy formats get about 1 dB of extra headroom, because
-their encoders can overshoot.
-
-**Output encoders:** MP3 with LAME (constant bitrate, or variable quality with `auto`),
-M4A with FFmpeg's AAC encoder, Opus with libopus, FLAC and WAV as 24-bit.
-
-**Previews** are rendered by the same pipeline as the final file, from the loudest part of
-the song, with a shorter ease-in, into a private temporary folder
-(`%TEMP%\Audio8D previews\run-<process>-<time>`). Only the newest few previews are kept
-for instant replays; a song's out-of-date preview is deleted as soon as a new one replaces
-it; everything goes when the window closes; folders left by a closed or crashed window are
-removed at the next start. The command line uses a temporary folder that is deleted when
-the preview ends, whatever happens.
-
-**Where Audio8D keeps things**
-
-| What | Windows | macOS / Linux |
-|---|---|---|
-| Settings (`settings.json`) and your styles (`presets.toml`) | `%APPDATA%\Audio8D` | `~/Library/Application Support/Audio8D` / `~/.config/audio8d` |
-| Log (`audio8d.log`) | `%LOCALAPPDATA%\Audio8D\logs` | the settings folder, `logs` |
-| Remembered measurements, separated vocals | `%LOCALAPPDATA%\Audio8D\cache` | `~/Library/Caches/Audio8D` / `~/.cache/audio8d` |
-| The add-on | `%LOCALAPPDATA%\Audio8D\addon` | see [the add-on](#what-changes-on-my-computer) |
-| Previews | `%TEMP%\Audio8D previews` | the system temporary folder |
-
-Setting the environment variable `AUDIO8D_HOME` to a folder keeps all of these (except
-previews) there instead, for a portable copy.
+| Word | Meaning |
+|---|---|
+| **8D audio** | Music that seems to move around your head when you use headphones. |
+| **Style** | A ready-made group of sound settings. |
+| **Default** / **Custom** | The settings every song uses / settings that belong to one song. |
+| **Customize** | Change the settings of one song (or the default). |
+| **Preview** | A temporary listen that does not create the final file. |
+| **Create** | Make and save the new 8D files. |
+| **Output** | How the new file is saved: format, quality, loudness, folder. |
+| **Bitrate** | A quality/size setting for compressed audio such as MP3. |
+| **Lossless** | Audio saved without throwing any sound data away (FLAC, WAV). |
+| **LUFS** | The unit for how loud music feels; music apps use about -14. |
+| **Add-on** | An optional extra part you can install and remove. |
+| **FFmpeg** | The sound program Audio8D uses to do the work. |
+| **Terminal** | A window where you type commands instead of clicking. |
+| **Git / Git LFS** | The tool that downloads the source code / its add-on for large files. |
+| **venv** | A private Python environment just for Audio8D, in the `.venv` folder. |
 
 ---
 
-## For developers
+## Known limitations
+
+**Platforms and packages**
+
+- **The macOS package has not been built or tested.** It is designed (and the GitHub
+  workflow has a macOS job), but no Mac was available. It is for Apple Silicon only; an
+  Intel Mac package can only be made by building on an Intel Mac (untested).
+- **No ARM packages for Linux or Windows.** The Linux package needs 64-bit x86 and glibc
+  2.35 or newer.
+- **No GitHub releases.** The packages are made into `8D/bin` by the build script and are
+  only on GitHub once they are committed and pushed.
+- **The packages are not signed**, so Windows (SmartScreen) and macOS (Gatekeeper) warn the
+  first time.
+- **The packages are large** (about 80–100 MB) because they include Python and FFmpeg.
+- **Drag and drop works on Windows only**, although the window says *Drop songs or folders
+  here* on Linux too. On macOS and Linux use Add songs / Add folder.
+- **Previews play inside the window on Windows only.** On macOS and Linux they open in
+  your music player and can't be stopped from Audio8D.
+- **From source, FFmpeg older than 7.0 is not detected** by the System check or `--check`;
+  songs with any room sound (every style except Voice) then fail, and the message says
+  *Your FFmpeg is older than version 7*. (The packages always include FFmpeg 7 or newer.)
+
+**Features**
+
+- **The singer add-on** needs a Python on your computer, can download several GB on Linux,
+  and each song with it takes a minute or two (the separated voice is remembered).
+- **Screen readers:** everything works from the keyboard, but Tk (the toolkit under the
+  window) does not give control names to screen readers such as Narrator or NVDA.
+- **Dialogs** (Change style, Customize) take about half a second to appear.
+- **Style suggestions come from tags and names**, not from listening to the audio.
+- **No "16D" styles.** "16D" has no technical definition; Audio8D moves a song along one
+  path, so relabelling a style as 16D would be misleading.
+- **Previewing a style** (Change style, or Edit on Your styles) uses the all-songs output
+  settings; a song's own output settings are used when the song is created.
+- **Styles saved long ago "based on hifi"** load with Gentle's movement and room; open them
+  with **Edit** and adjust if they sound different.
+- **Editing a saved style is done in the window**; the command line can only save a new one.
+
+**Sound**
+
+- **No formal listening test** was done; the sound was checked by measurement (see
+  [How the sound is made](#how-the-sound-is-made)).
+- **A partly damaged MP3 converts without a warning.** MP3 players skip damaged parts, and
+  so does Audio8D; listen to the result if the source may be damaged.
+- **5.1 and other surround files** are mixed down to stereo by FFmpeg's standard downmix
+  (the LFE channel is left out) before the 8D effect.
+- **Low tones in M4A and Opus** carry a little more distortion than in MP3 or FLAC; this
+  comes from those encoders, not from the 8D effect.
+
+---
+
+## Running from source
+
+*This part is for developers. Normal users should use a package (see
+[Quick start](#quick-start)).*
+
+**You need:**
+
+| Software | Windows | Linux | macOS (not tested) |
+|---|---|---|---|
+| **Python 3.10 or newer**, with Tk | [python.org](https://www.python.org/downloads/) (tick *Add python.exe to PATH*) | `sudo apt install python3 python3-venv python3-pip python3-tk` | `brew install python@3.13 python-tk@3.13` |
+| **Git** | [Git for Windows](https://git-scm.com/download/win) plus [Git LFS](https://git-lfs.com) (check `git lfs version`) | `sudo apt install git` | `brew install git` |
+| **FFmpeg 7.0 or newer** | Included in the repository: `vendor\ffmpeg\windows-x86_64` (Git LFS) | Install it yourself (below) | `brew install ffmpeg` (check `ffmpeg -version`) |
+| **CustomTkinter, Pillow** | `pip` (below) | `pip` (below) | `pip` (below) |
+
+**Get the code and run it (Windows):**
+
+```powershell
+git lfs install
+git clone https://github.com/gcfernando/python_codes.git
+cd python_codes\8D
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install customtkinter pillow
+python src\__main__.py --check
+python src\__main__.py --gui
+```
+
+- `vendor\ffmpeg\windows-x86_64\ffmpeg.exe` must be about 105 MB. If it is only a few
+  hundred bytes, Git LFS was missing: install it and run `git lfs pull`.
+- If Windows refuses to run `Activate.ps1`, run
+  `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, or skip the venv.
+- Double-clicking `Audio8D.pyw` also opens the window, using your normal Python (not the
+  venv), so the two packages must be installed there too.
+
+**Get the code and run it (Linux or macOS):**
+
+```bash
+git clone https://github.com/gcfernando/python_codes.git
+cd python_codes/8D
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install customtkinter pillow
+python src/__main__.py --check
+python src/__main__.py --gui
+```
+
+Git LFS is not needed on Linux or macOS. On macOS use `python3.13 -m venv .venv`.
+
+**FFmpeg 7 on Linux.** Ubuntu's own `ffmpeg` package is too old (22.04 has 4.4, 24.04 has
+6.1): `--check` passes but songs with any room sound fail (FFmpeg's own words are *Option
+'irnorm' not found*; Audio8D says *Your FFmpeg is older than version 7*).
+A tested fix for 64-bit x86 is the static build:
+
+```bash
+curl -LO https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+mkdir ffmpeg-static
+tar -xf ffmpeg-release-amd64-static.tar.xz -C ffmpeg-static --strip-components=1
+sudo install -m 755 ffmpeg-static/ffmpeg ffmpeg-static/ffprobe /usr/local/bin/
+ffmpeg -version
+```
+
+**Install as commands, with the developer tools:**
+
+```powershell
+python -m pip install -e ".[gui,dev]"
+```
+
+This adds the commands `audio8d` and `audio8d-gui`, plus pytest, ruff, pylint and pyright.
+An editable install (`-e`) finds FFmpeg like running from source. A normal
+(non-editable) install doesn't: put FFmpeg on your PATH, choose it in **Settings**, or use
+`--ffmpeg PATH --ffprobe PATH`. Install the singer add-on from **Settings** (the `stems`
+extra exists but is not needed).
+
+---
+
+## Building the packages
+
+Each package is built **on its own system**: PyInstaller can't build for another system.
+From the `8D` folder:
+
+```powershell
+python packaging/build_release.py
+```
+
+On Linux and macOS write `python3`. On Windows,
+`powershell -ExecutionPolicy Bypass -File packaging\build.ps1` does the same (it calls
+`build_release.py`; the old `-Zip` switch is accepted but no longer needed).
+
+**Build requirements:**
+
+| | Windows | Linux | macOS |
+|---|---|---|---|
+| Python 3.10+ with Tk | python.org | `sudo apt install python3 python3-venv python3-tk` | Homebrew (as above) |
+| Git | with Git LFS (for `vendor\ffmpeg`) | yes | yes |
+| Internet | first build (packages) | first build (packages and FFmpeg) | first build (packages and FFmpeg) |
+
+**What it does:**
+
+1. Makes its own environment in `build/venv-<system>` and installs Audio8D with its window
+   packages and PyInstaller.
+2. Gets FFmpeg 7 or newer: on Windows from `vendor/ffmpeg/windows-x86_64`; on Linux x86_64
+   it downloads the johnvansickle.com static build and checks its published MD5; on macOS
+   it downloads the osxexperts.net Apple Silicon build (evermeet.cx on Intel; macOS
+   downloads not verified). An older FFmpeg is refused. `--ffmpeg-dir FOLDER` uses your own
+   `ffmpeg` and `ffprobe` (7+) instead.
+3. Builds the programs from `packaging/audio8d.spec`, adds the README, licences and
+   `HOW TO RUN.txt`, and writes **`bin/Audio8D-<version>-<system>-<processor>.zip`**,
+   keeping the "may run" marks.
+4. **Tests the package:** unpacks it to a folder with spaces in its name, runs `--version`
+   and `--check` with no Python on the PATH, and converts a generated test tone.
+   `--skip-check` skips this. Any failure stops with *Build failed: …* and says why.
+
+Temporary files stay in `8D/build/` (not stored in git).
+
+**What `8D/bin` contains** (only the release packages, stored with Git LFS):
+
+```text
+8D/bin/
+  Audio8D-1.0.0-windows-x86_64.zip
+  Audio8D-1.0.0-linux-x86_64.zip
+  Audio8D-1.0.0-macos-arm64.zip     (after a build on a Mac)
+```
+
+**All three with GitHub Actions:** the workflow `.github/workflows/audio8d-release.yml` (at
+the repository root) builds on Windows, Ubuntu 22.04 and macOS 14 when started by hand
+(**Actions → Audio8D release packages → Run workflow**) or by a tag `audio8d-v*`, and
+uploads the three ZIPs as the artifact **Audio8D-bin**. It has not been run yet.
+
+---
+
+## Tests and project layout
+
+**Tests and checks** (from the `8D` folder, after `pip install -e ".[gui,dev]"`):
+
+```powershell
+python -m pytest                        # all tests (window tests need a screen)
+python -m ruff check .
+python -m ruff format --check .
+python -m pylint src tests packaging/build_release.py
+python -m pyright src tests
+```
+
+The last full run had 1179 tests passing, pylint 10.00/10 and no pyright errors.
+
+The tests include the real window, the command line, the add-on install/repair/uninstall
+(with pip faked), temporary-preview cleanup, and a check that every `audio8d` command in
+this guide is valid.
 
 **Layout of `src` (the `audio8d` package)**
 
@@ -1253,81 +1228,35 @@ previews) there instead, for a portable copy.
 |---|---|
 | `pipeline.py`, `batch.py`, `effects/`, `analysis/`, `ffmpeg/`, `files/` | The conversion, shared by the window and the command line |
 | `core/presets.py`, `core/sound_levels.py`, `core/style_guide.py` | The styles (sound only), the standard output, the Movement/Speed/Space words |
+| `core/locations.py` | Where settings, logs and the bundled FFmpeg are found |
 | `song_settings.py`, `per_song.py` | How a song's own settings combine with the defaults (window and `--per-song`) |
 | `gui_model.py` | The window's settings, Customize drafts, Reset to default, checks; no widgets |
 | `previews.py`, `player.py` | Temporary previews and playback |
-| `addons.py`, `health.py` | Add-on status, install, repair, uninstall; the system check |
+| `addons.py`, `addon_progress.py`, `health.py` | Add-on status, install, repair, uninstall; the system check |
 | `cli.py`, `options.py`, `display.py`, `display_health.py`, `guided.py` | The command line |
 | `gui_app.py` + `app_*.py` | The main window, split by topic |
-| `gui_styles.py`, `gui_style_chooser.py`, `gui_customize.py`, `gui_output.py`, `gui_review.py`, `gui_settings.py`, `gui_health.py`, `gui_songs.py`, `gui_mystyles.py`, `gui_style_save.py` | Pages and dialogs (`gui_style_save.py`: the checks every saved style goes through) |
-| `gui_modal.py`, `gui_widgets.py`, `gui_fields.py`, `gui_dialogs.py`, `gui_table.py` | Building blocks |
+| `gui_*.py`, `gui_modal.py`, `gui_widgets.py`, `gui_fields.py`, `gui_table.py` | The window's pages, dialogs and building blocks |
+| `dropfiles.py`, `launcher.py` | Windows only: drag and drop, and reopening a double-clicked console in Windows Terminal |
+
+Other folders: `packaging/` (build scripts and the PyInstaller spec), `vendor/ffmpeg/`
+(the Windows FFmpeg, Git LFS), `bin/` (the release ZIPs), `tests/`, `docs/images/`.
 
 Business rules live outside the window and the command line, so they can't drift apart.
-FFmpeg, FFprobe, Python and pip are always run with argument lists (never through a
-shell), are tracked while they run, stop when cancelled, and are stopped when the window
-closes.
-
-**Tests and checks** (from the `8D` folder, with `python -m pip install pytest ruff pylint pyright`):
-
-```powershell
-python -m pytest                        # all tests (window tests need a screen)
-python -m ruff check .
-python -m ruff format --check .
-python -m pylint src tests
-python -m pyright src tests
-```
-
-The tests include the real window (the style chooser, Customize with Apply and Cancel,
-Reset to default, previews, the add-on card, layout at 100 % and 125 % text), the command
-line, the add-on install/repair/uninstall (with pip faked), temporary-preview cleanup, and
-a check that every `audio8d` command in this guide is valid.
-
-**Build the Windows app** (from the `8D` folder):
-
-```powershell
-powershell -ExecutionPolicy Bypass -File packaging\build.ps1
-```
-
-It puts `Audio8D.exe`, `audio8d-cli.exe` and `_internal` into `bin`, beside `ffmpeg.exe`
-and `ffprobe.exe`, and checks that they start. Add `-Zip` to also make
-`build\Audio8D-<version>-windows.zip`.
-
----
-
-## Known limitations
-
-- **Screen readers:** everything works from the keyboard, but Tk (the toolkit under the
-  window) does not give control names to screen readers such as Narrator or NVDA.
-- **Dialogs** (Change style, Customize) take about half a second to appear on a typical
-  computer; the page behind them is not redrawn.
-- **Previews play inside the window on Windows.** On macOS and Linux they open in your usual
-  music player.
-- **Suggestions come from tags and names**, not from listening to the audio.
-- **No "16D" styles.** "16D" has no technical definition; the only describable idea is
-  several layers (singer and music) moving on their own paths at once. Audio8D moves a
-  song along one path, and with the singer add-on the voice follows the same path more
-  gently, so relabelling a style as 16D would be misleading.
-- **Previewing a style** (Change style, or Edit on Your styles) uses the Output step's
-  settings for all songs; a song's own output settings and *Safe for speakers too* are
-  used when the song is created, not in that preview.
-- **Styles saved long ago "based on hifi"** load with Gentle's movement and room, not the
-  old hifi values; open them with **Edit** and adjust if they sound different.
-- **Editing a saved style is done in the window.** The command line can save a new style
-  (`--save-style NAME`) but has no option to change or rename one.
-- *Keep the singer in the middle* is slow: a minute or two per song (the separated voice is
-  remembered, so the same song is quicker the next time).
-- The ready-made app is for Windows. macOS and Linux run the source code, which was not
-  tested on those systems for this release.
+FFmpeg, FFprobe, Python and pip are always run with argument lists (never through a shell)
+and are stopped when cancelled or when the window closes.
 
 ---
 
 ## Credits and licences
 
 Audio8D is developed by **Gehan Fernando**. It uses
-[FFmpeg](https://ffmpeg.org) (GPL-3.0, included for Windows),
+[FFmpeg](https://ffmpeg.org) (GPL-3.0; included in every package),
+[Python](https://www.python.org) (included in every package),
 [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter),
 [Pillow](https://python-pillow.org), and, optionally,
 [Demucs](https://github.com/facebookresearch/demucs) with
-[PyTorch](https://pytorch.org); the Windows app is built with
-[PyInstaller](https://pyinstaller.org). Their licences are in the `licenses` folder and
-listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+[PyTorch](https://pytorch.org); the packages are built with
+[PyInstaller](https://pyinstaller.org). The licences of the parts shipped with Audio8D are
+in the `licenses` folder and listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md);
+Demucs and PyTorch are downloaded by the add-on under their own licences (MIT and
+BSD-3-Clause).

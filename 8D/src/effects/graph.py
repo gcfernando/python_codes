@@ -29,6 +29,8 @@ NATURAL_HEADROOM_DB = 3.0
 _SIDE_HIGHPASS_HZ = 120.0
 # The reverb skips the low end so the room never booms
 _ROOM_HIGHPASS_HZ = 180.0
+# Removes a source's DC offset and inaudible rumble, which only waste headroom
+SUBSONIC_HZ = 5.0
 
 # Every filter the graph can use; checked against the FFmpeg build up front
 GRAPH_FILTERS = frozenset(
@@ -57,6 +59,8 @@ class Source:
     audio_input: int
     # Two for the 3D engine (delay taps, bands), one for plain panning
     control_inputs: tuple[int, ...]
+    # A one-channel song, which is copied to both ears at its full level
+    mono: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,6 +70,12 @@ class GraphInputs:
     sources: tuple[Source, ...]
     # The reverb's impulse response, or None when ambience is 0
     room_input: int | None = None
+
+
+def to_stereo(mono: bool) -> str:
+    """Filters that make a mono song stereo at full level ('' for everything else)."""
+    # FFmpeg's own upmix lowers each side by 3 dB; players copy mono at full level
+    return "pan=stereo|c0=c0|c1=c0," if mono else ""
 
 
 def _mono_mid(label: str) -> str:
@@ -195,9 +205,13 @@ def _source_lines(
     outputs = [f"{prefix}in", f"{prefix}side"] + (
         [f"{prefix}room"] if with_room else []
     )
+    # 64-bit maths keeps the very low corner exact at high sample rates too
+    subsonic = f",highpass=f={SUBSONIC_HZ:g}:poles=2:precision=f64"
     lines = [
-        f"[{source.audio_input}:a]aformat=sample_fmts=fltp:channel_layouts=stereo"
-        f"{resample},asplit={len(outputs)}" + "".join(f"[{name}]" for name in outputs),
+        f"[{source.audio_input}:a]{to_stereo(source.mono)}"
+        "aformat=sample_fmts=fltp:channel_layouts=stereo"
+        f"{resample}{subsonic},asplit={len(outputs)}"
+        + "".join(f"[{name}]" for name in outputs),
     ]
     if config.engine == "3d":
         low, high = source.control_inputs

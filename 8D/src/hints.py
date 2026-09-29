@@ -12,8 +12,9 @@ _BEST = PRESETS[RECOMMENDED_PRESET].config
 _FIXES = (
     (
         "Missing required executable",
-        "put ffmpeg.exe and ffprobe.exe in the bin folder of Audio8D, "
-        "or choose them in the window's Settings (FFmpeg and FFprobe).",
+        "unpack the Audio8D ZIP again (FFmpeg comes inside it; from the source code, "
+        "run git lfs pull), or choose FFmpeg 7 or newer in Settings (FFmpeg and "
+        "FFprobe).",
     ),
     (
         "The ffmpeg chosen in Settings",
@@ -27,8 +28,8 @@ _FIXES = (
     ),
     (
         "This FFmpeg build",
-        "download the 'essentials' build from gyan.dev and choose its ffmpeg.exe "
-        "and ffprobe.exe in Settings (or copy them into the bin folder).",
+        "use FFmpeg 7 or newer: unpack the Audio8D ZIP again (FFmpeg comes inside "
+        "it), or choose a newer ffmpeg and ffprobe in Settings.",
     ),
     (
         "Input file does not exist",
@@ -325,6 +326,22 @@ def headline(error: BaseException) -> str:
     )
 
 
+_FIRST_CLUES = (
+    # Windows and FFmpeg word this differently, but it always means a locked folder
+    (
+        ("Permission denied", "Access is denied"),
+        "Audio8D isn't allowed to write there. Choose another folder, such as your "
+        "Music folder, or close the program that has the file open.",
+    ),
+    # FFmpeg before 7.0 lacks an option the room sound needs, and says only this
+    (
+        ("irnorm",),
+        "Your FFmpeg is older than version 7. Unpack the Audio8D ZIP again, or choose "
+        "FFmpeg 7 or newer in Settings (FFmpeg and FFprobe).",
+    ),
+)
+
+
 def fix_for(error: Audio8DError) -> str | None:
     """The friendly fix for an Audio8D error, if we know one."""
     message = str(error)
@@ -333,20 +350,18 @@ def fix_for(error: Audio8DError) -> str | None:
         ("Command failed", "Failed to start")
     ):
         return (
-            "FFmpeg would not run. Put the 'essentials' build from gyan.dev "
-            "in the bin folder."
+            "FFmpeg would not run. Unpack the Audio8D ZIP again, or choose FFmpeg 7 "
+            "or newer in Settings (FFmpeg and FFprobe)."
         )
     if message.startswith("Failed to start"):
         return (
-            "FFmpeg would not start. "
-            "Put fresh copies of ffmpeg.exe and ffprobe.exe in the bin folder."
+            "FFmpeg would not start. Unpack the Audio8D ZIP again, or choose FFmpeg "
+            "7 or newer in Settings (FFmpeg and FFprobe)."
         )
-    # Windows and FFmpeg word this differently, but it always means a locked folder
-    if any(clue in message for clue in ("Permission denied", "Access is denied")):
-        return (
-            "Audio8D isn't allowed to write there. Choose another folder, such as "
-            "your Music folder, or close the program that has the file open."
-        )
+    # Causes that outrank the general advice, wherever they appear in the message
+    for clues, fix in _FIRST_CLUES:
+        if any(clue in message for clue in clues):
+            return fix
     for start, fix in _FIXES:
         if message.startswith(start):
             return fix

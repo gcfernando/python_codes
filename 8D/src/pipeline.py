@@ -33,6 +33,7 @@ from .effects import (
     build_measure_graph,
     loudness_gain_db,
     output_sample_rate,
+    to_stereo,
     write_controls,
     write_room,
 )
@@ -242,6 +243,28 @@ def _title_for(
     return base if base.endswith(options.title_suffix) else base + options.title_suffix
 
 
+def _log_source(
+    song: Path, info: AudioStreamInfo, sound_format: str, sample_rate: int
+) -> None:
+    """Record what the source analysis found and how the song will be made."""
+    depth = f"{info.bits_per_sample}-bit" if info.bits_per_sample else "no fixed depth"
+    rate = info.sample_rate or 0
+    LOG.info(
+        "Source %s: %s, %s kbps, %d Hz, %s, %d ch (%s), %s; making %s at %d Hz%s",
+        song.name,
+        info.codec_name,
+        round(info.bit_rate / 1000) if info.bit_rate else "?",
+        rate,
+        depth,
+        info.channels,
+        info.channel_layout or "unknown layout",
+        "lossless" if info.is_lossless else "already compressed",
+        sound_format,
+        sample_rate,
+        "" if sample_rate == rate else " (resampled once)",
+    )
+
+
 class _Job:  # pylint: disable=too-many-instance-attributes
     """One conversion's working state, so each step stays short and readable."""
 
@@ -270,6 +293,7 @@ class _Job:  # pylint: disable=too-many-instance-attributes
         sound_format = options.render_as or self.config.output_format
         self.lossless = sound_format in LOSSLESS_FORMATS
         self.sample_rate = output_sample_rate(sound_format, self.info.sample_rate)
+        _log_source(song, self.info, sound_format, self.sample_rate)
         self.inputs: list[InputFile] = [InputFile(song, options.trim)]
         self.graph_inputs = GraphInputs(sources=())
 
@@ -301,7 +325,12 @@ class _Job:  # pylint: disable=too-many-instance-attributes
             first = len(self.inputs)
             self.inputs += [InputFile(path) for path in controls]
             graph_sources.append(
-                Source(audio_input, tuple(range(first, first + len(controls))))
+                Source(
+                    audio_input,
+                    tuple(range(first, first + len(controls))),
+                    # Only the original song can be mono; the singer's stems are stereo
+                    mono=audio_input == 0 and self.info.channels == 1,
+                )
             )
         room = None
         if self.config.ambience > 0:
@@ -315,15 +344,17 @@ class _Job:  # pylint: disable=too-many-instance-attributes
             room = len(self.inputs) - 1
         self.graph_inputs = GraphInputs(tuple(graph_sources), room)
 
-    def _source_loudness(self) -> float:
+    def _source_loudness(self, stop: threading.Event) -> float:
         """The original song's own integrated loudness (for 'same as the original')."""
+        # Made stereo the same way as the 8D mix, so both are measured alike
+        stereo = to_stereo(self.info.channels == 1)
         graph = (
-            "[0:a:0]aformat=channel_layouts=stereo,"
+            f"[0:a:0]{stereo}aformat=channel_layouts=stereo,"
             "ebur128=peak=true:framelog=verbose[out]"
         )
         measured = measure_loudness(
             build_measure_command(self.toolchain.ffmpeg, self.inputs[:1], graph),
-            cancel=self.cancel,
+            cancel=stop,
         )
         return measured.integrated_lufs
 
@@ -364,17 +395,52 @@ class _Job:  # pylint: disable=too-many-instance-attributes
         # The original's loudness is measured on its own thread, alongside the mix
         source: dict[str, float | BaseException] = {}
         worker = None
+        # Set when the mix fails or is stopped, so the side measurement stops too
+        stop = threading.Event()
         if self.config.match_loudness:
 
             def measure_source() -> None:
                 try:
-                    source["lufs"] = self._source_loudness()
+                    source["lufs"] = self._source_loudness(stop)
                 except BaseException as exc:  # pylint: disable=broad-exception-caught
                     source["error"] = exc
 
             worker = threading.Thread(target=measure_source, daemon=True)
             worker.start()
+        try:
+            measured, remembered, mix_file = self._measure_mix(scratch)
+        except BaseException:
+            # Never leave FFmpeg measuring the original after the job has failed
+            stop.set()
+            if worker is not None:
+                worker.join()
+            raise
 
+        target = self.config.loudness_target
+        if worker is not None:
+            self._wait_for(worker, stop)
+            if "error" in source:
+                raise source["error"]  # type: ignore[misc]
+            lufs = float(source["lufs"])  # type: ignore[arg-type]
+            # A silent original has no loudness to match; keep the natural level
+            target = lufs if lufs > -70.0 else measured.integrated_lufs
+        assert target is not None
+        plan = self._plan(measured, target, cached=remembered)
+        margin = plan.limits_peaks(self.config.limiter_ceiling)
+        if mix_file is None:
+            # The mix step is done (measured, or remembered); only saving remains
+            self.progress(STAGE_RENDER, 1.0)
+            graph = self._graph(plan, margin)
+            self._encode(temporary_file, graph, self.length, stage=STAGE_SAVE)
+            self.progress(STAGE_SAVE, 1.0)
+        else:
+            self._save_mix(temporary_file, mix_file, plan, margin)
+        return plan
+
+    def _measure_mix(
+        self, scratch: Path
+    ) -> tuple[LoudnessMeasurement, bool, Path | None]:
+        """The mix's loudness: remembered, or measured (saved too for fast encoders)."""
         stems = self.config.vocals == "center"
         key = cache.measurement_key(
             self.song, self.config, self.options.trim, self.sample_rate
@@ -403,27 +469,14 @@ class _Job:  # pylint: disable=too-many-instance-attributes
                 measured = self._render_mix(graph, mix_file)
             if not stems:
                 cache.put(key, measured)
+        return measured, remembered, mix_file
 
-        target = self.config.loudness_target
-        if worker is not None:
-            worker.join()
-            if "error" in source:
-                raise source["error"]  # type: ignore[misc]
-            lufs = float(source["lufs"])  # type: ignore[arg-type]
-            # A silent original has no loudness to match; keep the natural level
-            target = lufs if lufs > -70.0 else measured.integrated_lufs
-        assert target is not None
-        plan = self._plan(measured, target, cached=remembered)
-        margin = plan.limits_peaks(self.config.limiter_ceiling)
-        if mix_file is None:
-            # The mix step is done (measured, or remembered); only saving remains
-            self.progress(STAGE_RENDER, 1.0)
-            graph = self._graph(plan, margin)
-            self._encode(temporary_file, graph, self.length, stage=STAGE_SAVE)
-            self.progress(STAGE_SAVE, 1.0)
-        else:
-            self._save_mix(temporary_file, mix_file, plan, margin)
-        return plan
+    def _wait_for(self, worker: threading.Thread, stop: threading.Event) -> None:
+        """Wait for the side measurement, passing on a Stop from the user."""
+        while worker.is_alive():
+            if self.cancel is not None and self.cancel.is_set():
+                stop.set()
+            worker.join(0.1)
 
     def _graph(self, plan: LoudnessPlan | None, margin: bool | None = None) -> str:
         """The one-pass graph: the full mix, the volume change and the limiter."""
@@ -482,6 +535,7 @@ class _Job:  # pylint: disable=too-many-instance-attributes
             sample_rate=self.sample_rate,
             cover_art=self.options.keep_cover and self.info.has_cover_art,
             title=_title_for(self.info, self.song, self.options),
+            tags_on_stream=self.info.tags_on_stream,
         )
         result = run_ffmpeg(
             command,
@@ -757,6 +811,8 @@ def compare(  # pylint: disable=too-many-arguments,too-many-locals
             on_progress=on_progress,
             cancel=cancel,
             trim=trim,
+            # B ends up in an MP3, so it keeps MP3's peak margin
+            render_as="mp3",
         )
         original = measure_loudness(
             build_measure_command(
@@ -784,6 +840,7 @@ def compare(  # pylint: disable=too-many-arguments,too-many-locals
             str(toolchain.ffmpeg), "-hide_banner", "-nostdin", "-loglevel", "error",
             "-y", "-ss", f"{start:.3f}", "-t", f"{seconds:.3f}", "-i", str(song),
             "-i", str(effect), "-filter_complex", graph, "-map", "[out]",
+            "-map_metadata", "0:s:a:0" if info.tags_on_stream else "0",
             "-c:a", "libmp3lame", "-b:a", "320k",
             "-metadata", f"title={info.title or song.stem} (A = original, B = 8D)",
             str(temporary),

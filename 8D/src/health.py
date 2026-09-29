@@ -148,8 +148,8 @@ def check_tools() -> list[Dependency]:
                 INVALID,
                 "This FFmpeg build lacks features Audio8D needs.",
                 _TOOL_PURPOSE["ffmpeg"],
-                fix="Use a full FFmpeg build, such as the one included with Audio8D "
-                "or the 'essentials' build from gyan.dev.",
+                fix="Use a full FFmpeg 7 or newer, such as the one inside the Audio8D "
+                "package.",
                 version=found[0].version,
                 path=ffmpeg,
                 detail=lacking,

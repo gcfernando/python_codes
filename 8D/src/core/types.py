@@ -38,6 +38,13 @@ class AudioStreamInfo:  # pylint: disable=too-many-instance-attributes
     genre: str | None = None
     artist: str | None = None
     album: str | None = None
+    # The stored bit depth of a lossless source (lossy sources have none)
+    bits_per_sample: int | None = None
+    # FFmpeg's sample format (s16, s32, fltp…) and channel layout, when known
+    sample_format: str | None = None
+    channel_layout: str | None = None
+    # True when the tags sit on the audio stream (Ogg: Opus, Vorbis), not the file
+    tags_on_stream: bool = False
 
     @property
     def is_lossless(self) -> bool:

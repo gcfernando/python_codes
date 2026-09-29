@@ -29,15 +29,59 @@ def test_the_project_folder_is_home_during_development() -> None:
 
     assert not locations.is_packaged()
     assert locations.app_dir() == root
-    assert locations.tools_dir() == root / "bin"
+    # This system's copy in vendor/ffmpeg (or, without one, that folder anyway)
+    assert locations.tools_dir() in (
+        root / "vendor" / "ffmpeg" / locations.platform_tag(),
+        root / "bin",
+    )
     assert locations.GUIDE_URL.endswith("/8D/README.md")
 
 
+def test_the_windows_ffmpeg_is_kept_in_vendor_not_bin() -> None:
+    root = Path(__file__).resolve().parents[2]
+    kept = root / "vendor" / "ffmpeg" / "windows-x86_64"
+    assert (kept / "ffmpeg.exe").is_file() and (kept / "ffprobe.exe").is_file()
+    # bin is only for the release ZIPs
+    assert not (root / "bin" / "ffmpeg.exe").exists()
+
+
 def test_the_exe_finds_everything_next_to_itself(packaged: Path) -> None:
-    # The exe lives in bin, beside ffmpeg
     assert locations.is_packaged()
     assert locations.app_dir() == packaged
     assert locations.tools_dir() == packaged
+
+
+def test_the_package_finds_ffmpeg_in_its_bundled_files(
+    packaged: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # PyInstaller puts bundled files in _internal (Frameworks on macOS)
+    inside = tmp_path / "_internal"
+    inside.mkdir()
+    name = "ffmpeg.exe" if sys.platform == "win32" else "ffmpeg"
+    (inside / name).write_bytes(b"x")
+    monkeypatch.setattr(sys, "_MEIPASS", str(inside), raising=False)
+    assert locations.tools_dir() == inside
+    # A copy beside the program still wins (people may replace FFmpeg there)
+    (packaged / name).write_bytes(b"x")
+    assert locations.tools_dir() == packaged
+
+
+@pytest.mark.parametrize(
+    ("platform", "machine", "tag"),
+    [
+        ("win32", "AMD64", "windows-x86_64"),
+        ("linux", "x86_64", "linux-x86_64"),
+        ("linux", "aarch64", "linux-arm64"),
+        ("darwin", "arm64", "macos-arm64"),
+        ("darwin", "x86_64", "macos-x86_64"),
+    ],
+)
+def test_each_system_has_one_package_name(
+    monkeypatch: pytest.MonkeyPatch, platform: str, machine: str, tag: str
+) -> None:
+    monkeypatch.setattr(sys, "platform", platform)
+    monkeypatch.setattr(locations.platform, "machine", lambda: machine)
+    assert locations.platform_tag() == tag
 
 
 def test_the_exe_restarts_itself_in_windows_terminal(packaged: Path) -> None:

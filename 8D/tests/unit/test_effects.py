@@ -232,6 +232,33 @@ def test_graph_resamples_only_when_needed_and_runs_timing_at_a_quarter() -> None
     assert "aresample=12000" in graph
 
 
+@pytest.mark.parametrize("engine", ["3d", "pan"])
+def test_every_source_loses_dc_and_rumble_before_anything_else(engine: str) -> None:
+    inputs = GraphInputs((Source(1, (3, 4)), Source(2, (5, 6))), room_input=7)
+    if engine == "pan":
+        inputs = GraphInputs((Source(1, (3,)), Source(2, (5,))), room_input=7)
+    graph = build_graph(
+        EffectConfig(engine=engine), inputs, sample_rate=44100, source_rate=44100
+    )
+    subsonic = "highpass=f=5:poles=2:precision=f64"
+    # Once per source, before the song is split into its mid, side and room paths
+    assert graph.count(subsonic) == 2
+    assert (
+        f"[1:a]aformat=sample_fmts=fltp:channel_layouts=stereo,{subsonic},asplit"
+        in (graph)
+    )
+
+
+def test_a_mono_song_reaches_both_ears_at_its_full_level() -> None:
+    mono = GraphInputs((Source(0, (1, 2), mono=True),), room_input=3)
+    stereo = build_graph(EffectConfig(), _ONE, sample_rate=44100, source_rate=44100)
+    graph = build_graph(EffectConfig(), mono, sample_rate=44100, source_rate=44100)
+
+    # Copied to both sides, not FFmpeg's 3 dB lower automatic upmix
+    assert "[0:a]pan=stereo|c0=c0|c1=c0,aformat=sample_fmts=fltp" in graph
+    assert "[0:a]pan=" not in stereo
+
+
 def test_bass_off_and_pan_engine_graphs() -> None:
     no_bass = build_graph(
         EffectConfig(bass_hz=0), _ONE, sample_rate=44100, source_rate=44100

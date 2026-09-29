@@ -4,7 +4,8 @@
 Where each tool comes from, in order:
 
 1. a path chosen in the window's Settings (``set_preferred_paths``);
-2. the copy bundled with Audio8D in its bin folder;
+2. the copy bundled with Audio8D (inside the package, or vendor/ffmpeg in the
+   source code; see core.locations.tools_dir);
 3. the PATH;
 4. the usual install folders (winget, Chocolatey, Scoop, Homebrew, /usr/bin…).
 
@@ -31,7 +32,7 @@ REQUIRED_FILTERS = GRAPH_FILTERS
 REQUIRED_ENCODER = "libmp3lame"
 LOG = logging.getLogger(__name__)
 
-# The bundled ffmpeg and ffprobe in bin win over anything on PATH
+# The bundled ffmpeg and ffprobe win over anything on PATH
 BUNDLED_DIR = tools_dir()
 TOOLS = ("ffmpeg", "ffprobe")
 # How long `-version` may take before a tool counts as not working

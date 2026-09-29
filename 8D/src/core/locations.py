@@ -2,6 +2,7 @@
 """Where Audio8D finds its own files, and where it keeps your styles, cache and log."""
 
 import os
+import platform
 import sys
 from pathlib import Path
 
@@ -21,10 +22,33 @@ def app_dir() -> Path:
     return Path(__file__).resolve().parent.parent.parent
 
 
+def platform_tag() -> str:
+    """This system and processor as package names spell them, e.g. 'linux-x86_64'."""
+    system = {"win32": "windows", "darwin": "macos"}.get(sys.platform, "linux")
+    machine = platform.machine().lower()
+    # Windows says AMD64, macOS arm64, Linux x86_64 or aarch64: one name for each kind
+    machine = {"amd64": "x86_64", "x64": "x86_64", "aarch64": "arm64"}.get(
+        machine, machine
+    )
+    return f"{system}-{machine}"
+
+
+def _bundled_candidates() -> list[Path]:
+    """Where a bundled ffmpeg and ffprobe may be, most specific first."""
+    if is_packaged():
+        # Beside the program, then in its bundled files (_internal, macOS Frameworks)
+        inside = getattr(sys, "_MEIPASS", None)
+        return [app_dir(), *([Path(inside)] if inside else [])]
+    root = app_dir()
+    # The copy kept for this system in vendor, then the older bin layout
+    return [root / "vendor" / "ffmpeg" / platform_tag(), root / "bin"]
+
+
 def tools_dir() -> Path:
-    """The bin folder: Audio8D's programs and the bundled ffmpeg and ffprobe."""
-    # The exe itself lives in bin, so its own folder is bin
-    return app_dir() if is_packaged() else app_dir() / "bin"
+    """The folder with the bundled ffmpeg and ffprobe for this system, if any."""
+    ffmpeg = "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
+    candidates = _bundled_candidates()
+    return next((c for c in candidates if (c / ffmpeg).is_file()), candidates[0])
 
 
 # The one and only guide; 'Open the full guide' always opens it in the browser

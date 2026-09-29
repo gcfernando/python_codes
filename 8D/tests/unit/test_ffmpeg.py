@@ -266,6 +266,61 @@ def test_probe_finds_album_art_and_the_title() -> None:
     assert info.title == "My Song"
 
 
+def test_probe_reads_the_sources_depth_format_and_layout() -> None:
+    info = parse_probe_output(
+        json.dumps(
+            {
+                "streams": [{"codec_name": "flac", "channels": 2,
+                             "sample_rate": "96000", "bits_per_raw_sample": "24",
+                             "sample_fmt": "s32", "channel_layout": "stereo"}],
+                "format": {"duration": "10.0", "tags": {"ARTIST": "Band"}},
+            }
+        )
+    )  # fmt: skip
+
+    assert info.bits_per_sample == 24
+    assert info.sample_format == "s32"
+    assert info.channel_layout == "stereo"
+    # Tags on the file itself are read from there
+    assert info.tags_on_stream is False and info.artist == "Band"
+
+
+def test_probe_sees_that_ogg_files_keep_their_tags_on_the_stream() -> None:
+    info = parse_probe_output(
+        json.dumps(
+            {
+                "streams": [{"codec_name": "opus", "channels": 2,
+                             "sample_rate": "48000",
+                             "tags": {"ARTIST": "Band", "TITLE": "Song"}}],
+                "format": {"duration": "10.0", "format_name": "ogg"},
+            }
+        )
+    )  # fmt: skip
+
+    assert info.tags_on_stream is True
+    assert info.artist == "Band" and info.title == "Song"
+    # Lossy sources decode to float: they have no stored bit depth
+    assert info.bits_per_sample is None
+
+
+def test_tags_are_copied_from_where_the_source_keeps_them() -> None:
+    def metadata_source(on_stream: bool) -> str:
+        command = build_encode_command(
+            Path("ffmpeg"),
+            [InputFile(Path("in.opus"))],
+            Path("out.mp3"),
+            filter_graph="x",
+            config=EffectConfig(),
+            sample_rate=48000,
+            title="Song (8D)",
+            tags_on_stream=on_stream,
+        )
+        return command[command.index("-map_metadata") + 1]
+
+    assert metadata_source(False) == "0"
+    assert metadata_source(True) == "0:s:a:0"
+
+
 def test_progress_lines_become_shares() -> None:
     assert _progress_value("out_time_us=5000000", 10.0) == 0.5
     assert _progress_value("out_time_ms=20000000", 10.0) == 1.0

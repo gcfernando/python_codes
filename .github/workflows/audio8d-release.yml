@@ -1,0 +1,80 @@
+# Developed by ::> Gehan Fernando
+# Builds the three standalone Audio8D packages, each on its own system (PyInstaller
+# can't cross-build), then gathers them as one artifact holding 8D/bin.
+name: Audio8D release packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "audio8d-v*"
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            python: python
+            tag: windows-x86_64
+          # 22.04 keeps the Linux package working on older distributions (glibc 2.35+)
+          - os: ubuntu-22.04
+            python: python3
+            tag: linux-x86_64
+          # Apple Silicon (arm64)
+          - os: macos-14
+            python: python3
+            tag: macos-arm64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: 8D
+    steps:
+      # Only the Windows FFmpeg is needed from Git LFS, not the ZIPs already in bin
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Windows FFmpeg from Git LFS
+        if: runner.os == 'Windows'
+        run: git lfs pull --include "8D/vendor/**"
+
+      - name: Python (Windows and macOS)
+        if: runner.os != 'Linux'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python with Tk (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y python3-venv python3-tk
+
+      - name: Build and check the package
+        shell: bash
+        run: |
+          rm -f bin/*.zip
+          ${{ matrix.python }} packaging/build_release.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audio8d-${{ matrix.os }}
+          path: 8D/bin/Audio8D-*-${{ matrix.tag }}.zip
+          if-no-files-found: error
+
+  bin:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: 8D/bin
+          merge-multiple: true
+
+      - name: The three packages
+        run: ls -la 8D/bin && test "$(ls 8D/bin/*.zip | wc -l)" -eq 3
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Audio8D-bin
+          path: 8D/bin/*.zip

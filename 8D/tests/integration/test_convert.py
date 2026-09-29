@@ -309,8 +309,8 @@ def test_batch_converts_a_whole_list(
 def test_bundled_binaries_win_over_path() -> None:
     bundled = BUNDLED_DIR / "ffmpeg.exe"
     if not bundled.is_file():
-        pytest.skip("no ffmpeg.exe bundled in 8D/bin")
-    assert BUNDLED_DIR.name == "bin"
+        pytest.skip("no ffmpeg.exe kept in 8D/vendor/ffmpeg for this system")
+    assert BUNDLED_DIR.parent.name == "ffmpeg" and BUNDLED_DIR.name == "windows-x86_64"
 
     assert TOOLCHAIN is not None
     assert TOOLCHAIN.ffmpeg == bundled.resolve()

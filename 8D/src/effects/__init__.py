@@ -9,6 +9,7 @@ from .graph import (
     build_finish_graph,
     build_graph,
     build_measure_graph,
+    to_stereo,
 )
 from .levels import loudness_gain_db, mp3_sample_rate_for, output_sample_rate
 from .reverb import write_room
@@ -25,6 +26,7 @@ __all__ = [
     "loudness_gain_db",
     "mp3_sample_rate_for",
     "output_sample_rate",
+    "to_stereo",
     "write_controls",
     "write_room",
 ]
