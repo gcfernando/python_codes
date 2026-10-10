@@ -8,6 +8,9 @@ Requires: numpy, opencv-python, Pillow. No GUI, network, external weights,
 interactive questions, or manual tuning. The result is deterministic for a
 fixed input and these dependency versions. Artistic perfection cannot be
 measured or guaranteed for arbitrary images.
+
+Developer ::> Gehan Fernando
+
 """
 
 from __future__ import annotations
