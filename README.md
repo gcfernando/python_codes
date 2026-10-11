@@ -1,4 +1,4 @@
-# 🐍 Python Projects
+# 🐍 Python Projects and Code Examples — Automation, Networking, Desktop GUI, Media and Machine Learning
 
 <div align="center">
 
@@ -7,12 +7,12 @@
 Small, independent projects exploring **automation · desktop apps · networking · media · data · machine learning**
 
 ![Python projects](https://img.shields.io/badge/Python-projects-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Topics](https://img.shields.io/badge/Topics-36%20projects-8A2BE2?style=for-the-badge)
+![Topics](https://img.shields.io/badge/Topics-37%20projects-8A2BE2?style=for-the-badge)
 ![Hands-on](https://img.shields.io/badge/Learn-by%20building-FF8C00?style=for-the-badge)
 
 </div>
 
-Welcome! This repository is a portfolio of standalone Python projects, from short language examples to practical command-line tools, desktop interfaces, and data-science demos. Pick a project below to open its guide, find its requirements, and learn how to run it.
+Welcome! This repository is a portfolio of standalone **Python projects for beginners and intermediate developers**, from short language examples to practical command-line tools, desktop interfaces, and data-science demos. You will find working Python scripts for a **TCP port scanner**, a **Wi-Fi scanner and Flask dashboard**, an **internet speed test**, **image-to-ASCII and photo-to-sketch converters**, **PNG steganography**, **QR code generation**, **text-to-speech**, **MP3 tag reading**, a **Tkinter contact book backed by SQL Server**, **ARIMA/SARIMAX COVID-19 forecasting**, and **scikit-learn salary prediction**. Pick a project below to open its guide, find its requirements, and learn how to run it.
 
 > 🎨 **No single setup fits every project:** dependencies and setup instructions are documented in each project's README. Some projects also need particular operating systems, local assets, external services, or credentials.
 
@@ -37,6 +37,7 @@ Welcome! This repository is a portfolio of standalone Python projects, from shor
 
 | Project | What it does |
 |---|---|
+| [Graphite CLI](Graphite_CLI/README.md) | Convert a photo into a black-and-white graphite pencil sketch with a single OpenCV command. |
 | [Image to ASCII](Image%20to%20ASCII/readme.md) | Convert an image into ASCII art saved as a text file. |
 | [Image2Cartoon](Image2Cartoon/readme.md) | Apply OpenCV filters to create a cartoon-style image. |
 | [Improve MP3 Quality](Improve%20MP3%20Quality/readme.md) | Re-encode MP3 files with configurable bitrate, channels, and sample rate. |
@@ -105,6 +106,27 @@ Welcome! This repository is a portfolio of standalone Python projects, from shor
 ## 🗂️ Repository layout
 
 Projects are organized in their own folders, generally with a `Console_Code/` or `GUI_Code/` directory and a project-specific README. The `ML/` folder groups the forecasting and salary-prediction projects; `GUI_Apps/` currently contains the Contact Book application.
+
+## ❓ FAQ
+
+**Who is this repository for?**
+Python learners and developers who want small, readable, runnable examples of a specific task — scanning ports, reading Wi-Fi networks, processing images or audio, building a desktop GUI, or training a simple model — rather than one large framework.
+
+**Do I need to install everything?**
+No. Each project is independent; install only the packages listed in the README of the project you want to run.
+
+**Do the projects work on Linux and macOS?**
+Many do, but some use Windows-only features (for example `FixNetwork`, `Wifi Profiles`, and `Use Windows Login`) or need external tools such as FFmpeg, a browser driver, or SQL Server. Check the project README before running it.
+
+**Can I call .NET code from Python?**
+Yes — [Load Libraries](LoadLibraries/readme.md) shows how to load a compiled C# library with `pythonnet`. The reverse direction (calling Python from C#) is in the [C# PythonBridge example](https://github.com/gcfernando/csharp_codes/tree/main/PythonBridge).
+
+## 🔗 Related projects
+
+- [Audio8D](https://github.com/gcfernando/audio-8d) — a complete Python desktop and command-line 8D audio converter built on FFmpeg
+- [Machine-learning datasets](https://github.com/gcfernando/datasets) — small datasets for regression, classification, and forecasting practice
+- [Developer knowledge base](https://github.com/gcfernando/document) — includes a complete Python OOP guide and a Python dunder-methods reference
+- [C# and .NET code examples](https://github.com/gcfernando/csharp_codes) — the companion collection for .NET
 
 ---
 

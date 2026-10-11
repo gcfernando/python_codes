@@ -1,6 +1,6 @@
-# ML
+# Python Machine Learning Examples — ARIMA/SARIMAX Time-Series Forecasting and Linear Regression
 
-A collection of machine learning projects built with Python.
+A collection of beginner-friendly **machine learning projects built with Python**: a **COVID-19 time-series forecast** using auto-ARIMA and SARIMAX (`pmdarima`, `statsmodels`), and a **salary prediction model** using scikit-learn linear regression with a separate training and inference workflow.
 
 ---
 
@@ -49,8 +49,11 @@ pip install numpy pandas pmdarima covid_daily statsmodels matplotlib
 #### Usage
 
 ```bash
+cd "COVID Forecast/Console_Code"
 python CovidForecast.py
 ```
+
+The downloaded data is cached as `<country>_corvid19.csv` in the working directory, so later runs reuse it instead of downloading again.
 
 ---
 
@@ -100,20 +103,24 @@ pip install pandas scikit-learn joblib numpy
 
 #### Usage
 
+Both scripts use paths relative to the working directory (`./Source/...`), so run them from the `Salary` folder. A trained `salary.pkl` and `scaler.pkl` are already included in `Salary/Source/`, so you can run inference without training first.
+
 **Train the model:**
 ```bash
-python "Salary/Model Builder/builder.py"
+cd Salary
+python "Model Builder/builder.py"
 ```
 
 **Run inference:**
 ```bash
-python "Salary/Prediction/prediction.py"
+cd Salary
+python "Prediction/prediction.py"
 ```
 
-**Example inference session:**
+**Inference session format:**
 ```
 Enter Years of Experience: 5
-Predicted Salary for 5.0 years of experience: $72,345.67
+Predicted Salary for 5.0 years of experience: $<predicted amount>
 ```
 
 ---
@@ -128,6 +135,15 @@ ML/
 └── Salary/
     ├── Model Builder/
     │   └── builder.py             # Model training pipeline
-    └── Prediction/
-        └── prediction.py          # Inference script
+    ├── Prediction/
+    │   └── prediction.py          # Inference script
+    └── Source/
+        ├── Salary.csv             # Training data
+        ├── salary.pkl             # Saved LinearRegression model
+        └── scaler.pkl             # Saved StandardScaler
 ```
+
+## Related
+
+- [Machine-learning datasets](https://github.com/gcfernando/datasets) — more datasets for regression, classification, and forecasting practice
+- [Back to all Python projects](../README.md)

@@ -1,6 +1,6 @@
-# GUI Apps
+# Python Desktop GUI Apps — Tkinter (ttkbootstrap) Contact Book with SQL Server
 
-A collection of desktop GUI applications built with Python.
+A collection of desktop GUI applications built with Python. It currently contains **Contact Book**, a CRUD contact manager that shows how to connect a **Tkinter / ttkbootstrap** interface to **Microsoft SQL Server** using **pyodbc** and stored procedures.
 
 ---
 
@@ -8,7 +8,7 @@ A collection of desktop GUI applications built with Python.
 
 ### Contact Book
 
-A desktop contact management application with a graphical interface backed by a Microsoft SQL Server database.
+A desktop contact management application with a graphical interface backed by a Microsoft SQL Server database. It is a practical example of a Python GUI that saves, searches, updates, and deletes records in SQL Server through parameterized stored-procedure calls.
 
 **Location:** `ContactBook/V1/Contact.py`
 
@@ -59,7 +59,7 @@ The application uses **Microsoft SQL Server** via the ODBC Driver 17. Run the pr
 
 ```bash
 # Connect to your SQL Server instance and run:
-ContactBook/SQL_Script/ContactBook.sql
+SQL_Script/ContactBook.sql
 ```
 
 The script creates:
@@ -78,11 +78,23 @@ The SQL Server connection string is defined as a class variable in `Contact.py`.
 __sql_connection = 'DRIVER={ODBC Driver 17 for SQL Server};SERVER=<your-server>;DATABASE=<your-db>;UID=<username>;PWD=<password>'
 ```
 
+> **Security note:** do not commit real server names, user names, or passwords. Prefer Windows authentication (`Trusted_Connection=yes`) or read the connection string from an environment variable in your own copy.
+
 #### Usage
+
+From the `GUI_Apps` folder:
 
 ```bash
 python ContactBook/V1/Contact.py
 ```
+
+#### FAQ
+
+**Which ODBC driver do I need?**
+The connection string uses `ODBC Driver 17 for SQL Server`. If you have a newer driver installed, such as ODBC Driver 18, change the `DRIVER` value to match.
+
+**Why does saving fail for a contact that looks new?**
+The database enforces unique mobile numbers and email addresses, so a save is rejected if either value already belongs to another contact.
 
 ---
 
@@ -96,3 +108,9 @@ GUI_Apps/
 └── SQL_Script/
     └── ContactBook.sql      # Database schema and stored procedures
 ```
+
+## Related
+
+- [Text2Audio](../Text2Audio/readme.md) and [Setup Wizard — Fruit Wiki](../SetupWizard/readme.md) — more Python desktop GUI examples
+- [Complete SQL Guide](https://github.com/gcfernando/document/blob/main/sql_complete_guide.md) — learn the SQL Server concepts used here, including stored procedures and constraints
+- [Back to all Python projects](../README.md)
