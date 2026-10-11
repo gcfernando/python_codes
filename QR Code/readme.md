@@ -1,10 +1,10 @@
-# QR Code
+# Generate a QR Code in Python — Custom Colours with the qrcode Library
 
-Generates a custom QR code image using Python and saves it as a PNG file.
+A short Python script that shows **how to generate a QR code in Python** with the `qrcode` library, using custom fill and background colours and saving the result as a PNG image.
 
 ## Overview
 
-This script uses the `qrcode` library to create a QR code that encodes a LinkedIn profile URL. The QR code is styled with a dark blue fill on a light gray background and saved to `profile.png`.
+This script uses the `qrcode` library to create a QR code that encodes a short text containing a LinkedIn profile address. The QR code is styled with a dark blue fill on a light gray background and saved to `profile.png`. A sample `profile.png` is included in the `Console_Code` folder.
 
 ## Features
 
@@ -35,11 +35,13 @@ Open `qr_code.py` and update the `data` variable with your desired content:
 data = 'Your text or URL here'
 ```
 
-Then run the script:
+Then run the script from the `Console_Code` folder:
 
 ```bash
 python qr_code.py
 ```
+
+To make the QR code open a website when scanned, encode a full URL including `https://`; plain text is shown as text by most scanner apps.
 
 A file named `profile.png` will be created in the working directory.
 
@@ -47,7 +49,7 @@ A file named `profile.png` will be created in the working directory.
 
 | Parameter | Value | Description |
 |---|---|---|
-| `version` | `1` | QR code complexity (1–40; 1 is smallest) |
+| `version` | `1` | Starting QR code size (1–40). Because `qr.make(fit=True)` is used, the version grows automatically if the data does not fit |
 | `box_size` | `15` | Pixel size of each box in the QR code |
 | `border` | `5` | Width of the quiet zone border (in boxes) |
 | `fill_color` | `'darkblue'` | Color of the QR code modules |
@@ -58,5 +60,12 @@ A file named `profile.png` will be created in the working directory.
 ```
 QR Code/
 └── Console_Code/
-    └── qr_code.py    # Main script
+    ├── qr_code.py    # Main script
+    └── profile.png   # Sample output
 ```
+
+## Related Projects
+
+- [Steganography — hide text inside a PNG](../Stenography/readme.md)
+- [Image to ASCII](../Image%20to%20ASCII/readme.md)
+- [Back to all Python projects](../README.md)

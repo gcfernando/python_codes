@@ -1,6 +1,6 @@
-# Stenography
+# Image Steganography in Python — Hide Text in a PNG with LSB (stegano)
 
-Hides a secret text message inside an image using LSB (Least Significant Bit) steganography, and retrieves it later.
+A short Python example of **image steganography**: it hides a secret text message inside a PNG image using LSB (Least Significant Bit) encoding with the `stegano` library, then reads the message back. (The folder is named `Stenography`; the technique is steganography.)
 
 ## Overview
 
@@ -39,7 +39,7 @@ output_image   = 'path/to/output_secret.png'
 
 Also update `hidden_text` with the message you want to embed.
 
-Then run the script:
+Then run the script from the `Console_Code` folder:
 
 ```bash
 python HideTextInImage.py
@@ -62,3 +62,10 @@ Stenography/
 - Only **PNG images** are supported. JPEG compression would destroy the hidden data.
 - The carrier image must be large enough to hold the message (more pixels = more capacity).
 - The output image is visually identical to the input.
+- Steganography hides that a message exists but does not encrypt it — anyone who runs `lsb.reveal()` on the image can read the text. Encrypt the message first if it must stay confidential.
+
+## Related Projects
+
+- [QR Code generator](../QR%20Code/readme.md)
+- [Password Generator and Strength Checker](../Password%20Utility/readme.md)
+- [Back to all Python projects](../README.md)

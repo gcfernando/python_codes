@@ -1,6 +1,6 @@
-# Port Scanner
+# Python Port Scanner — Multithreaded TCP Scanner with IPv6, Banners and JSON Output
 
-A fast, multithreaded TCP port scanner written in pure Python. No external dependencies required.
+A fast, multithreaded **TCP port scanner written in pure Python** (standard library only). It scans IPv4 and IPv6 hosts, distinguishes open, closed, and filtered ports, can grab service banners, and can emit JSON for automation.
 
 > **Only scan systems you own or have explicit written permission to test.**
 > Unauthorized scanning may violate computer-misuse laws in your jurisdiction.
@@ -28,6 +28,8 @@ python portscan.py <target> [options]
 ```
 
 ### Examples
+
+`example.com` below is a placeholder — replace it with a host you own or are authorized to scan, such as `127.0.0.1` for your own machine.
 
 ```bash
 # Scan default ports 1-1024
@@ -73,6 +75,9 @@ python portscan.py example.com -v
 ## Output Formats
 
 ### Human-readable (default)
+
+Illustrative output (addresses and open ports depend on the target):
+
 ```
 14:32:01 [INFO] Target: example.com -> 93.184.216.34 (IPv4)
 14:32:01 [INFO] Scanning 1024 port(s) with concurrency=200, timeout=1.00s
@@ -105,6 +110,8 @@ python portscan.py example.com -v
 | `closed` | Host actively refused the connection |
 | `filtered` | Connection timed out (likely a firewall) |
 
+The human-readable format and the JSON structure above were confirmed by scanning `127.0.0.1`. Service names come from the operating system's services database (`socket.getservbyport`), so the same port can be labelled differently on different systems (for example, port 135 appears as `epmap` on Windows).
+
 ## Exit Codes
 
 | Code | Meaning |
@@ -121,3 +128,17 @@ Port Scanner/
 └── Console_Code/
     └── portscan.py    # Main script
 ```
+
+## FAQ
+
+**Is this a replacement for Nmap?**
+No. It performs TCP connect scans only (no SYN, UDP, OS, or version detection). It is a readable example of a concurrent scanner and a lightweight tool for quick checks.
+
+**Why are some ports shown as `filtered`?**
+The connection attempt timed out rather than being refused, which usually means a firewall dropped the packets. Increasing `--timeout` can turn slow `filtered` results into `open` or `closed`.
+
+## Related Projects
+
+- [WiFi Radar — Flask Wi-Fi scanner dashboard](../Wifi%20Radar/readme.md)
+- [Linux command reference for cybersecurity](https://github.com/gcfernando/other_codes/tree/main/Linux_Commands)
+- [Back to all Python projects](../README.md)

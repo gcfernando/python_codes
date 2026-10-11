@@ -1,6 +1,6 @@
-# Setup Wizard — Fruit Wiki
+# PySimpleGUI Image Viewer with PyInstaller Packaging — Fruit Wiki (Python)
 
-A GUI application that displays fruit images and information in a paginated viewer, built with PySimpleGUI and Pillow. The project is packaged for distribution using PyInstaller.
+A Python desktop GUI that displays fruit images and descriptions in a paginated viewer, built with **PySimpleGUI** and **Pillow**, with a `resource_path()` helper that makes bundled assets work when the app is packaged into a Windows executable with **PyInstaller**.
 
 ## Overview
 
@@ -31,44 +31,52 @@ Install dependencies:
 pip install PySimpleGUI Pillow pyglet pyinstaller
 ```
 
-## Folder Structure (at Runtime)
-
-The application expects the following structure relative to the executable or script:
+## Folder Structure
 
 ```
 SetupWizard/
-├── GUI_Code/
-│   └── fruitWiki.py    # Main application
-├── Fonts/
-│   └── Futura.ttf      # Custom font
-├── Images/
-│   ├── apple.png       # Fruit images
-│   └── banana.jpg
-└── Data/
-    ├── apple.txt       # Matching text description for apple.png
-    └── banana.txt
+└── GUI_Code/
+    ├── fruitWiki.py    # Main application
+    ├── icon.ico        # Application icon
+    ├── Fonts/
+    │   └── Futura.ttf  # Custom font
+    ├── Images/         # Apple, Banana, Cherry, Grapes, Mango, Papaya (.png)
+    └── Data/           # Matching descriptions (Apple.txt, Banana.txt, ...)
 ```
 
-Each `.txt` file in `Data/` must have the same base name as its matching image file.
+Each `.txt` file in `Data/` must have the same base name as its matching image file. Six fruits are included.
 
 ## Usage
 
 ### Running the script directly
 
+When not packaged, `resource_path()` resolves `Fonts`, `Images`, and `Data` relative to the **current working directory**, so run the script from the `GUI_Code` folder:
+
 ```bash
-python GUI_Code/fruitWiki.py
+cd GUI_Code
+python fruitWiki.py
 ```
 
 ### Building a standalone executable with PyInstaller
 
+In a one-file build, `resource_path()` looks for assets in PyInstaller's temporary extraction folder (`sys._MEIPASS`), so the asset folders must be bundled into the executable with `--add-data` (on Windows the separator is `;`). From the `GUI_Code` folder:
+
 ```bash
-pyinstaller --onefile --windowed GUI_Code/fruitWiki.py
+pyinstaller --onefile --windowed --icon icon.ico --add-data "Fonts;Fonts" --add-data "Images;Images" --add-data "Data;Data" fruitWiki.py
 ```
 
-The generated `.exe` can be distributed as a standalone installer. Bundle the `Fonts/`, `Images/`, and `Data/` folders alongside it.
+The executable is created in `dist/`.
 
 ## Notes
 
 - The `resource_path()` function ensures the app finds its assets whether run from source or as a PyInstaller bundle.
 - Sentence formatting is applied to description text: periods followed by a space are replaced with a newline.
-- The Delete button is disabled when viewing the first entry; the Next button is disabled on the last.
+- The Previous button is disabled when viewing the first entry; the Next button is disabled on the last.
+- The custom font is registered with `pyglet.font.add_file`, which is why `pyglet` is a dependency.
+- PySimpleGUI's licensing changed with version 5. Check the current PySimpleGUI terms before installing, or use FreeSimpleGUI, a community fork of the version 4 API.
+
+## Related Projects
+
+- [Text2Audio — customtkinter text-to-speech app](../Text2Audio/readme.md)
+- [Contact Book — ttkbootstrap and SQL Server](../GUI_Apps/README.md)
+- [Back to all Python projects](../README.md)

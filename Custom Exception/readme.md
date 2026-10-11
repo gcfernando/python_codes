@@ -1,6 +1,6 @@
-# Custom Exception
+# How to Create a Custom Exception in Python — Minimal Example
 
-A minimal Python example demonstrating how to define and raise a custom exception class.
+A minimal Python example demonstrating **how to define, raise, and catch a custom exception class** by subclassing `Exception`.
 
 ## Overview
 
@@ -34,11 +34,13 @@ except CustomException as e:
 
 ## Usage
 
+From the `Console_Code` folder:
+
 ```bash
 python CustomException.py
 ```
 
-**Output:**
+**Output** (confirmed by running the script):
 ```
 Something went wrong
 ```
@@ -55,3 +57,17 @@ Custom Exception/
 └── Console_Code/
     └── CustomException.py    # Main script
 ```
+
+## FAQ
+
+**Do I need to store `message` on the exception?**
+No — `str(e)` already returns the message passed to `super().__init__(message)`. Storing it as `self.message` simply makes it available as a named attribute, which is handy when you add more fields (such as an error code).
+
+**Should custom exceptions inherit from `Exception` or `BaseException`?**
+From `Exception` (or one of its subclasses). `BaseException` is reserved for exceptions such as `KeyboardInterrupt` and `SystemExit` that ordinary `except Exception` blocks should not catch.
+
+## Related Projects
+
+- [Object Clone — deep copy example](../Object%20Clone/readme.md)
+- [Python dbm database example](../Database/README.md)
+- [Back to all Python projects](../README.md)

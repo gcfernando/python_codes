@@ -1,6 +1,6 @@
-# Image2Cartoon
+# Cartoonify an Image with Python and OpenCV — Image2Cartoon
 
-Converts a regular photograph into a cartoon-style image using OpenCV image processing techniques.
+A short Python script that shows **how to cartoonify a photo with OpenCV**: median blur, adaptive-threshold edge detection, and a bilateral filter are combined to turn a regular photograph into a cartoon-style image.
 
 ## Overview
 
@@ -46,6 +46,13 @@ python CartoonImage.py
 
 Two windows will open — one showing the original resized image and one showing the cartoon version. Press any key to close them.
 
+The result is only displayed, not saved. To keep it, add `cv2.imwrite('cartoon.jpg', cartoon_image)` after the conversion.
+
+## Tips
+
+- Both images are resized to a fixed 500×500, which stretches photos that are not square. Resize by a scale factor instead to keep the aspect ratio.
+- `cv2.adaptiveThreshold(..., 9, 9)` controls edge detection (block size and constant); `cv2.bilateralFilter(image, 9, 250, 250)` controls how flat the colour areas become. Adjust them to make lines thicker or colours smoother.
+
 ## File Structure
 
 ```
@@ -53,3 +60,10 @@ Image2Cartoon/
 └── Console_Code/
     └── CartoonImage.py    # Main script
 ```
+
+## Related Projects
+
+- [Photo to graphite pencil sketch CLI](../Graphite_CLI/README.md)
+- [Remove Background](../Remove%20Background/readme.md)
+- [Image to ASCII](../Image%20to%20ASCII/readme.md)
+- [Back to all Python projects](../README.md)

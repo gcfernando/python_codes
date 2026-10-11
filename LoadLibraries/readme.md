@@ -1,6 +1,6 @@
-# Load Libraries
+# Call a C# DLL from Python with pythonnet — Load a .NET Library
 
-Demonstrates how to call a compiled .NET (C#) library from Python using `pythonnet`.
+Demonstrates **how to call a compiled C# / .NET library (DLL) from Python** using `pythonnet` and its `clr` module.
 
 ## Overview
 
@@ -9,7 +9,7 @@ This project shows cross-language interoperability between Python and .NET. A si
 ## Features
 
 - Load and call a .NET assembly (`.dll`) from Python
-- Demonstrates four arithmetic operations via the C# `Calc` class:
+- Calls five static methods on the C# `Calc` class — a description plus four arithmetic operations:
   - `About()` — returns a description string
   - `Addition(a, b)`
   - `Subtraction(a, b)`
@@ -42,7 +42,7 @@ Install the dependency:
 pip install pythonnet
 ```
 
-You also need the **.NET runtime** installed on your system (compatible with the compiled DLL version).
+You also need a **.NET runtime** that can load the DLL. `Calculator.csproj` targets **.NET 6** (`net6.0`).
 
 ## Usage
 
@@ -59,6 +59,8 @@ python Console_Code/CalcCaller.py
 ```
 
 ### Example Output
+
+The script calls `Addition(5, 5)`, `Subtraction(10, 5)`, `Multiplication(5, 5)`, and `Division(10, 5)`, so it prints:
 
 ```
 About: You're accessing .NET library
@@ -83,4 +85,22 @@ Copy the resulting `.dll` from the `bin/Release/` output to `Library/Calculator.
 ## Notes
 
 - The DLL path in `CalcCaller.py` is currently hardcoded. Update it to match your actual directory structure before running.
-- `asyncio`, `pprint`, and `copy` are part of the Python standard library and do not need installation.
+- `Calc` is a `public static class`, so its methods are called directly on the type (`Calc.Addition(5, 5)`) without creating an instance.
+
+## Troubleshooting
+
+- **The DLL fails to load on Windows.** By default `pythonnet` 3 uses the .NET Framework runtime on Windows, while this DLL targets .NET 6. Select the .NET (Core) runtime before importing `clr`:
+
+  ```python
+  from pythonnet import load
+  load("coreclr")
+  import clr
+  ```
+
+  The machine needs a .NET runtime that can run a `net6.0` assembly, or rebuild the library for the runtime you have installed.
+- **`FileNotFoundException` for the DLL** — the path passed to `clr.AddReference` must point to the DLL on your machine.
+
+## Related Projects
+
+- [The reverse direction: call Python from C# with Python.NET](https://github.com/gcfernando/csharp_codes/tree/main/PythonBridge)
+- [Back to all Python projects](../README.md)

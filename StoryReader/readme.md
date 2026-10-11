@@ -1,6 +1,6 @@
-# Story Reader
+# Read a PDF Aloud with Python — PyPDF2 and pyttsx3 Offline Text-to-Speech
 
-Reads a PDF document aloud using text-to-speech, page by page.
+A short Python script that **reads a PDF aloud**, page by page: it extracts the text with `PyPDF2` and speaks it with `pyttsx3`, which uses your operating system's built-in (offline) text-to-speech voices.
 
 ## Overview
 
@@ -9,7 +9,7 @@ This script extracts text from a PDF file using `PyPDF2` and converts it to spee
 ## Features
 
 - Reads all pages of a PDF aloud using the system's text-to-speech engine
-- Automatically selects a female voice if one is available (falls back to default otherwise)
+- Tries to select a voice whose name or ID contains "female" (see the note on voice selection below)
 - Configurable reading speed (words per minute) and volume
 - Prints progress to the console as each page is read
 - Short pause between pages for a more natural listening experience
@@ -30,7 +30,7 @@ pip install PyPDF2 pyttsx3
 
 ## Usage
 
-Place your PDF file in the same directory as the script (or update the path), then run:
+`Story.pdf` is not included in the repository. Place your own PDF named `Story.pdf` in the folder you run the script from (or update the path), then run:
 
 ```bash
 python StoryReader.py
@@ -68,3 +68,13 @@ StoryReader/
 - `pyttsx3` uses the operating system's built-in TTS engine (SAPI5 on Windows, NSSpeechSynthesizer on macOS, eSpeak on Linux).
 - Pages with no extractable text are silently skipped.
 - Press `Ctrl+C` to interrupt playback.
+- `PyPDF2` is no longer developed under that name; its successor is `pypdf`, which provides the same `PdfReader` class.
+
+### Voice selection
+
+`select_voice` looks for the word "female" in each installed voice's name or ID. Standard Windows voice names such as "Microsoft Zira Desktop" do not contain that word, so the function usually falls back to `voices[1]`, the second installed voice. On a default English (US) Windows installation, that is typically Zira. If only one voice is installed, `voices[1]` raises an `IndexError`; change the fallback to `voices[0]` or pass a specific voice ID.
+
+## Related Projects
+
+- [Text2Audio — Google text-to-speech desktop app](../Text2Audio/readme.md)
+- [Back to all Python projects](../README.md)

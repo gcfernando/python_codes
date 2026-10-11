@@ -1,6 +1,6 @@
-# Text2Audio
+# Text to Speech Desktop App in Python — gTTS and customtkinter (15 Accents)
 
-A desktop GUI application that converts typed text into speech using Google Text-to-Speech (gTTS), with support for multiple languages and accents.
+A Python desktop GUI that **converts typed text to speech** using Google Text-to-Speech (`gTTS`), with 15 language and accent options, a modern `customtkinter` interface, and playback through `pygame`.
 
 ## Overview
 
@@ -42,6 +42,8 @@ pip install customtkinter gtts pygame
 
 ## Usage
 
+From the `Text2Audio` folder:
+
 ```bash
 python GUI_Code/main.py
 ```
@@ -72,3 +74,10 @@ Text2Audio/
 
 - An active internet connection is required since gTTS sends requests to Google's TTS API.
 - The generated `output.mp3` file is saved in the current working directory and overwritten on each use.
+- Accents are produced by sending the request to a regional Google domain through gTTS's `tld` parameter (for example `co.uk` for UK English or `com.br` for Brazilian Portuguese).
+
+## Related Projects
+
+- [Story Reader — read a PDF aloud with offline TTS](../StoryReader/readme.md)
+- [Setup Wizard — Fruit Wiki GUI](../SetupWizard/readme.md)
+- [Back to all Python projects](../README.md)

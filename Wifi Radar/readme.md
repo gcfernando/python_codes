@@ -1,6 +1,6 @@
-# WiFi Radar
+# WiFi Radar — Python Wi-Fi Scanner with a Live Flask Web Dashboard
 
-A real-time, cross-platform Wi-Fi scanner with a military-style radar web interface. Displays nearby access points as live radar blips with signal strength, security info, vendor lookup, and CSV export.
+A real-time, cross-platform **Wi-Fi scanner written in Python** with a military-style radar web interface served by Flask. Displays nearby access points as live radar blips with signal strength, security info, vendor lookup, and CSV export.
 
 ## Overview
 
@@ -50,6 +50,8 @@ sudo python3 server.py   # Linux
 
 Then open your browser at: **http://localhost:5000**
 
+> **Network exposure:** `server.py` starts Flask with `host='0.0.0.0'` and enables CORS, so the dashboard and API are reachable from other devices on the same network, not only from `localhost`. Change the host to `127.0.0.1` in `app.run(...)` if you want it to be local-only, and do not run it on untrusted networks.
+
 ## API Endpoints
 
 | Endpoint | Description |
@@ -91,7 +93,7 @@ Linux requires `sudo` for scanning.
 - Flask and Flask-CORS (auto-installed by launcher scripts)
 - Wi-Fi adapter enabled in OS settings
 - Any modern web browser
-- Internet access for vendor lookups (works offline after cache is built)
+- Internet access for vendor lookups (works offline after cache is built). Each new access point's BSSID (MAC address) is sent to `api.macvendors.com` for the lookup.
 
 ## File Structure
 
@@ -104,6 +106,13 @@ Wifi Radar/
 ├── START_WINDOWS.bat      # Windows one-click launcher
 └── START_UNIX.sh          # macOS / Linux launcher
 ```
+
+## Related Projects
+
+- [WiFi Scanner — command-line scan with pywifi](../Wifi%20Scanner/readme.md)
+- [WiFi Profiles — saved Windows Wi-Fi networks](../Wifi%20Profiles/readme.md)
+- [Port Scanner](../Port%20Scanner/readme.md)
+- [Back to all Python projects](../README.md)
 
 ## Disclaimer
 

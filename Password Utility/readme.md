@@ -1,6 +1,6 @@
-# Password Utility
+# Python Password Generator and Password Strength Checker
 
-Two command-line tools for generating secure random passwords and evaluating the strength of existing passwords.
+Two small Python command-line tools: a **random password generator** with guaranteed numbers of digits, uppercase, lowercase, and special characters, and a **password strength checker** that rates a password by the number of possible character combinations.
 
 ## Overview
 
@@ -26,24 +26,23 @@ Generates a random password based on specified requirements.
 | Special characters | 5 |
 | Remaining | Random mix of all character types |
 
-The generated characters are shuffled to ensure randomness in the final output.
+The generated characters are shuffled so the guaranteed characters are not grouped at the start.
 
-**Usage:**
+> **Security note:** the generator uses Python's `random` module, which is designed for simulations, not security. For real passwords, use the `secrets` module (for example `secrets.choice(...)` and `secrets.SystemRandom().shuffle(...)`) or a password manager.
+
+**Usage** (from the `Cosole_Code` folder):
 
 ```bash
 python Password_Generator.py
 ```
 
-**Example output:**
-```
-aB3!xK#9mZ@2vQ&5nP$7wR%1jS*4uL
-```
+The script prints one 30-character password; every run produces a different one.
 
 ---
 
 ### Password Strength Validator (`PasswordStregth.py`)
 
-Evaluates a password by calculating the total number of possible combinations given its character composition.
+Evaluates a password by calculating the total number of possible combinations given its character composition: 26 options for each lowercase letter, 26 for each uppercase letter, 10 for each digit, and the size of the special-character set for each special character, multiplied together.
 
 **Strength levels:**
 
@@ -63,18 +62,20 @@ python PasswordStregth.py
 
 The script runs in a loop, letting you check multiple passwords until you choose to exit.
 
-**Example session:**
+**Example session** (results confirmed by running the script):
 ```
 Enter your password: hello
-Very Weak
+Weak
 
 More ! (Y|N) : Y
 
 Enter your password: P@ssw0rd!2024
-Strong
+Very Strong
 
 More ! (Y|N) : N
 ```
+
+> The rating only considers length and character types. `P@ssw0rd!2024` scores **Very Strong** even though it follows a very common pattern that password crackers try early. For a realistic estimate, use a library such as `zxcvbn`, which also checks dictionary words and common substitutions.
 
 ## Requirements
 
@@ -88,3 +89,9 @@ Password Utility/
     ├── Password_Generator.py    # Random password generator
     └── PasswordStregth.py       # Password strength validator
 ```
+
+## Related Projects
+
+- [Use Windows Login — verify Windows credentials](../Use%20Windows%20Login/readme.md)
+- [Steganography — hide text in images](../Stenography/readme.md)
+- [Back to all Python projects](../README.md)

@@ -1,6 +1,6 @@
-# Lyrics
+# Get Song Lyrics with Python and the Genius API — lyricsgenius Example
 
-Fetches and displays song lyrics from the Genius music database using the `lyricsgenius` library.
+A short Python script that **searches the Genius API for a song** with the `lyricsgenius` library and prints its title, artist, album, and a lyrics preview.
 
 ## Overview
 
@@ -40,21 +40,25 @@ To get a Genius API token, register at [genius.com/developers](https://genius.co
 
 ## Usage
 
+From the `Console_Code` folder:
+
 ```bash
 python Lyrics.py
 ```
 
-### Example Output
+### Output Format
 
 ```
-🎵 Title: Sapphire
-🎤 Artist: Ed Sheeran
-💿 Album: Shivers (Single)
+🎵 Title: <song title>
+🎤 Artist: <artist>
+💿 Album: <album full title>
 
 🎶 Lyrics:
 
-Life is beautiful, standing on the edge...
+<first 1,000 characters of the lyrics>...
 ```
+
+If no match is found, the script prints `Song not found.`
 
 ## File Structure
 
@@ -64,8 +68,15 @@ Lyrics/
     └── Lyrics.py    # Main script
 ```
 
+## Related Projects
+
+- [MP3 Tags — read ID3 metadata](../MP3%20Tags/readme.md)
+- [MP3 Player with crossfade](../MP3%20Player/readme.md)
+- [Back to all Python projects](../README.md)
+
 ## Notes
 
-- The API token in the script is a placeholder and should be replaced with your own.
+- Use your own Genius API token. Do not commit a real token to source control — read it from an environment variable instead, for example `lyricsgenius.Genius(os.environ["GENIUS_ACCESS_TOKEN"])`.
+- `song.album` can be `None` for songs without an album on Genius, which would make the `song.album.full_title` line fail.
 - The Genius free API tier has rate limits. If you hit them, the search may return `None`.
 - Only the first 1,000 characters of the lyrics are printed in the current implementation.

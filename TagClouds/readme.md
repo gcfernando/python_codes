@@ -1,6 +1,6 @@
-# Tag Clouds
+# Generate a Word Cloud from Web Pages in Python — wordcloud with an Image Mask
 
-Generates a word cloud from text scraped across multiple web pages, shaped by a custom mask image.
+A Python script that **creates a word cloud from text scraped from several web pages**, shaped by a mask image, using `requests`, `inscriptis`, `wordcloud`, and `matplotlib`.
 
 ## Overview
 
@@ -44,6 +44,8 @@ The following variables at the top of `TagCloud.py` can be modified:
 
 ## Usage
 
+From the `Console_Code` folder:
+
 ```bash
 python TagCloud.py
 ```
@@ -66,4 +68,12 @@ TagClouds/
 - An internet connection is required to fetch web pages and the mask image.
 - Pages that return HTTP errors or connection failures are silently skipped.
 - If all pages fail, the script raises a `ValueError` rather than generating an empty cloud.
-- The font path is currently hardcoded to a Windows system font. Update `font_path` if running on macOS or Linux.
+- The font path is hardcoded to `C:\Windows\Fonts\ITCKRIST.ttf` (ITC Kristen). That font is usually installed with Microsoft Office rather than with Windows itself, so update `font_path` if it is missing or if you run the script on macOS or Linux.
+- The configured pages are third-party sites that may move, change, or block automated requests. Replace them with pages you are allowed to fetch.
+- The mask works best with a high-contrast image: words are drawn in the non-white areas.
+
+## Related Projects
+
+- [Simple Selenium Scraper](../Simple%20Selenium%20Scraper/readme.md)
+- [Image2Cartoon — OpenCV image effects](../Image2Cartoon/readme.md)
+- [Back to all Python projects](../README.md)

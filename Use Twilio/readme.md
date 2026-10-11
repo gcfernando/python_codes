@@ -1,6 +1,6 @@
-# Use Twilio
+# Send SMS and WhatsApp Messages and Make Calls with Python and Twilio
 
-A command-line client for sending SMS messages, WhatsApp messages, and making voice calls via the Twilio REST API.
+A command-line Python client that shows **how to send an SMS, send a WhatsApp message, and place a voice call with the Twilio API**, using the official `twilio` package.
 
 ## Overview
 
@@ -27,7 +27,7 @@ pip install twilio
 
 ## Configuration
 
-Open `SendSMS.py` and replace the placeholder credentials with your actual Twilio account details:
+Open `SendSMS.py` and replace the placeholder credentials with your actual Twilio account details (the committed file contains masked placeholder values):
 
 ```python
 twilio_service = TwilioService(
@@ -38,9 +38,11 @@ twilio_service = TwilioService(
 )
 ```
 
-You can find these values in your [Twilio Console](https://console.twilio.com/).
+You can find these values in your [Twilio Console](https://console.twilio.com/). Do not commit real credentials; in your own copy, read them from environment variables such as `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN`.
 
 ## Usage
+
+From the `Console_Code` folder:
 
 ```bash
 python SendSMS.py
@@ -82,3 +84,12 @@ Use Twilio/
 - The voice call option uses `http://demo.twilio.com/docs/voice.xml` as the TwiML URL, which plays a Twilio demo message.
 - WhatsApp messaging requires a Twilio WhatsApp sender number approved through the Twilio console.
 - Phone numbers must include the country code (e.g., `+1` for USA, `+44` for UK).
+- The script asks for a message even for option `2`; the text is not used for voice calls. Any option other than `0` or `1` places a call.
+- The loop runs until you press `Ctrl+C`, and it clears the screen with `cls` (Windows) at the start of each round.
+- The option prompt is read with `eval(input(...))`, which executes whatever is typed as Python code. Run it only on your own machine, or change it to `int(input(...))`.
+- Twilio trial accounts can only send to verified numbers, and messages and calls are billed to your Twilio account.
+
+## Related Projects
+
+- [Simple WhatsApp Sender — WhatsApp Web automation](../Simple%20WhatApp%20Sender/readme.md)
+- [Back to all Python projects](../README.md)

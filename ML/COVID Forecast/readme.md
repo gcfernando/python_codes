@@ -1,6 +1,6 @@
-# COVID Forecast
+# COVID-19 Time Series Forecasting in Python — auto-ARIMA and SARIMAX Example
 
-A time series forecasting script that predicts daily COVID-19 cases for a country using SARIMAX and auto-ARIMA models.
+A **time series forecasting** script in Python that predicts daily COVID-19 cases for a country using `pmdarima.auto_arima` for model selection and `statsmodels` SARIMAX for fitting — a worked example of the ADF stationarity test, seasonal ARIMA, in-sample validation, and future forecasts with confidence intervals.
 
 ## Overview
 
@@ -46,6 +46,8 @@ Edit the variables at the top of `CovidForecast.py`:
 
 ## Usage
 
+From the `Console_Code` folder:
+
 ```bash
 python CovidForecast.py
 ```
@@ -74,3 +76,16 @@ COVID Forecast/
 └── Console_Code/
     └── CovidForecast.py    # Main script
 ```
+
+## Notes
+
+- `auto_arima` is called with `seasonal=True` and `m=12`, so it looks for a 12-step seasonal pattern in the daily series. Weekly reporting patterns would correspond to `m=7`; try both if you adapt the script.
+- The data download depends on the third-party `covid_daily` package and the site it reads from. If the download fails, place a CSV with the same structure at `<country>_corvid19.csv` and the script will load it instead.
+- The forecasts are a modelling exercise, not public-health guidance.
+
+## Related Projects
+
+- [Salary prediction with scikit-learn linear regression](../Salary/readme.md)
+- [Machine-learning examples overview](../README.md)
+- [Machine-learning datasets for practice](https://github.com/gcfernando/datasets)
+- [Back to all Python projects](../../README.md)

@@ -1,6 +1,6 @@
-# Remove Background
+# Remove Image Background in Python with rembg — AI Background Removal Example
 
-Removes the background from an image and replaces it with a solid black backdrop using `rembg` and Pillow.
+A short Python script that shows **how to remove the background from an image in Python** using the AI-based `rembg` library, then places the subject on a solid black background with Pillow.
 
 ## Overview
 
@@ -30,17 +30,17 @@ pip install rembg Pillow
 
 ## Usage
 
-Open `Remove.py` and set the input and output file paths:
+By default the script processes the included sample image `Elephant.jpg` and writes `Elephant_Modified.jpg`, so you can try it straight away from the `Console_Code` folder:
+
+```bash
+python Remove.py
+```
+
+To use your own image, set the input and output paths in `Remove.py`:
 
 ```python
 orginal_image = 'path/to/input.jpg'
 output_image  = 'path/to/output.jpg'
-```
-
-Then run the script:
-
-```bash
-python Remove.py
 ```
 
 The processed image will be saved at the output path.
@@ -57,10 +57,19 @@ The processed image will be saved at the output path.
 ```
 Remove Background/
 └── Console_Code/
-    └── Remove.py    # Main script
+    ├── Remove.py      # Main script
+    └── Elephant.jpg   # Sample input image
 ```
 
 ## Notes
 
 - The output background color is currently set to black. Change `'black'` to `'white'` or any other color in `Image.new('RGB', result_img.size, 'black')` to use a different background.
 - `rembg` works best on images with clear subject-background contrast.
+- To keep a transparent background instead, save `result_img` (the RGBA image) as a `.png` file rather than compositing it onto a colour.
+- The function's docstring and variable name mention a white background, but the code uses `'black'`.
+
+## Related Projects
+
+- [Image2Cartoon — cartoon effect with OpenCV](../Image2Cartoon/readme.md)
+- [Photo to graphite pencil sketch CLI](../Graphite_CLI/README.md)
+- [Back to all Python projects](../README.md)

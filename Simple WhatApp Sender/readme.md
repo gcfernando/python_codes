@@ -1,6 +1,6 @@
-# Simple WhatsApp Sender
+# Send a Scheduled WhatsApp Message with Python — pywhatkit Example
 
-Sends a scheduled WhatsApp message to a phone number at a specified time using the `pywhatkit` library.
+A short Python script that shows **how to schedule and send a WhatsApp message from Python** with the `pywhatkit` library, which automates WhatsApp Web in your browser.
 
 ## Overview
 
@@ -32,18 +32,31 @@ Open `WhatAppMessage.py` and update the following variables:
 
 | Variable | Description | Example |
 |---|---|---|
-| `phone_number` | Recipient's phone number with country code, no `+` or leading `0` | `"+46123456789"` |
+| `phone_number` | Recipient's phone number in international format, starting with `+` and the country code | `"+46123456789"` |
 | `message` | Text of the message to send | `"Hello from Python!"` |
 | `hour` | Hour to send the message (24-hour format) | `21` |
 | `min` | Minute to send the message | `5` |
 
 ## Usage
 
+From the `Cosole_Code` folder:
+
 ```bash
 python WhatAppMessage.py
 ```
 
 The script will wait until the specified time, then open WhatsApp Web and send the message automatically.
+
+## How It Works
+
+In `pywhatkit` 5.4, `sendwhatmsg`:
+
+1. Checks that the number contains a `+` country code (otherwise it raises `CountryCodeException`).
+2. Calculates the time until the scheduled minute and sleeps until 15 seconds before it (`wait_time=15`).
+3. Opens a WhatsApp Web chat link in your **default browser**, waits for it to load, clicks the centre of the screen, and presses **Enter** with `pyautogui`.
+4. With `tab_close=True`, closes the tab a few seconds after sending.
+
+Because it simulates mouse and keyboard input, keep the computer unlocked, the browser window visible, and avoid typing while it sends. The scheduled time must be at least 15 seconds in the future; a time that has already passed today is treated as that time tomorrow.
 
 ## File Structure
 
@@ -56,5 +69,11 @@ Simple WhatApp Sender/
 ## Notes
 
 - WhatsApp Web must be logged in before the scheduled send time.
-- The `pywhatkit` library controls Chrome via keyboard automation, so do not interact with the browser while it is sending.
 - Phone number format: include the country code with `+` (e.g., `+46` for Sweden, `+1` for USA).
+- Only send messages to people who expect them; automated bulk messaging can breach WhatsApp's terms of service.
+
+## Related Projects
+
+- [Use Twilio — send SMS and WhatsApp messages through an API](../Use%20Twilio/readme.md)
+- [Simple Selenium Scraper — browser automation](../Simple%20Selenium%20Scraper/readme.md)
+- [Back to all Python projects](../README.md)

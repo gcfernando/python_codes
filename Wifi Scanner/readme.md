@@ -1,6 +1,6 @@
-# Wifi Scanner
+# Python Wi-Fi Scanner — List Nearby Networks with pywifi
 
-Scans for nearby Wi-Fi networks and prints detailed information about each one using the `pywifi` library.
+A short Python script that **scans for nearby Wi-Fi networks** with the `pywifi` library and prints each network's SSID, BSSID, signal strength, frequency, and security type.
 
 ## Overview
 
@@ -37,11 +37,15 @@ pip install pywifi
 
 ## Usage
 
+From the `Console_Code` folder:
+
 ```bash
 python Wifi_Scanner.py
 ```
 
 ### Example Output
+
+Illustrative output showing the labels the script prints. Because of the [known issues](#known-issues), on Windows the frequency appears in GHz (for example `2.412`) and WPA2-Personal networks are labelled `WPA2-EAP`.
 
 ```
 SSID: HomeNetwork
@@ -73,3 +77,16 @@ Wifi Scanner/
 - The script always uses the first Wi-Fi interface (`interfaces()[0]`). Systems with multiple Wi-Fi adapters will use whichever is first in the list.
 - `pywifi` support varies by platform. It works on Windows and Linux; macOS support is limited.
 - On Linux, you may need to run the script with `sudo` for full scan access.
+- `scan()` starts an asynchronous scan, and the script reads `scan_results()` immediately afterwards. Waiting a few seconds between the two calls (for example `time.sleep(3)`) can return a more complete list.
+
+## Known issues
+
+- **Security labels are shifted.** `pywifi` numbers its AKM types as 0 = none, 1 = WPA, 2 = WPA-PSK, 3 = WPA2, 4 = WPA2-PSK, 5 = unknown, but the script's `akm_modes` list is ordered `OPEN, WPA-PSK, WPA-EAP, WPA2-PSK, WPA2-EAP, UNKNOWN`. As a result, a typical WPA2-Personal network (type 4) is printed as `WPA2-EAP`. Reordering the list to `['OPEN', 'WPA-EAP', 'WPA-PSK', 'WPA2-EAP', 'WPA2-PSK', 'UNKNOWN']` matches `pywifi`'s constants.
+- **Frequency units.** On Windows, `pywifi` returns the channel centre frequency in kHz, so `network.freq / 1000000` prints gigahertz (for example `2.412`) under a "MHz" label. Dividing by `1000` gives MHz. Other platforms may report frequency in different units.
+
+## Related Projects
+
+- [WiFi Radar — live Wi-Fi dashboard](../Wifi%20Radar/readme.md)
+- [WiFi Profiles — saved Windows Wi-Fi networks](../Wifi%20Profiles/readme.md)
+- [Internet Speed Test](../Internet%20Speed%20Test/readme.md)
+- [Back to all Python projects](../README.md)

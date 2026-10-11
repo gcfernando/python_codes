@@ -1,6 +1,6 @@
-# MP3 Player
+# Python MP3 Player with Crossfade — pygame Console Music Player
 
-A console-based MP3 player with seamless crossfade transitions, background preloading, and shuffle playback.
+A console-based **MP3 player written in Python** with crossfade transitions between tracks, background preloading of the next song, and shuffled playback, built on `pygame.mixer` and `mutagen`.
 
 ## Overview
 
@@ -14,7 +14,7 @@ This script plays all `.mp3` files from a folder you specify, in shuffled order,
 - Animated "Playing..." indicator in the console
 - Displays previous, current, and next track names with durations
 - Console window title updated to show the currently playing track
-- Windows sleep prevention (keeps the screen on while music plays)
+- Windows system-sleep prevention while music plays (`SetThreadExecutionState` with `ES_SYSTEM_REQUIRED`; the display can still turn off)
 - Graceful shutdown on playlist end or interrupt
 
 ## Configuration
@@ -42,6 +42,8 @@ pip install pygame mutagen colorama
 
 ## Usage
 
+From the `Console_Code` folder:
+
 ```bash
 python MP3Player.py
 ```
@@ -67,13 +69,20 @@ The player will shuffle the playlist, preload the first track, and begin playbac
 
 ```
 MP3 Player/
-├── Console_Code/
-│   └── MP3Player.py    # Main script
-└── GUI_Code/
+└── Console_Code/
+    └── MP3Player.py    # Main script
 ```
 
 ## Notes
 
 - Only `.mp3` files are supported.
 - If a track fails to load, it is skipped and the next track loads.
-- On non-Windows systems, sleep prevention and console title updates use ANSI escape codes.
+- On non-Windows systems, the console title is set with an ANSI escape sequence; sleep prevention is only available on Windows.
+- Track lengths are read with `mutagen` so the player knows when to start the crossfade.
+
+## Related Projects
+
+- [MP3 Tags — read ID3 metadata](../MP3%20Tags/readme.md)
+- [Improve MP3 Quality — re-encode MP3 files](../Improve%20MP3%20Quality/readme.md)
+- [Audio8D — 8D audio converter](https://github.com/gcfernando/audio-8d)
+- [Back to all Python projects](../README.md)

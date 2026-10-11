@@ -1,6 +1,6 @@
-# Bookmark
+# Python Bookmark Manager CLI — Save and Search Links with SQLite and Rich
 
-A lightweight command-line link organizer for saving, searching, opening, editing, and deleting bookmarks with notes.
+A lightweight **command-line bookmark manager written in Python** for saving, searching, opening, editing, and deleting links with notes. It stores data in SQLite (no server needed) and uses `rich` for coloured terminal output — a compact example of a CRUD console app.
 
 ## Overview
 
@@ -32,6 +32,8 @@ pip install rich
 ```
 
 ## Usage
+
+From the `Console_Code` folder:
 
 ```bash
 python book_marks.py
@@ -80,3 +82,10 @@ Bookmark/
 
 - `links.db` is created automatically in the directory where the script is run.
 - The database schema adds the `note` column automatically if it's missing (for backwards compatibility with older databases).
+- Commands are case-insensitive (`add`, `ADD`, and `Add` all work), and the search matches part of the title (`LIKE '%keyword%'`).
+
+## Related Projects
+
+- [Python dbm key-value database example](../Database/README.md)
+- [Contact Book — Python GUI with SQL Server](../GUI_Apps/README.md)
+- [Back to all Python projects](../README.md)

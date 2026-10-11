@@ -1,6 +1,6 @@
-# Async HTTP
+# Async HTTP Requests in Python with aiohttp and asyncio — GET, POST, PUT, DELETE Example
 
-An interactive command-line client for making asynchronous HTTP requests using Python's `asyncio` and `aiohttp` libraries.
+An interactive command-line client that shows how to make **asynchronous HTTP requests in Python** with `asyncio` and `aiohttp` — sending GET, POST, PUT, and DELETE requests to a REST API and printing the JSON responses.
 
 ## Overview
 
@@ -30,9 +30,13 @@ pip install aiohttp
 
 ## Usage
 
+From the `Console_Code` folder:
+
 ```bash
 python HttpCall.py
 ```
+
+The script uses `http://northwind.now.sh/api/` as its base URL. At the time of writing, that address redirects to `https://northwind.vercel.app/api/`, a shared public demo API, so POST, PUT, and DELETE requests change data that other people can see. Use your own API for anything beyond experimentation.
 
 ### Example Session
 
@@ -67,3 +71,14 @@ Async HTTP/
 └── Console_Code/
     └── HttpCall.py    # Main script
 ```
+
+## Notes
+
+- Each request opens its own `aiohttp.ClientSession`. That keeps the demo short; in larger programs, create one session and reuse it for many requests.
+- Entering any method other than GET, POST, PUT, or DELETE ends the loop.
+
+## Related Projects
+
+- [Internet Speed Test](../Internet%20Speed%20Test/readme.md)
+- [Port Scanner](../Port%20Scanner/readme.md)
+- [Back to all Python projects](../README.md)

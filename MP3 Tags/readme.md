@@ -1,6 +1,6 @@
-# MP3 Tags
+# Read MP3 ID3 Tags in Python — eyeD3 Metadata and Audio Info Example
 
-Reads and displays ID3 metadata and audio properties from an MP3 file using `eyed3`.
+A short Python script that shows **how to read MP3 metadata (ID3 tags) in Python** with `eyed3` — title, artist, album, genre, track number, and year — along with audio details such as sample rate, bitrate, duration, and channel mode.
 
 ## Overview
 
@@ -48,28 +48,32 @@ Open `ReadMP3File.py` and update the file path:
 mp3_file_path = "path/to/your/audio.mp3"
 ```
 
-Then run the script:
+Then run the script from the `Console_Code` folder:
 
 ```bash
 python ReadMP3File.py
 ```
 
-### Example Output
+### Output Format
 
 ```
-Title: Bohemian Rhapsody
-Artist: Queen
-Album: A Night at the Opera
-Album Artist: Queen
-Genre: Rock
-Track Number: (11, None)
-Year: 1975
-Sample Rate: 44100
-Bitrate: 320 kbps
-Duration: 354.32 seconds
-Channels: Joint stereo
-File Size: 14.23 MB
+Title: <title>
+Artist: <artist>
+Album: <album>
+Album Artist: <album artist>
+Genre: <genre>
+Track Number: (<track>, <total or None>)
+Year: <year>
+Sample Rate: <Hz>
+Bitrate: <see known issue below>
+Duration: <seconds>
+Channels: <channel mode, e.g. Joint stereo>
+File Size: <MB>
 ```
+
+## Known issue: bitrate prints as 0 kbps
+
+In `eyed3`, `audio_file.info.bit_rate` is a `(vbr, bitrate)` tuple whose bitrate is **already in kb/s**. The script divides it by 1000 again (`bit_rate[1] // 1000`), so a 320 kb/s file prints `Bitrate: 0 kbps`. Printing `audio_file.info.bit_rate[1]` — or `audio_file.info.bit_rate_str`, which also marks variable bitrates with `~` — shows the correct value.
 
 ## File Structure
 
@@ -83,3 +87,11 @@ MP3 Tags/
 
 - The file path is currently hardcoded in the script. Update it before running.
 - Year is only printed if `getBestDate()` returns a valid date object.
+- The script assumes the file has an ID3 tag; for an untagged MP3, `audio_file.tag` is `None`.
+
+## Related Projects
+
+- [MP3 Player with crossfade](../MP3%20Player/readme.md)
+- [Improve MP3 Quality — re-encode MP3 files](../Improve%20MP3%20Quality/readme.md)
+- [Lyrics — Genius API song lookup](../Lyrics/readme.md)
+- [Back to all Python projects](../README.md)

@@ -1,6 +1,6 @@
-# Streamlit Demo
+# Streamlit Example App in Python — Widgets, DataFrames and Charts
 
-A comprehensive Streamlit web application demonstrating a wide range of widgets, layout features, and data visualizations.
+A single-file **Streamlit example app** in Python that demonstrates sidebar input widgets, a pandas DataFrame, a matplotlib histogram, and Streamlit's native line and area charts — a quick way to learn how to build an interactive data web app without writing HTML or JavaScript.
 
 ## Overview
 
@@ -43,6 +43,8 @@ pip install streamlit pandas numpy matplotlib
 
 ## Usage
 
+From the `Console_Code` folder:
+
 ```bash
 streamlit run streamlit_app.py
 ```
@@ -62,3 +64,13 @@ Streamlit/
 └── Console_Code/
     └── streamlit_app.py    # Main Streamlit application
 ```
+
+## How Streamlit Runs the App
+
+Streamlit re-runs the whole script from top to bottom every time a widget changes. Each widget call (for example `st.sidebar.slider`) returns its current value, so the page always reflects the latest inputs without callbacks.
+
+## Related Projects
+
+- [Local AI chat app with Ollama and Streamlit](https://github.com/gcfernando/document/blob/main/local_ai_learning_lab.md)
+- [WiFi Radar — Flask web dashboard](../Wifi%20Radar/readme.md)
+- [Back to all Python projects](../README.md)

@@ -1,6 +1,6 @@
-# Health Monitor
+# Python Memory Leak Detector — Live Process Memory Monitor with psutil and Rich
 
-A real-time terminal dashboard for detecting memory leaks in running processes.
+A real-time terminal dashboard written in Python that watches the **memory usage of running processes** and flags ones whose memory keeps growing — a simple heuristic for spotting possible memory leaks.
 
 ## Overview
 
@@ -13,8 +13,8 @@ Health Monitor continuously tracks the memory usage of the top processes on your
 - Detects memory leaks by observing consistent growth over a rolling window of snapshots
 - Three status levels per process:
   - **OK** — memory usage is stable
-  - **WATCH** — memory is growing faster than usual
-  - **LEAK** — memory has grown consistently across 10 or more consecutive snapshots
+  - **WATCH** — memory has grown by more than 25 MB across the recent snapshot history
+  - **LEAK** — memory has increased on 10 or more consecutive snapshots
 - Footer shows detected leak PIDs or a "no leaks" confirmation with a timestamp
 - Configurable number of processes to track and check interval via command-line arguments
 
@@ -23,8 +23,11 @@ Health Monitor continuously tracks the memory usage of the top processes on your
 | Parameter | Default | Description |
 |---|---|---|
 | Snapshot interval | 1 second | How often memory is sampled |
-| Leak threshold | 50 MB | Growth amount that triggers WATCH status |
-| Leak window | 10 snapshots | Consecutive growth snapshots required to trigger LEAK |
+| `LEAK_THRESHOLD_MB` | 50 MB | WATCH is shown when growth exceeds half of this value (25 MB) |
+| `LEAK_WINDOW` | 10 snapshots | Number of consecutive increases (of any size) that triggers LEAK |
+| History length | 20 snapshots | Only the most recent 20 readings per process are kept |
+
+These are heuristics, not proof of a leak: caches, garbage-collected runtimes, and applications that are legitimately loading data can also grow steadily.
 
 ## Requirements
 
@@ -40,6 +43,8 @@ pip install psutil rich
 ```
 
 ## Usage
+
+From the `Console_Code` folder:
 
 ```bash
 # Run with defaults (top 15 processes, 1-second interval)
@@ -69,7 +74,7 @@ python health_monitor.py -n 20 -i 5
 | PID | Process ID |
 | Process Name | Name of the process |
 | Current (MB) | Current resident memory usage in megabytes |
-| Growth (MB) | Memory change since first snapshot in this session |
+| Growth (MB) | Memory change since the oldest of the (up to 20) stored snapshots |
 | Status | OK / WATCH / LEAK |
 
 ## File Structure
@@ -85,3 +90,10 @@ Health Monitor/
 - Press `Ctrl+C` to stop monitoring. The dashboard is cleared on exit.
 - Processes that exit mid-session are automatically removed from tracking.
 - Processes that cannot be read (e.g., protected system processes) are silently skipped.
+- The top-N list is recalculated on every snapshot, so a process that drops out of the top N stops being tracked.
+- Memory is the resident set size (RSS) reported by `psutil`.
+
+## Related Projects
+
+- [Extract CPU Information](../Extract%20CPU%20Information/readme.md)
+- [Back to all Python projects](../README.md)

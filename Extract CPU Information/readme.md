@@ -1,6 +1,6 @@
-# Extract CPU Information
+# Get CPU Information in Python — psutil and py-cpuinfo Example
 
-Retrieves and displays detailed information about the system's CPU using Python.
+A short script that shows **how to get CPU information in Python**: processor brand, architecture, clock speed, and physical and logical core counts, using `psutil` and `py-cpuinfo`.
 
 ## Overview
 
@@ -30,11 +30,15 @@ pip install psutil py-cpuinfo
 
 ## Usage
 
+From the `Console_Code` folder:
+
 ```bash
 python CPU.py
 ```
 
 ### Example Output
+
+Values depend on your machine; the labels are printed exactly as below (including the script's `Actucal Hz` spelling).
 
 ```
 Processor Info
@@ -49,7 +53,7 @@ Processor Info
 
 ## Notes
 
-- Temperature is estimated based on the current CPU frequency (`freq / 100 + 15`). It is not a hardware sensor reading.
+- Temperature is estimated based on the current CPU frequency (`freq / 100 + 15`). It is not a hardware sensor reading and should not be used to judge whether a CPU is overheating. On Linux, `psutil.sensors_temperatures()` can read real sensor values where the hardware exposes them.
 - `psutil` and `cpuinfo` support Windows, macOS, and Linux.
 
 ## File Structure
@@ -59,3 +63,8 @@ Extract CPU Information/
 └── Console_Code/
     └── CPU.py    # Main script
 ```
+
+## Related Projects
+
+- [Health Monitor — live process memory dashboard](../Health%20Monitor/readme.md)
+- [Back to all Python projects](../README.md)

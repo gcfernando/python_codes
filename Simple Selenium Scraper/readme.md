@@ -1,6 +1,6 @@
-# Simple Selenium Scraper
+# Python Selenium Web Scraping Example — Headless Chrome Headline Scraper
 
-A headless web scraper that extracts cricket news headlines from ESPN Cricinfo using Selenium and Chrome.
+A short **Selenium web scraping example in Python** that runs Chrome in headless mode, opens the ESPN Cricinfo news page, and prints the page header and news headlines found by CSS class.
 
 ## Overview
 
@@ -27,7 +27,16 @@ pip install selenium
 
 You also need:
 - **Google Chrome** installed on your system
-- **ChromeDriver** matching your Chrome version — download from [chromedriver.chromium.org](https://chromedriver.chromium.org/downloads)
+- **ChromeDriver** matching your Chrome version — available from [Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/)
+
+> **Selenium version:** the script passes the driver path as the first positional argument, `webdriver.Chrome(chromedriver_path, options=chrome_options)`. That form was removed in Selenium 4.10, so with current Selenium versions the call fails. Either install an older release (`pip install "selenium<4.10"`) or update the call to use a `Service`:
+>
+> ```python
+> from selenium.webdriver.chrome.service import Service
+> driver = webdriver.Chrome(service=Service(chromedriver_path), options=chrome_options)
+> ```
+>
+> With Selenium 4.6 or later you can also omit the path entirely and let Selenium Manager download a matching driver: `webdriver.Chrome(options=chrome_options)`.
 
 ## Configuration
 
@@ -46,19 +55,22 @@ You can change this to any URL and update the CSS class selectors (`ds-text-titl
 
 ## Usage
 
+From the `Console_Code` folder:
+
 ```bash
 python Web_Scrape.py
 ```
 
-### Example Output
+### Output Format
 
 ```
-Looking for : Cricket News
-
-    India beat Australia by 5 wickets in 3rd ODI
-    England name squad for West Indies tour
-    ...
+Looking for : <page header text>
+	<headline 1>
+	<headline 2>
+	...
 ```
+
+Headlines change daily, and the CSS classes used by the site can change at any time; if nothing is printed, inspect the page and update the selectors.
 
 ## File Structure
 
@@ -72,3 +84,11 @@ Simple Selenium Scraper/
 
 - The first two items from the news feed list are skipped (`news_feeds[2:]`) to avoid navigation elements.
 - ChromeDriver must be version-compatible with the installed Chrome browser.
+- The console is cleared with `os.system('cls')`, which is Windows-specific; use `clear` on macOS or Linux.
+- Check a website's terms of use and `robots.txt` before scraping it, and keep request rates low.
+
+## Related Projects
+
+- [Tag Clouds — word cloud from scraped web pages](../TagClouds/readme.md)
+- [Simple WhatsApp Sender — browser automation](../Simple%20WhatApp%20Sender/readme.md)
+- [Back to all Python projects](../README.md)
