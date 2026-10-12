@@ -69,3 +69,9 @@ Stenography/
 - [QR Code generator](../QR%20Code/readme.md)
 - [Password Generator and Strength Checker](../Password%20Utility/readme.md)
 - [Back to all Python projects](../README.md)
+
+---
+
+## Documentation links
+
+[Read all Python Projects and Code Examples guides online](https://gcfernando.github.io/python_codes/documentation/) · [Project overview](https://gcfernando.github.io/python_codes/) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)

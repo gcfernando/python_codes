@@ -95,3 +95,9 @@ MP3 Tags/
 - [Improve MP3 Quality — re-encode MP3 files](../Improve%20MP3%20Quality/readme.md)
 - [Lyrics — Genius API song lookup](../Lyrics/readme.md)
 - [Back to all Python projects](../README.md)
+
+---
+
+## Documentation links
+
+[Read all Python Projects and Code Examples guides online](https://gcfernando.github.io/python_codes/documentation/) · [Project overview](https://gcfernando.github.io/python_codes/) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)

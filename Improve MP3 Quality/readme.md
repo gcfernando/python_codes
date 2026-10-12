@@ -106,3 +106,9 @@ Improve MP3 Quality/
 - [MP3 Player with crossfade](../MP3%20Player/readme.md)
 - [Audio8D — FFmpeg 8D audio converter](https://github.com/gcfernando/audio-8d)
 - [Back to all Python projects](../README.md)
+
+---
+
+## Documentation links
+
+[Read all Python Projects and Code Examples guides online](https://gcfernando.github.io/python_codes/documentation/) · [Project overview](https://gcfernando.github.io/python_codes/) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)

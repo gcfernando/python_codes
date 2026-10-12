@@ -92,3 +92,9 @@ Simple Selenium Scraper/
 - [Tag Clouds — word cloud from scraped web pages](../TagClouds/readme.md)
 - [Simple WhatsApp Sender — browser automation](../Simple%20WhatApp%20Sender/readme.md)
 - [Back to all Python projects](../README.md)
+
+---
+
+## Documentation links
+
+[Read all Python Projects and Code Examples guides online](https://gcfernando.github.io/python_codes/documentation/) · [Project overview](https://gcfernando.github.io/python_codes/) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)

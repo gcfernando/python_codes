@@ -74,3 +74,9 @@ Streamlit re-runs the whole script from top to bottom every time a widget change
 - [Local AI chat app with Ollama and Streamlit](https://github.com/gcfernando/document/blob/main/local_ai_learning_lab.md)
 - [WiFi Radar — Flask web dashboard](../Wifi%20Radar/readme.md)
 - [Back to all Python projects](../README.md)
+
+---
+
+## Documentation links
+
+[Read all Python Projects and Code Examples guides online](https://gcfernando.github.io/python_codes/documentation/) · [Project overview](https://gcfernando.github.io/python_codes/) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)

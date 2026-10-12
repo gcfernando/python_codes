@@ -114,3 +114,9 @@ GUI_Apps/
 - [Text2Audio](../Text2Audio/readme.md) and [Setup Wizard — Fruit Wiki](../SetupWizard/readme.md) — more Python desktop GUI examples
 - [Complete SQL Guide](https://github.com/gcfernando/document/blob/main/sql_complete_guide.md) — learn the SQL Server concepts used here, including stored procedures and constraints
 - [Back to all Python projects](../README.md)
+
+---
+
+## Documentation links
+
+[Read all Python Projects and Code Examples guides online](https://gcfernando.github.io/python_codes/documentation/) · [Project overview](https://gcfernando.github.io/python_codes/) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)

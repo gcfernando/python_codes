@@ -80,3 +80,9 @@ Lyrics/
 - `song.album` can be `None` for songs without an album on Genius, which would make the `song.album.full_title` line fail.
 - The Genius free API tier has rate limits. If you hit them, the search may return `None`.
 - Only the first 1,000 characters of the lyrics are printed in the current implementation.
+
+---
+
+## Documentation links
+
+[Read all Python Projects and Code Examples guides online](https://gcfernando.github.io/python_codes/documentation/) · [Project overview](https://gcfernando.github.io/python_codes/) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)

@@ -216,3 +216,9 @@ defaults:
       path: "Wifi Radar/index.html"
     values:
       sitemap: false
+
+# Public documentation navigation and presentation.
+repository: gcfernando/python_codes
+theme: jekyll-theme-primer
+projects_hub: https://gcfernando.github.io/gcfernando/projects/
+project_category: "Learn & utilities"

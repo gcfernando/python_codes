@@ -1,6 +1,6 @@
 # 🐍 Python Projects and Code Examples — Automation, Networking, Desktop GUI, Media and Machine Learning
 
-<div align="center">
+<div align="center" markdown="1">
 
 ### A colorful collection of Python experiments, utilities, and applications
 
@@ -130,8 +130,14 @@ Yes — [Load Libraries](LoadLibraries/readme.md) shows how to load a compiled C
 
 ---
 
-<div align="center">
+<div align="center" markdown="1">
 
 ✨ **Browse a project, try an idea, and keep learning Python.** ✨
 
 </div>
+
+---
+
+## Documentation links
+
+[Read all Python Projects and Code Examples guides online](https://gcfernando.github.io/python_codes/documentation/) · [Project overview](https://gcfernando.github.io/python_codes/) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)

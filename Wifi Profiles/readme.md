@@ -86,3 +86,9 @@ Wifi Profiles/
 - [WiFi Radar — live Wi-Fi dashboard](../Wifi%20Radar/readme.md)
 - [FixNetwork — Windows network reset script](../FixNetwork/readme.md)
 - [Back to all Python projects](../README.md)
+
+---
+
+## Documentation links
+
+[Read all Python Projects and Code Examples guides online](https://gcfernando.github.io/python_codes/documentation/) · [Project overview](https://gcfernando.github.io/python_codes/) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)

@@ -77,3 +77,9 @@ Simple WhatApp Sender/
 - [Use Twilio — send SMS and WhatsApp messages through an API](../Use%20Twilio/readme.md)
 - [Simple Selenium Scraper — browser automation](../Simple%20Selenium%20Scraper/readme.md)
 - [Back to all Python projects](../README.md)
+
+---
+
+## Documentation links
+
+[Read all Python Projects and Code Examples guides online](https://gcfernando.github.io/python_codes/documentation/) · [Project overview](https://gcfernando.github.io/python_codes/) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)

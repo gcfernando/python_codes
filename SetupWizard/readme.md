@@ -80,3 +80,9 @@ The executable is created in `dist/`.
 - [Text2Audio — customtkinter text-to-speech app](../Text2Audio/readme.md)
 - [Contact Book — ttkbootstrap and SQL Server](../GUI_Apps/README.md)
 - [Back to all Python projects](../README.md)
+
+---
+
+## Documentation links
+
+[Read all Python Projects and Code Examples guides online](https://gcfernando.github.io/python_codes/documentation/) · [Project overview](https://gcfernando.github.io/python_codes/) · [All developer projects](https://gcfernando.github.io/gcfernando/projects/)
