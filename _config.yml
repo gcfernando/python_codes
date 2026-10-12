@@ -1,0 +1,218 @@
+# GitHub Pages documentation site; does not configure application deployment.
+url: "https://gcfernando.github.io"
+baseurl: "/python_codes"
+title: "Python Projects and Code Examples"
+description: "Python examples for automation, networking, desktop interfaces, media processing, machine learning and local web dashboards."
+lang: "en"
+plugins:
+  - jekyll-sitemap
+exclude:
+  - packages
+  - bin
+  - obj
+  - node_modules
+  - vendor
+  - tests
+  - .claude
+  - .agents
+  - .codex
+defaults:
+  - scope:
+      path: "Async HTTP/readme.md"
+    values:
+      title: "Async HTTP Requests in Python with aiohttp and asyncio — GET, POST, PUT, DELETE Example"
+      description: "This script demonstrates asynchronous HTTP communication by connecting to the Northwind sample REST API. It runs a loop that lets you repeatedly choose a request method, provide the…"
+  - scope:
+      path: "Bookmark/readme.md"
+    values:
+      title: "Python Bookmark Manager CLI — Save and Search Links with SQLite and Rich"
+      description: "A lightweight command-line bookmark manager written in Python for saving, searching, opening, editing, and deleting links with notes. It stores data in SQLite (no server needed) and uses…"
+  - scope:
+      path: "Custom Exception/readme.md"
+    values:
+      title: "How to Create a Custom Exception in Python — Minimal Example"
+      description: "A minimal Python example demonstrating how to define, raise, and catch a custom exception class by subclassing Exception."
+  - scope:
+      path: "Database/README.md"
+    values:
+      title: "Python dbm Example — Simple Key-Value Database with the Standard Library"
+      description: "A simple example of key-value data persistence using Python's built-in dbm module: store a small record in a file-based database and read it back, with no database server and no…"
+  - scope:
+      path: "Extract CPU Information/readme.md"
+    values:
+      title: "Get CPU Information in Python — psutil and py-cpuinfo Example"
+      description: "A short script that shows how to get CPU information in Python: processor brand, architecture, clock speed, and physical and logical core counts, using psutil and py-cpuinfo."
+  - scope:
+      path: "FixNetwork/readme.md"
+    values:
+      title: "Windows Network Reset Script in Python — Fix Internet Connection Problems"
+      description: "A Windows network repair utility written in Python that automates the standard Windows network troubleshooting commands — DHCP release/renew, DNS flush, Winsock and TCP/IP stack reset,…"
+  - scope:
+      path: "Graphite_CLI/README.md"
+    values:
+      title: "Photo to Graphite Pencil Sketch — Automatic Python CLI (OpenCV)"
+      description: "That's the complete command. The tool reads the photo, chooses rendering settings automatically, converts it to a black-and-white graphite-style image, preserves the input pixel…"
+  - scope:
+      path: "GUI_Apps/README.md"
+    values:
+      title: "Python Desktop GUI Apps — Tkinter (ttkbootstrap) Contact Book with SQL Server"
+      description: "A collection of desktop GUI applications built with Python. It currently contains Contact Book, a CRUD contact manager that shows how to connect a Tkinter / ttkbootstrap interface to…"
+  - scope:
+      path: "Health Monitor/readme.md"
+    values:
+      title: "Python Memory Leak Detector — Live Process Memory Monitor with psutil and Rich"
+      description: "A real-time terminal dashboard written in Python that watches the memory usage of running processes and flags ones whose memory keeps growing — a simple heuristic for spotting possible…"
+  - scope:
+      path: "Image to ASCII/readme.md"
+    values:
+      title: "Convert an Image to ASCII Art in Python — pywhatkit Example"
+      description: "A short Python script that converts an image into ASCII art and saves it as a text file, using pywhatkit.imagetoasciiart."
+  - scope:
+      path: "Image2Cartoon/readme.md"
+    values:
+      title: "Cartoonify an Image with Python and OpenCV — Image2Cartoon"
+      description: "A short Python script that shows how to cartoonify a photo with OpenCV: median blur, adaptive-threshold edge detection, and a bilateral filter are combined to turn a regular photograph…"
+  - scope:
+      path: "Improve MP3 Quality/readme.md"
+    values:
+      title: "Re-encode MP3 Files in Python — Change Bitrate, Channels and Sample Rate with pydub"
+      description: "A command-line tool written in Python that re-encodes MP3 files with a chosen bitrate, channel option, and sample rate using pydub and FFmpeg (libmp3lame), for a single file or a whole…"
+  - scope:
+      path: "Internet Speed Test/readme.md"
+    values:
+      title: "Internet Speed Test in Python — speedtest-cli Example"
+      description: "A short Python script that tests your internet speed — download, upload, and ping — using the speedtest-cli library and Speedtest.net servers."
+  - scope:
+      path: "LoadLibraries/readme.md"
+    values:
+      title: "Call a C# DLL from Python with pythonnet — Load a .NET Library"
+      description: "Demonstrates how to call a compiled C# / .NET library (DLL) from Python using pythonnet and its clr module."
+  - scope:
+      path: "Lyrics/readme.md"
+    values:
+      title: "Get Song Lyrics with Python and the Genius API — lyricsgenius Example"
+      description: "A short Python script that searches the Genius API for a song with the lyricsgenius library and prints its title, artist, album, and a lyrics preview."
+  - scope:
+      path: "ML/COVID Forecast/readme.md"
+    values:
+      title: "COVID-19 Time Series Forecasting in Python — auto-ARIMA and SARIMAX Example"
+      description: "A time series forecasting script in Python that predicts daily COVID-19 cases for a country using pmdarima.autoarima for model selection and statsmodels SARIMAX for fitting — a worked…"
+  - scope:
+      path: "ML/README.md"
+    values:
+      title: "Python Machine Learning Examples — ARIMA/SARIMAX Time-Series Forecasting and Linear Regression"
+      description: "A collection of beginner-friendly machine learning projects built with Python: a COVID-19 time-series forecast using auto-ARIMA and SARIMAX (pmdarima, statsmodels), and a salary…"
+  - scope:
+      path: "ML/Salary/readme.md"
+    values:
+      title: "Salary Prediction with Linear Regression in Python — scikit-learn Train and Predict Example"
+      description: "A beginner-friendly machine learning example in Python: a scikit-learn linear regression pipeline that predicts salary from years of experience, with a separate training script that…"
+  - scope:
+      path: "MP3 Player/readme.md"
+    values:
+      title: "Python MP3 Player with Crossfade — pygame Console Music Player"
+      description: "A console-based MP3 player written in Python with crossfade transitions between tracks, background preloading of the next song, and shuffled playback, built on pygame.mixer and mutagen."
+  - scope:
+      path: "MP3 Tags/readme.md"
+    values:
+      title: "Read MP3 ID3 Tags in Python — eyeD3 Metadata and Audio Info Example"
+      description: "A short Python script that shows how to read MP3 metadata (ID3 tags) in Python with eyed3 — title, artist, album, genre, track number, and year — along with audio details such as sample…"
+  - scope:
+      path: "Object Clone/readme.md"
+    values:
+      title: "Deep Copy vs Shallow Copy in Python — copy.deepcopy() Example"
+      description: "A minimal example of cloning a Python object with copy.deepcopy(), showing that changes to the original do not affect the copy."
+  - scope:
+      path: "Password Utility/readme.md"
+    values:
+      title: "Python Password Generator and Password Strength Checker"
+      description: "Two small Python command-line tools: a random password generator with guaranteed numbers of digits, uppercase, lowercase, and special characters, and a password strength checker that…"
+  - scope:
+      path: "Port Scanner/readme.md"
+    values:
+      title: "Python Port Scanner — Multithreaded TCP Scanner with IPv6, Banners and JSON Output"
+      description: "A fast, multithreaded TCP port scanner written in pure Python (standard library only). It scans IPv4 and IPv6 hosts, distinguishes open, closed, and filtered ports, can grab service…"
+  - scope:
+      path: "QR Code/readme.md"
+    values:
+      title: "Generate a QR Code in Python — Custom Colours with the qrcode Library"
+      description: "A short Python script that shows how to generate a QR code in Python with the qrcode library, using custom fill and background colours and saving the result as a PNG image."
+  - scope:
+      path: "README.md"
+    values:
+      title: "🐍 Python Projects and Code Examples — Automation, Networking, Desktop GUI, Media and Machine Learning"
+      description: "Python examples for automation, networking, desktop interfaces, media processing, machine learning and local web dashboards."
+  - scope:
+      path: "Remove Background/readme.md"
+    values:
+      title: "Remove Image Background in Python with rembg — AI Background Removal Example"
+      description: "A short Python script that shows how to remove the background from an image in Python using the AI-based rembg library, then places the subject on a solid black background with Pillow."
+  - scope:
+      path: "SetupWizard/readme.md"
+    values:
+      title: "PySimpleGUI Image Viewer with PyInstaller Packaging — Fruit Wiki (Python)"
+      description: "A Python desktop GUI that displays fruit images and descriptions in a paginated viewer, built with PySimpleGUI and Pillow, with a resourcepath() helper that makes bundled assets work…"
+  - scope:
+      path: "Simple Selenium Scraper/readme.md"
+    values:
+      title: "Python Selenium Web Scraping Example — Headless Chrome Headline Scraper"
+      description: "A short Selenium web scraping example in Python that runs Chrome in headless mode, opens the ESPN Cricinfo news page, and prints the page header and news headlines found by CSS class."
+  - scope:
+      path: "Simple WhatApp Sender/readme.md"
+    values:
+      title: "Send a Scheduled WhatsApp Message with Python — pywhatkit Example"
+      description: "A short Python script that shows how to schedule and send a WhatsApp message from Python with the pywhatkit library, which automates WhatsApp Web in your browser."
+  - scope:
+      path: "Stenography/readme.md"
+    values:
+      title: "Image Steganography in Python — Hide Text in a PNG with LSB (stegano)"
+      description: "A short Python example of image steganography: it hides a secret text message inside a PNG image using LSB (Least Significant Bit) encoding with the stegano library, then reads the…"
+  - scope:
+      path: "StoryReader/readme.md"
+    values:
+      title: "Read a PDF Aloud with Python — PyPDF2 and pyttsx3 Offline Text-to-Speech"
+      description: "A short Python script that reads a PDF aloud, page by page: it extracts the text with PyPDF2 and speaks it with pyttsx3, which uses your operating system's built-in (offline)…"
+  - scope:
+      path: "Streamlit/readme.md"
+    values:
+      title: "Streamlit Example App in Python — Widgets, DataFrames and Charts"
+      description: "A single-file Streamlit example app in Python that demonstrates sidebar input widgets, a pandas DataFrame, a matplotlib histogram, and Streamlit's native line and area charts — a quick…"
+  - scope:
+      path: "TagClouds/readme.md"
+    values:
+      title: "Generate a Word Cloud from Web Pages in Python — wordcloud with an Image Mask"
+      description: "A Python script that creates a word cloud from text scraped from several web pages, shaped by a mask image, using requests, inscriptis, wordcloud, and matplotlib."
+  - scope:
+      path: "Text2Audio/readme.md"
+    values:
+      title: "Text to Speech Desktop App in Python — gTTS and customtkinter (15 Accents)"
+      description: "A Python desktop GUI that converts typed text to speech using Google Text-to-Speech (gTTS), with 15 language and accent options, a modern customtkinter interface, and playback through…"
+  - scope:
+      path: "Use Twilio/readme.md"
+    values:
+      title: "Send SMS and WhatsApp Messages and Make Calls with Python and Twilio"
+      description: "A command-line Python client that shows how to send an SMS, send a WhatsApp message, and place a voice call with the Twilio API, using the official twilio package."
+  - scope:
+      path: "Use Windows Login/readme.md"
+    values:
+      title: "Verify Windows Credentials in Python — pywin32 LogonUser Example"
+      description: "A short Python script that shows how to check a Windows username and password from Python with win32security.LogonUser (pywin32), as a simple Windows credential gate for a script or tool."
+  - scope:
+      path: "Wifi Profiles/readme.md"
+    values:
+      title: "Show Saved Wi-Fi Passwords and Delete Wi-Fi Profiles on Windows with Python (netsh)"
+      description: "A Windows utility written in Python that uses netsh wlan to list saved Wi-Fi networks with their stored passwords and bulk-delete Wi-Fi profiles while keeping one network."
+  - scope:
+      path: "Wifi Radar/readme.md"
+    values:
+      title: "WiFi Radar — Python Wi-Fi Scanner with a Live Flask Web Dashboard"
+      description: "A real-time, cross-platform Wi-Fi scanner written in Python with a military-style radar web interface served by Flask. Displays nearby access points as live radar blips with signal…"
+  - scope:
+      path: "Wifi Scanner/readme.md"
+    values:
+      title: "Python Wi-Fi Scanner — List Nearby Networks with pywifi"
+      description: "A short Python script that scans for nearby Wi-Fi networks with the pywifi library and prints each network's SSID, BSSID, signal strength, frequency, and security type."
+  - scope:
+      path: "Wifi Radar/index.html"
+    values:
+      sitemap: false
