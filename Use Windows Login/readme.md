@@ -15,7 +15,7 @@ This script uses `getpass` to securely collect the current user's Windows passwo
 
 ## Requirements
 
-```
+```text
 pywin32
 ```
 
@@ -37,14 +37,14 @@ python Use_Win_Login.py
 
 ### Example Session
 
-```
+```text
 Enter your Windows password:
 Login successful!
 ```
 
 Or, if the password is incorrect:
 
-```
+```text
 Enter your Windows password:
 Login failed. Exiting application.
 ```
@@ -59,7 +59,7 @@ Login failed. Exiting application.
 
 ## File Structure
 
-```
+```text
 Use Windows Login/
 └── Console_Code/
     └── Use_Win_Login.py    # Main script

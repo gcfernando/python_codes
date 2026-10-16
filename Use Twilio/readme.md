@@ -15,7 +15,7 @@ This script wraps the Twilio REST API into a `TwilioService` class with three co
 
 ## Requirements
 
-```
+```text
 twilio
 ```
 
@@ -50,7 +50,7 @@ python SendSMS.py
 
 ### Interactive Prompt
 
-```
+```text
 Enter option (0, 1, 2) : 0       → Send SMS
 Enter option (0, 1, 2) : 1       → Send WhatsApp message
 Enter option (0, 1, 2) : 2       → Make a voice call
@@ -73,7 +73,7 @@ Enter message : Hello from Python!
 
 ## File Structure
 
-```
+```text
 Use Twilio/
 └── Console_Code/
     └── SendSMS.py    # Main script

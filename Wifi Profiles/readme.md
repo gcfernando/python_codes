@@ -35,7 +35,7 @@ python profile.py
 
 Runs first and prints output like:
 
-```
+```text
 SSID: HomeNetwork
 Password: mypassword123
 ------------------------------
@@ -67,7 +67,7 @@ The script then deletes all other saved profiles, printing `Skipping profile: ..
 
 ## File Structure
 
-```
+```text
 Wifi Profiles/
 └── Console_Code/
     └── profile.py    # Main script

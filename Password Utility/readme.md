@@ -63,7 +63,7 @@ python PasswordStregth.py
 The script runs in a loop, letting you check multiple passwords until you choose to exit.
 
 **Example session** (results confirmed by running the script):
-```
+```text
 Enter your password: hello
 Weak
 
@@ -83,7 +83,7 @@ No external dependencies. Both scripts use only Python standard library modules 
 
 ## File Structure
 
-```
+```text
 Password Utility/
 └── Cosole_Code/
     ├── Password_Generator.py    # Random password generator

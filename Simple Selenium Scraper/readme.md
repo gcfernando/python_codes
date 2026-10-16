@@ -15,7 +15,7 @@ This script launches a headless Chrome browser, navigates to the ESPN Cricinfo n
 
 ## Requirements
 
-```
+```text
 selenium
 ```
 
@@ -47,7 +47,7 @@ chromedriver_path = "path/to/chromedriver.exe"
 ```
 
 The target URL is set to:
-```
+```text
 https://www.espncricinfo.com/cricket-news
 ```
 
@@ -63,7 +63,7 @@ python Web_Scrape.py
 
 ### Output Format
 
-```
+```text
 Looking for : <page header text>
 	<headline 1>
 	<headline 2>
@@ -74,7 +74,7 @@ Headlines change daily, and the CSS classes used by the site can change at any t
 
 ## File Structure
 
-```
+```text
 Simple Selenium Scraper/
 └── Console_Code/
     └── Web_Scrape.py    # Main script

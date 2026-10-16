@@ -30,7 +30,7 @@ Extracts and displays the following information:
 
 ## Requirements
 
-```
+```text
 eyed3
 ```
 
@@ -56,7 +56,7 @@ python ReadMP3File.py
 
 ### Output Format
 
-```
+```text
 Title: <title>
 Artist: <artist>
 Album: <album>
@@ -77,7 +77,7 @@ In `eyed3`, `audio_file.info.bit_rate` is a `(vbr, bitrate)` tuple whose bitrate
 
 ## File Structure
 
-```
+```text
 MP3 Tags/
 └── Console_Code/
     └── ReadMP3File.py    # Main script

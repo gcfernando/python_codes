@@ -17,7 +17,7 @@ This script extracts text from a PDF file using `PyPDF2` and converts it to spee
 
 ## Requirements
 
-```
+```text
 PyPDF2
 pyttsx3
 ```
@@ -57,7 +57,7 @@ read_pdf_aloud("path/to/your/file.pdf", voice_id=chosen_voice, rate=150, volume=
 
 ## File Structure
 
-```
+```text
 StoryReader/
 └── Console_Code/
     └── StoryReader.py    # Main script

@@ -16,7 +16,7 @@ This script connects to the best available Speedtest.net server, runs a full spe
 
 ## Requirements
 
-```
+```text
 speedtest-cli
 ```
 
@@ -38,7 +38,7 @@ python SpeedTest.py
 
 The numbers below are illustrative; the text matches what the script prints.
 
-```
+```text
 Loading servers
 Calulating download speed...
 Calulating upload speed...
@@ -52,7 +52,7 @@ Ping        : 12.34 ms
 
 ## File Structure
 
-```
+```text
 Internet Speed Test/
 └── Console_Code/
     └── SpeedTest.py    # Main script

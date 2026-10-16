@@ -2,7 +2,9 @@
 
 <div align="center" markdown="1">
 
-### A colorful collection of Python experiments, utilities, and applications
+<a id="a-colorful-collection-of-python-experiments-utilities-and-applications"></a>
+
+Independent Python utilities, applications and learning examples
 
 Small, independent projects exploring **automation · desktop apps · networking · media · data · machine learning**
 
@@ -12,7 +14,7 @@ Small, independent projects exploring **automation · desktop apps · networking
 
 </div>
 
-Welcome! This repository is a portfolio of standalone **Python projects for beginners and intermediate developers**, from short language examples to practical command-line tools, desktop interfaces, and data-science demos. You will find working Python scripts for a **TCP port scanner**, a **Wi-Fi scanner and Flask dashboard**, an **internet speed test**, **image-to-ASCII and photo-to-sketch converters**, **PNG steganography**, **QR code generation**, **text-to-speech**, **MP3 tag reading**, a **Tkinter contact book backed by SQL Server**, **ARIMA/SARIMAX COVID-19 forecasting**, and **scikit-learn salary prediction**. Pick a project below to open its guide, find its requirements, and learn how to run it.
+This repository is a portfolio of standalone **Python projects for beginners and intermediate developers**, from short language examples to command-line tools, desktop interfaces and data-science demos. Examples include a **TCP port scanner**, a **Wi-Fi scanner and Flask dashboard**, an **internet speed test**, **image-to-ASCII and photo-to-sketch converters**, **PNG steganography**, **QR code generation**, **text-to-speech**, **MP3 tag reading**, a **Tkinter contact book backed by SQL Server**, **ARIMA/SARIMAX COVID-19 forecasting**, and **scikit-learn salary prediction**. Pick a project below to open its guide, check its requirements and known limitations, and learn how to run it.
 
 > 🎨 **No single setup fits every project:** dependencies and setup instructions are documented in each project's README. Some projects also need particular operating systems, local assets, external services, or credentials.
 

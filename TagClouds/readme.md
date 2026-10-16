@@ -17,7 +17,7 @@ This script fetches content from a list of web pages about Nike, extracts the pl
 
 ## Requirements
 
-```
+```text
 requests
 inscriptis
 Pillow
@@ -57,7 +57,7 @@ The script will:
 
 ## File Structure
 
-```
+```text
 TagClouds/
 └── Console_Code/
     └── TagCloud.py    # Main script

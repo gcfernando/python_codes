@@ -28,7 +28,7 @@ Text2Audio provides a clean, dark-themed desktop interface where you type text, 
 
 ## Requirements
 
-```
+```text
 customtkinter
 gtts
 pygame
@@ -63,7 +63,7 @@ python GUI_Code/main.py
 
 ## File Structure
 
-```
+```text
 Text2Audio/
 └── GUI_Code/
     ├── main.py      # Entry point — creates and runs TextToAudio instance

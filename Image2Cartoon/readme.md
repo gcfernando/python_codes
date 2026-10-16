@@ -20,7 +20,7 @@ The output is resized to 500×500 pixels.
 
 ## Requirements
 
-```
+```text
 opencv-python
 ```
 
@@ -55,7 +55,7 @@ The result is only displayed, not saved. To keep it, add `cv2.imwrite('cartoon.j
 
 ## File Structure
 
-```
+```text
 Image2Cartoon/
 └── Console_Code/
     └── CartoonImage.py    # Main script

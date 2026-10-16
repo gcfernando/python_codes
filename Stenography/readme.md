@@ -18,7 +18,7 @@ Steganography is the practice of hiding information within another file in a way
 
 ## Requirements
 
-```
+```text
 stegano
 ```
 
@@ -51,7 +51,7 @@ The script will:
 
 ## File Structure
 
-```
+```text
 Stenography/
 └── Console_Code/
     └── HideTextInImage.py    # Main script

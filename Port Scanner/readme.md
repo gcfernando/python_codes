@@ -78,7 +78,7 @@ python portscan.py example.com -v
 
 Illustrative output (addresses and open ports depend on the target):
 
-```
+```text
 14:32:01 [INFO] Target: example.com -> 93.184.216.34 (IPv4)
 14:32:01 [INFO] Scanning 1024 port(s) with concurrency=200, timeout=1.00s
   22     open   (ssh)
@@ -123,7 +123,7 @@ The human-readable format and the JSON structure above were confirmed by scannin
 
 ## File Structure
 
-```
+```text
 Port Scanner/
 └── Console_Code/
     └── portscan.py    # Main script

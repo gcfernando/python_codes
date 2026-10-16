@@ -18,7 +18,7 @@ This project shows cross-language interoperability between Python and .NET. A si
 
 ## Project Structure
 
-```
+```text
 LoadLibraries/
 ├── Calculator/
 │   ├── Calc.cs               # C# source — static Calculator class
@@ -32,7 +32,7 @@ LoadLibraries/
 
 ## Requirements
 
-```
+```text
 pythonnet
 ```
 
@@ -62,7 +62,7 @@ python Console_Code/CalcCaller.py
 
 The script calls `Addition(5, 5)`, `Subtraction(10, 5)`, `Multiplication(5, 5)`, and `Division(10, 5)`, so it prints:
 
-```
+```text
 About: You're accessing .NET library
 
 Addition: 10.0

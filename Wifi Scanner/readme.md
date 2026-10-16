@@ -20,7 +20,7 @@ This script initializes the system's first Wi-Fi interface, triggers a scan, and
 
 ## Requirements
 
-```
+```text
 pywifi
 ```
 
@@ -47,7 +47,7 @@ python Wifi_Scanner.py
 
 Illustrative output showing the labels the script prints. Because of the [known issues](#known-issues), on Windows the frequency appears in GHz (for example `2.412`) and WPA2-Personal networks are labelled `WPA2-EAP`.
 
-```
+```text
 SSID: HomeNetwork
 BSSID: AA:BB:CC:DD:EE:FF
 Signal Strength (dBm): -55
@@ -66,7 +66,7 @@ Security Auth: WPA_PSK
 
 ## File Structure
 
-```
+```text
 Wifi Scanner/
 └── Console_Code/
     └── Wifi_Scanner.py    # Main script

@@ -16,7 +16,7 @@ This script searches for a song by title and artist name using the Genius API, c
 
 ## Requirements
 
-```
+```text
 lyricsgenius
 ```
 
@@ -48,7 +48,7 @@ python Lyrics.py
 
 ### Output Format
 
-```
+```text
 🎵 Title: <song title>
 🎤 Artist: <artist>
 💿 Album: <album full title>
@@ -62,7 +62,7 @@ If no match is found, the script prints `Song not found.`
 
 ## File Structure
 
-```
+```text
 Lyrics/
 └── Console_Code/
     └── Lyrics.py    # Main script

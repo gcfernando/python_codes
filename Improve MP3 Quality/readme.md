@@ -19,7 +19,7 @@ This script uses `pydub` (backed by FFmpeg) to re-encode one or more MP3 files. 
 
 ## Requirements
 
-```
+```text
 pydub
 ```
 
@@ -54,7 +54,7 @@ The script prompts for:
 
 ### Example Session
 
-```
+```text
 Enter the file path or folder path: C:\Music\album
 
 BitRates (Kbps) => 32k, 64k, 96k, 128k, 192k, 256k, 320k
@@ -83,7 +83,7 @@ The channel options are applied by `pydub` before encoding; they are not LAME's 
 
 ## File Structure
 
-```
+```text
 Improve MP3 Quality/
 ├── Common/
 │   ├── ffmpeg.exe            # Bundled Windows FFmpeg binaries

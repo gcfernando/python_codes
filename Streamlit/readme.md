@@ -28,7 +28,7 @@ This app serves as a showcase of Streamlit's core capabilities. Users can intera
 
 ## Requirements
 
-```
+```text
 streamlit
 pandas
 numpy
@@ -59,7 +59,7 @@ The app opens automatically in your default browser at `http://localhost:8501`.
 
 ## File Structure
 
-```
+```text
 Streamlit/
 └── Console_Code/
     └── streamlit_app.py    # Main Streamlit application

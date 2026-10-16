@@ -16,7 +16,7 @@ This script demonstrates asynchronous HTTP communication by connecting to the No
 
 ## Requirements
 
-```
+```text
 aiohttp
 ```
 
@@ -40,7 +40,7 @@ The script uses `http://northwind.now.sh/api/` as its base URL. At the time of w
 
 ### Example Session
 
-```
+```text
 Enter Method (GET, POST, PUT, DELETE): GET
 # → prints list of categories
 
@@ -66,7 +66,7 @@ More! (Y|N): N
 
 ## File Structure
 
-```
+```text
 Async HTTP/
 └── Console_Code/
     └── HttpCall.py    # Main script

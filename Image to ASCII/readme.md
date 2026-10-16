@@ -8,7 +8,7 @@ This script uses the `pywhatkit` library to transform any image into a text-base
 
 ## Requirements
 
-```
+```text
 pywhatkit
 ```
 
@@ -45,7 +45,7 @@ In `pywhatkit` 5.4, `image_to_ascii_art` converts the image to grayscale with Pi
 
 ## File Structure
 
-```
+```text
 Image to ASCII/
 └── Console_Code/
     └── ImageToText.py    # Main script

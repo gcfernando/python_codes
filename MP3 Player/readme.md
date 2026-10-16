@@ -28,7 +28,7 @@ Two constants in the script control the crossfade behavior:
 
 ## Requirements
 
-```
+```text
 pygame
 mutagen
 colorama
@@ -50,7 +50,7 @@ python MP3Player.py
 
 When prompted, enter the full path to your music folder:
 
-```
+```text
 Enter music folder path: C:\Music\Playlist
 ```
 
@@ -67,7 +67,7 @@ The player will shuffle the playlist, preload the first track, and begin playbac
 
 ## File Structure
 
-```
+```text
 MP3 Player/
 └── Console_Code/
     └── MP3Player.py    # Main script

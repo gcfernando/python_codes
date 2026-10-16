@@ -39,14 +39,14 @@ python CloneObject.py
 ```
 
 **Output:**
-```
+```text
 20
 10
 ```
 
 ## File Structure
 
-```
+```text
 Object Clone/
 └── Console_Code/
     └── CloneObject.py    # Main script

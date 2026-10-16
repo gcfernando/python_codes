@@ -19,7 +19,7 @@ Bookmark stores your important URLs in a local SQLite database (`links.db`) alon
 
 ## Requirements
 
-```
+```text
 rich
 ```
 
@@ -52,7 +52,7 @@ At the prompt, type one of the following commands:
 
 ### Example Session
 
-```
+```text
 COMMAND >> add
 Title: Python Docs
 URL: https://docs.python.org
@@ -72,7 +72,7 @@ Opening...
 
 ## File Structure
 
-```
+```text
 Bookmark/
 └── Console_Code/
     └── book_marks.py    # Main script (also creates links.db in the working directory)

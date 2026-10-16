@@ -33,7 +33,7 @@ Edit these variables at the top of the script:
 
 #### Requirements
 
-```
+```text
 numpy
 pandas
 pmdarima
@@ -90,7 +90,7 @@ A linear regression pipeline that predicts salary based on years of experience.
 
 #### Requirements
 
-```
+```text
 pandas
 scikit-learn
 joblib
@@ -118,7 +118,7 @@ python "Prediction/prediction.py"
 ```
 
 **Inference session format:**
-```
+```text
 Enter Years of Experience: 5
 Predicted Salary for 5.0 years of experience: $<predicted amount>
 ```
@@ -127,7 +127,7 @@ Predicted Salary for 5.0 years of experience: $<predicted amount>
 
 ## Folder Structure
 
-```
+```text
 ML/
 ├── COVID Forecast/
 │   └── Console_Code/

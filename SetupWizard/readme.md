@@ -18,7 +18,7 @@ Fruit Wiki is a simple desktop encyclopedia for fruits. It reads image files fro
 
 ## Requirements
 
-```
+```text
 PySimpleGUI
 Pillow
 pyglet
@@ -33,7 +33,7 @@ pip install PySimpleGUI Pillow pyglet pyinstaller
 
 ## Folder Structure
 
-```
+```text
 SetupWizard/
 └── GUI_Code/
     ├── fruitWiki.py    # Main application

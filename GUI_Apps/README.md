@@ -42,7 +42,7 @@ The application presents a simple form with four input fields and four action bu
 
 #### Requirements
 
-```
+```text
 pyodbc
 ttkbootstrap
 ```
@@ -100,7 +100,7 @@ The database enforces unique mobile numbers and email addresses, so a save is re
 
 ## Folder Structure
 
-```
+```text
 GUI_Apps/
 ├── ContactBook/
 │   └── V1/

@@ -37,7 +37,7 @@ python "Model Builder/builder.py"
 ```
 
 **Output format:**
-```
+```text
 R² Score: <score to 4 decimal places>
 Mean Squared Error: <mse to 2 decimal places>
 Model and scaler saved!
@@ -60,7 +60,7 @@ python "Prediction/prediction.py"
 ```
 
 **Session format:**
-```
+```text
 Enter Years of Experience: 7
 Predicted Salary for 7.0 years of experience: $<predicted amount>
 ```
@@ -69,7 +69,7 @@ Predicted Salary for 7.0 years of experience: $<predicted amount>
 
 ## Requirements
 
-```
+```text
 pandas
 scikit-learn
 joblib
@@ -84,7 +84,7 @@ pip install pandas scikit-learn joblib numpy
 
 ## File Structure
 
-```
+```text
 Salary/
 ├── Model Builder/
 │   └── builder.py          # Training pipeline

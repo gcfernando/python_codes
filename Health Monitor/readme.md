@@ -31,7 +31,7 @@ These are heuristics, not proof of a leak: caches, garbage-collected runtimes, a
 
 ## Requirements
 
-```
+```text
 psutil
 rich
 ```
@@ -79,7 +79,7 @@ python health_monitor.py -n 20 -i 5
 
 ## File Structure
 
-```
+```text
 Health Monitor/
 └── Console_Code/
     └── health_monitor.py    # Main script

@@ -41,7 +41,7 @@ python CustomException.py
 ```
 
 **Output** (confirmed by running the script):
-```
+```text
 Something went wrong
 ```
 
@@ -52,7 +52,7 @@ Something went wrong
 
 ## File Structure
 
-```
+```text
 Custom Exception/
 └── Console_Code/
     └── CustomException.py    # Main script

@@ -97,7 +97,7 @@ Linux requires `sudo` for scanning.
 
 ## File Structure
 
-```
+```text
 Wifi Radar/
 ├── server.py              # Python backend — Wi-Fi scanner + Flask API
 ├── index.html             # Radar UI — pure HTML/CSS/JS

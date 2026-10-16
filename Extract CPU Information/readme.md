@@ -17,7 +17,7 @@ This script uses the `psutil` and `py-cpuinfo` libraries to gather and print CPU
 
 ## Requirements
 
-```
+```text
 psutil
 py-cpuinfo
 ```
@@ -40,7 +40,7 @@ python CPU.py
 
 Values depend on your machine; the labels are printed exactly as below (including the script's `Actucal Hz` spelling).
 
-```
+```text
 Processor Info
     Brand            : Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz
     Architecture     : X86_64
@@ -58,7 +58,7 @@ Processor Info
 
 ## File Structure
 
-```
+```text
 Extract CPU Information/
 └── Console_Code/
     └── CPU.py    # Main script

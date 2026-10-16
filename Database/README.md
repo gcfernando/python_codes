@@ -27,7 +27,7 @@ python data_manager.py
 
 The intended output is:
 
-```
+```text
 Hi, I am Gehan Fernando. I live in Sri Lanka, and I am 43 years old.
 ```
 
@@ -46,7 +46,7 @@ As currently written, the script raises `KeyError: 'first_name'` when it reaches
 
 ## File Structure
 
-```
+```text
 Database/
 └── DatabaseManager/
     └── Console_Code/

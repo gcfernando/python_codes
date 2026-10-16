@@ -19,7 +19,7 @@ This script downloads daily COVID-19 case data, performs stationarity analysis, 
 
 ## Requirements
 
-```
+```text
 numpy
 pandas
 pmdarima
@@ -71,7 +71,7 @@ On first run, a CSV file (e.g., `india_corvid19.csv`) is downloaded and saved in
 
 ## File Structure
 
-```
+```text
 COVID Forecast/
 └── Console_Code/
     └── CovidForecast.py    # Main script

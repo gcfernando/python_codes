@@ -15,7 +15,7 @@ This script uses the `qrcode` library to create a QR code that encodes a short t
 
 ## Requirements
 
-```
+```text
 qrcode[pil]
 ```
 
@@ -57,7 +57,7 @@ A file named `profile.png` will be created in the working directory.
 
 ## File Structure
 
-```
+```text
 QR Code/
 └── Console_Code/
     ├── qr_code.py    # Main script

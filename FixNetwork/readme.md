@@ -29,7 +29,7 @@ This script automates a series of common network troubleshooting steps — relea
 
 ## Requirements
 
-```
+```text
 colorama
 tqdm
 ```
@@ -54,7 +54,7 @@ After the routine completes, a reboot is recommended for maximum stability.
 
 ## File Structure
 
-```
+```text
 FixNetwork/
 └── Console_Code/
     └── network_repair.py    # Main script

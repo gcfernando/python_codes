@@ -14,7 +14,7 @@ This script automates sending a WhatsApp message via WhatsApp Web. It opens the 
 
 ## Requirements
 
-```
+```text
 pywhatkit
 ```
 
@@ -60,7 +60,7 @@ Because it simulates mouse and keyboard input, keep the computer unlocked, the b
 
 ## File Structure
 
-```
+```text
 Simple WhatApp Sender/
 └── Cosole_Code/
     └── WhatAppMessage.py    # Main script

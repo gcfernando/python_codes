@@ -15,7 +15,7 @@ This script takes an input image, removes its background using the AI-powered `r
 
 ## Requirements
 
-```
+```text
 rembg
 Pillow
 ```
@@ -54,7 +54,7 @@ The processed image will be saved at the output path.
 
 ## File Structure
 
-```
+```text
 Remove Background/
 └── Console_Code/
     ├── Remove.py      # Main script
