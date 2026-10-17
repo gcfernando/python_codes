@@ -81,6 +81,8 @@ A linear regression pipeline that predicts salary based on years of experience.
 7. Evaluate using R² score and Mean Squared Error
 8. Save the model and scaler to `Source/salary.pkl` and `Source/scaler.pkl` if R² > 0.95
 
+The current demo fits preprocessing before the train/test split, allowing held-out data to influence it. Split first and fit preprocessing on training data when adapting it for independent evaluation; see the [salary example's limitations](Salary/readme.md#notes). The R² threshold controls saving and does not guarantee accuracy on new data.
+
 #### Prediction Inference (`prediction.py`)
 
 1. Load the saved model and scaler from disk

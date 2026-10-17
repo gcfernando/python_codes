@@ -20,13 +20,13 @@ defaults:
   - scope:
       path: "Async HTTP/readme.md"
     values:
-      title: "Async HTTP Requests in Python with aiohttp and asyncio — GET, POST, PUT, DELETE Example"
-      description: "This script demonstrates asynchronous HTTP communication by connecting to the Northwind sample REST API. It runs a loop that lets you repeatedly choose a request method, provide the…"
+      title: "Async HTTP Requests in Python with aiohttp and asyncio"
+      description: "Send asynchronous GET, POST, PUT and DELETE requests to a sample REST API from an interactive Python client using aiohttp and asyncio."
   - scope:
       path: "Bookmark/readme.md"
     values:
-      title: "Python Bookmark Manager CLI — Save and Search Links with SQLite and Rich"
-      description: "A lightweight command-line bookmark manager written in Python for saving, searching, opening, editing, and deleting links with notes. It stores data in SQLite (no server needed) and uses…"
+      title: "Python Bookmark Manager CLI with SQLite and Rich"
+      description: "Save, search, edit, delete and open bookmarks with notes in a local SQLite database, using a Python command-line interface and Rich output."
   - scope:
       path: "Custom Exception/readme.md"
     values:
@@ -36,7 +36,7 @@ defaults:
       path: "Database/README.md"
     values:
       title: "Python dbm Example — Simple Key-Value Database with the Standard Library"
-      description: "A simple example of key-value data persistence using Python's built-in dbm module: store a small record in a file-based database and read it back, with no database server and no…"
+      description: "Store and retrieve a small record with Python dbm, a file-based key-value database in the standard library that needs no database server."
   - scope:
       path: "Extract CPU Information/readme.md"
     values:
@@ -45,23 +45,23 @@ defaults:
   - scope:
       path: "FixNetwork/readme.md"
     values:
-      title: "Windows Network Reset Script in Python — Fix Internet Connection Problems"
-      description: "A Windows network repair utility written in Python that automates the standard Windows network troubleshooting commands — DHCP release/renew, DNS flush, Winsock and TCP/IP stack reset,…"
+      title: "Windows Network Diagnostics and Reset Script in Python"
+      description: "Review a Python Windows network repair utility for DHCP, DNS, Winsock, proxy and adapter troubleshooting, including reset precautions."
   - scope:
       path: "Graphite_CLI/README.md"
     values:
-      title: "Photo to Graphite Pencil Sketch — Automatic Python CLI (OpenCV)"
-      description: "That's the complete command. The tool reads the photo, chooses rendering settings automatically, converts it to a black-and-white graphite-style image, preserves the input pixel…"
+      title: "Photo to Graphite Pencil Sketch with Python and OpenCV"
+      description: "Convert photos to graphite pencil sketches with a Python CLI using OpenCV, NumPy and Pillow, automatic rendering settings and PNG or JPEG output."
   - scope:
       path: "GUI_Apps/README.md"
     values:
-      title: "Python Desktop GUI Apps — Tkinter (ttkbootstrap) Contact Book with SQL Server"
-      description: "A collection of desktop GUI applications built with Python. It currently contains Contact Book, a CRUD contact manager that shows how to connect a Tkinter / ttkbootstrap interface to…"
+      title: "Python Tkinter Contact Book with SQL Server"
+      description: "Explore a contact manager built with Tkinter, ttkbootstrap, pyodbc and SQL Server stored procedures for creating, searching and editing contacts."
   - scope:
       path: "Health Monitor/readme.md"
     values:
-      title: "Python Memory Leak Detector — Live Process Memory Monitor with psutil and Rich"
-      description: "A real-time terminal dashboard written in Python that watches the memory usage of running processes and flags ones whose memory keeps growing — a simple heuristic for spotting possible…"
+      title: "Python Process Memory Monitor — Possible Leak Alerts"
+      description: "Watch process memory usage in a live Python terminal dashboard with psutil and Rich, using growth heuristics to flag possible memory leaks."
   - scope:
       path: "Image to ASCII/readme.md"
     values:
@@ -71,12 +71,12 @@ defaults:
       path: "Image2Cartoon/readme.md"
     values:
       title: "Cartoonify an Image with Python and OpenCV — Image2Cartoon"
-      description: "A short Python script that shows how to cartoonify a photo with OpenCV: median blur, adaptive-threshold edge detection, and a bilateral filter are combined to turn a regular photograph…"
+      description: "Turn a photo into a cartoon-style image with OpenCV median blur, adaptive thresholding and a bilateral filter in a short Python example."
   - scope:
       path: "Improve MP3 Quality/readme.md"
     values:
-      title: "Re-encode MP3 Files in Python — Change Bitrate, Channels and Sample Rate with pydub"
-      description: "A command-line tool written in Python that re-encodes MP3 files with a chosen bitrate, channel option, and sample rate using pydub and FFmpeg (libmp3lame), for a single file or a whole…"
+      title: "Re-encode MP3 Files in Python with pydub and FFmpeg"
+      description: "Change MP3 bitrate, channels and sample rate with a Python pydub and FFmpeg tool for files or folders; review its in-place replacement behavior."
   - scope:
       path: "Internet Speed Test/readme.md"
     values:
@@ -95,18 +95,18 @@ defaults:
   - scope:
       path: "ML/COVID Forecast/readme.md"
     values:
-      title: "COVID-19 Time Series Forecasting in Python — auto-ARIMA and SARIMAX Example"
-      description: "A time series forecasting script in Python that predicts daily COVID-19 cases for a country using pmdarima.autoarima for model selection and statsmodels SARIMAX for fitting — a worked…"
+      title: "COVID-19 Time-Series Forecasting with ARIMA and SARIMAX in Python"
+      description: "Explore a Python time-series forecast using auto-ARIMA, SARIMAX, stationarity tests and confidence intervals with historical COVID-19 case data."
   - scope:
       path: "ML/README.md"
     values:
-      title: "Python Machine Learning Examples — ARIMA/SARIMAX Time-Series Forecasting and Linear Regression"
-      description: "A collection of beginner-friendly machine learning projects built with Python: a COVID-19 time-series forecast using auto-ARIMA and SARIMAX (pmdarima, statsmodels), and a salary…"
+      title: "Python Machine Learning Examples — Forecasting and Regression"
+      description: "Learn from two Python examples: COVID-19 time-series forecasting with auto-ARIMA and SARIMAX, and salary prediction with scikit-learn regression."
   - scope:
       path: "ML/Salary/readme.md"
     values:
-      title: "Salary Prediction with Linear Regression in Python — scikit-learn Train and Predict Example"
-      description: "A beginner-friendly machine learning example in Python: a scikit-learn linear regression pipeline that predicts salary from years of experience, with a separate training script that…"
+      title: "Salary Prediction with Linear Regression in Python"
+      description: "Train a scikit-learn salary regression model from years of experience, save the model and scaler with joblib, and load them for predictions."
   - scope:
       path: "MP3 Player/readme.md"
     values:
@@ -115,8 +115,8 @@ defaults:
   - scope:
       path: "MP3 Tags/readme.md"
     values:
-      title: "Read MP3 ID3 Tags in Python — eyeD3 Metadata and Audio Info Example"
-      description: "A short Python script that shows how to read MP3 metadata (ID3 tags) in Python with eyed3 — title, artist, album, genre, track number, and year — along with audio details such as sample…"
+      title: "Read MP3 ID3 Tags in Python with eyeD3"
+      description: "Read MP3 title, artist, album, genre and track metadata with eyeD3 in Python, along with bitrate, sample rate, duration and channel information."
   - scope:
       path: "Object Clone/readme.md"
     values:
@@ -126,12 +126,12 @@ defaults:
       path: "Password Utility/readme.md"
     values:
       title: "Python Password Generator and Password Strength Checker"
-      description: "Two small Python command-line tools: a random password generator with guaranteed numbers of digits, uppercase, lowercase, and special characters, and a password strength checker that…"
+      description: "Explore two Python CLI examples: generate passwords with character-count requirements and estimate password strength from possible combinations."
   - scope:
       path: "Port Scanner/readme.md"
     values:
-      title: "Python Port Scanner — Multithreaded TCP Scanner with IPv6, Banners and JSON Output"
-      description: "A fast, multithreaded TCP port scanner written in pure Python (standard library only). It scans IPv4 and IPv6 hosts, distinguishes open, closed, and filtered ports, can grab service…"
+      title: "Python TCP Port Scanner — IPv6, Banners and JSON Output"
+      description: "Scan authorized IPv4 and IPv6 hosts with a multithreaded Python TCP scanner, optional service banners and JSON output using the standard library."
   - scope:
       path: "QR Code/readme.md"
     values:
@@ -140,7 +140,7 @@ defaults:
   - scope:
       path: "README.md"
     values:
-      title: "🐍 Python Projects and Code Examples — Automation, Networking, Desktop GUI, Media and Machine Learning"
+      title: "Python Projects — Automation, Networking, Media and Machine Learning"
       description: "Python examples for automation, networking, desktop interfaces, media processing, machine learning and local web dashboards."
   - scope:
       path: "Remove Background/readme.md"
@@ -150,8 +150,8 @@ defaults:
   - scope:
       path: "SetupWizard/readme.md"
     values:
-      title: "PySimpleGUI Image Viewer with PyInstaller Packaging — Fruit Wiki (Python)"
-      description: "A Python desktop GUI that displays fruit images and descriptions in a paginated viewer, built with PySimpleGUI and Pillow, with a resourcepath() helper that makes bundled assets work…"
+      title: "PySimpleGUI Image Viewer and PyInstaller Packaging in Python"
+      description: "Build a fruit image viewer with PySimpleGUI and Pillow, and learn how a resource path helper locates bundled assets in PyInstaller packages."
   - scope:
       path: "Simple Selenium Scraper/readme.md"
     values:
@@ -165,18 +165,18 @@ defaults:
   - scope:
       path: "Stenography/readme.md"
     values:
-      title: "Image Steganography in Python — Hide Text in a PNG with LSB (stegano)"
-      description: "A short Python example of image steganography: it hides a secret text message inside a PNG image using LSB (Least Significant Bit) encoding with the stegano library, then reads the…"
+      title: "Image Steganography in Python — Hide Text in PNG with LSB"
+      description: "Hide a text message in a PNG image and read it back with the stegano library, using a short Python example of least significant bit steganography."
   - scope:
       path: "StoryReader/readme.md"
     values:
-      title: "Read a PDF Aloud with Python — PyPDF2 and pyttsx3 Offline Text-to-Speech"
-      description: "A short Python script that reads a PDF aloud, page by page: it extracts the text with PyPDF2 and speaks it with pyttsx3, which uses your operating system's built-in (offline)…"
+      title: "Read a PDF Aloud with Python, PyPDF2 and pyttsx3"
+      description: "Extract text from PDF pages with PyPDF2 and read it aloud with pyttsx3 using the operating system text-to-speech voices in a Python example."
   - scope:
       path: "Streamlit/readme.md"
     values:
-      title: "Streamlit Example App in Python — Widgets, DataFrames and Charts"
-      description: "A single-file Streamlit example app in Python that demonstrates sidebar input widgets, a pandas DataFrame, a matplotlib histogram, and Streamlit's native line and area charts — a quick…"
+      title: "Streamlit Python Example — Widgets, DataFrames and Charts"
+      description: "Explore Streamlit sidebar widgets, a pandas DataFrame, a matplotlib histogram and native line and area charts in a single-file Python app."
   - scope:
       path: "TagClouds/readme.md"
     values:
@@ -185,8 +185,8 @@ defaults:
   - scope:
       path: "Text2Audio/readme.md"
     values:
-      title: "Text to Speech Desktop App in Python — gTTS and customtkinter (15 Accents)"
-      description: "A Python desktop GUI that converts typed text to speech using Google Text-to-Speech (gTTS), with 15 language and accent options, a modern customtkinter interface, and playback through…"
+      title: "Python Text-to-Speech App with gTTS and CustomTkinter"
+      description: "Convert typed text to speech in a CustomTkinter Python desktop app with gTTS language and accent options and audio playback through pygame."
   - scope:
       path: "Use Twilio/readme.md"
     values:
@@ -200,13 +200,13 @@ defaults:
   - scope:
       path: "Wifi Profiles/readme.md"
     values:
-      title: "Show Saved Wi-Fi Passwords and Delete Wi-Fi Profiles on Windows with Python (netsh)"
+      title: "Manage Saved Windows Wi-Fi Profiles with Python and netsh"
       description: "A Windows utility written in Python that uses netsh wlan to list saved Wi-Fi networks with their stored passwords and bulk-delete Wi-Fi profiles while keeping one network."
   - scope:
       path: "Wifi Radar/readme.md"
     values:
-      title: "WiFi Radar — Python Wi-Fi Scanner with a Live Flask Web Dashboard"
-      description: "A real-time, cross-platform Wi-Fi scanner written in Python with a military-style radar web interface served by Flask. Displays nearby access points as live radar blips with signal…"
+      title: "WiFi Radar — Python Wi-Fi Scanner and Flask Dashboard"
+      description: "Display nearby Wi-Fi access points in a local Flask radar dashboard with signal strength, security details, vendor lookup and CSV export."
   - scope:
       path: "Wifi Scanner/readme.md"
     values:

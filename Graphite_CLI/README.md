@@ -46,13 +46,9 @@ Supports common Pillow-readable image files as input and PNG/JPEG as output (`.p
 
 This is a deterministic OpenCV renderer, not a neural image-to-image model or a human artist. It cannot guarantee a specific reference style, 100% identity preservation in perceptual terms, or perfect results on arbitrary photos. Automatic validation detects corrupted output, wrong dimensions, and obvious failures, not subjective artistic quality. For a strict artistic acceptance target, use a validated trained model or a human-in-the-loop quality-review process.
 
-## Automated tests
+## Verification limits
 
-The test module `test_portrait_graphite_cli.py` is not included in this repository. If you add it next to the script, run it with:
-
-```bash
-python -m unittest -v test_portrait_graphite_cli.py
-```
+This repository does not include an automated test module for Graphite CLI. The runtime validation described above checks output integrity and basic image properties; it does not verify artistic quality. Inspect the saved image when deciding whether a conversion meets your needs.
 
 ## Project structure
 

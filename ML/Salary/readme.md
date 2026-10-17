@@ -100,7 +100,8 @@ Salary/
 
 - A trained `salary.pkl` and `scaler.pkl` are already included, so `prediction.py` works without training first. Run `builder.py` to retrain them. If your scikit-learn version differs from the one that created the files, retraining avoids version-mismatch warnings when loading them.
 - The dataset must contain `years_experience` and `salary` columns.
-- The model is only saved when R² exceeds 0.95 to ensure prediction quality.
+- The model is only saved when the test-set R² exceeds 0.95. This is a demo's save condition, not a guarantee of prediction quality on new data.
+- The current script fills missing values and fits its scaler before the train/test split. For an independent evaluation, split first and fit preprocessing only on the training data, then transform the held-out data with those fitted steps. The current order allows held-out data to influence preprocessing.
 
 ## Related Projects
 

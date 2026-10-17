@@ -1,4 +1,4 @@
-# Python Memory Leak Detector — Live Process Memory Monitor with psutil and Rich
+# Python Process Memory Monitor — Possible Leak Alerts with psutil and Rich
 
 A real-time terminal dashboard written in Python that watches the **memory usage of running processes** and flags ones whose memory keeps growing — a simple heuristic for spotting possible memory leaks.
 
@@ -10,12 +10,12 @@ Health Monitor continuously tracks the memory usage of the top processes on your
 
 - Live terminal dashboard powered by the `rich` library
 - Tracks the top N processes by memory usage
-- Detects memory leaks by observing consistent growth over a rolling window of snapshots
+- Flags possible memory leaks by observing consistent growth over a rolling window of snapshots
 - Three status levels per process:
-  - **OK** — memory usage is stable
+  - **OK** — neither growth threshold is currently met
   - **WATCH** — memory has grown by more than 25 MB across the recent snapshot history
   - **LEAK** — memory has increased on 10 or more consecutive snapshots
-- Footer shows detected leak PIDs or a "no leaks" confirmation with a timestamp
+- Footer shows flagged process IDs or the application's "No leaks detected" message with a timestamp; that message only means no tracked process currently meets the heuristic
 - Configurable number of processes to track and check interval via command-line arguments
 
 ## Leak Detection Logic
@@ -27,7 +27,7 @@ Health Monitor continuously tracks the memory usage of the top processes on your
 | `LEAK_WINDOW` | 10 snapshots | Number of consecutive increases (of any size) that triggers LEAK |
 | History length | 20 snapshots | Only the most recent 20 readings per process are kept |
 
-These are heuristics, not proof of a leak: caches, garbage-collected runtimes, and applications that are legitimately loading data can also grow steadily.
+These are heuristics, not proof of a leak: caches, garbage-collected runtimes, and applications that are legitimately loading data can also grow steadily. A LEAK alert requires 10 consecutive increases, with any increase size; the header's summary of "+50MB over 10 snapshots" does not match this implemented rule. Investigate flagged processes with a profiler before diagnosing a leak.
 
 ## Requirements
 
